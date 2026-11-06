@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Contatos dos Músicos</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --text:#1d1b16; --muted:#6d685c;
+    --line:#e6e1d4; --accent:#b4531a; --accent-soft:#f6e6d9; --wpp:#1fa855; --wpp-dark:#178a45;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14120f; --card:#1e1b17; --text:#f1ece1; --muted:#a39d8f;
+      --line:#2e2a23; --accent:#e08a4f; --accent-soft:#33261b; --wpp:#25b862; --wpp-dark:#1fa055;
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:20px 16px 40px}
+  header{padding:12px 0 16px}
+  h1{margin:0 0 4px; font-size:1.55rem; letter-spacing:-.01em}
+  .sub{margin:0; color:var(--muted); font-size:.95rem}
+  .tools{position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0 12px}
+  .search{
+    width:100%; padding:13px 14px; font-size:1rem; color:var(--text);
+    background:var(--card); border:1px solid var(--line); border-radius:12px; outline:none;
+  }
+  .search:focus{border-color:var(--accent)}
+  .meta{display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:.82rem; color:var(--muted)}
+  .shuffle{
+    background:none; border:1px solid var(--line); color:var(--muted); border-radius:999px;
+    padding:5px 11px; font-size:.8rem; cursor:pointer;
+  }
+  .shuffle:active{background:var(--accent-soft)}
+  .botoes{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end}
+  .status{margin-top:7px; font-size:.8rem; color:var(--muted); min-height:1.1em}
+  ul{list-style:none; margin:0; padding:0; display:grid; gap:10px}
+  li.card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px; display:grid; grid-template-columns:48px 1fr; gap:12px; align-items:start;
+  }
+  .avatar{
+    position:relative; overflow:hidden;
+    width:48px; height:48px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem;
+  }
+  .avatar.colorido{background:hsl(var(--h) 55% 90%); color:hsl(var(--h) 55% 30%)}
+  .avatar img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .25s}
+  .avatar img.ok{opacity:1}
+  .avatar.com-foto{cursor:zoom-in; -webkit-tap-highlight-color:transparent}
+  .avatar.com-foto:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .avatar.com-foto:active{transform:scale(.96)}
+
+  /* foto ampliada (ao tocar no avatar) */
+  .foto-zoom{
+    position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; padding:20px; background:rgba(0,0,0,.9); cursor:zoom-out; animation:aparecer .18s ease-out;
+  }
+  .foto-zoom[hidden]{display:none}
+  .foto-zoom img{
+    width:min(86vw, 380px); aspect-ratio:1/1; object-fit:contain; border-radius:16px; background:#111;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);
+  }
+  .foto-zoom .legenda{color:#fff; font-weight:650; font-size:1.05rem; text-align:center; overflow-wrap:anywhere}
+  .foto-fechar{
+    position:absolute; top:calc(env(safe-area-inset-top,0px) + 12px); right:14px; width:44px; height:44px;
+    border-radius:50%; border:0; background:rgba(255,255,255,.16); color:#fff; font-size:1.2rem; cursor:pointer;
+  }
+  @keyframes aparecer{from{opacity:0} to{opacity:1}}
+  @media (prefers-reduced-motion: reduce){ .foto-zoom{animation:none} }
+  .name{font-weight:650; font-size:1.05rem; line-height:1.25; overflow-wrap:anywhere}
+  .line{color:var(--muted); font-size:.88rem; margin-top:3px}
+  .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .tag{
+    display:inline-block; background:var(--accent-soft); color:var(--accent);
+    font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:999px;
+  }
+  /* etiquetas de instrumento: cada instrumento tem a sua cor (--h = matiz, definida no script) */
+  .tag{background:hsl(var(--h,24) 58% 91%); color:hsl(var(--h,24) 60% 27%)}
+  @media (prefers-color-scheme: dark){
+    .tag{background:hsl(var(--h,24) 28% 17%); color:hsl(var(--h,24) 68% 72%)}
+  }
+
+  /* botões de instrumento (filtro) */
+  /* o contador pode ter o nome dos instrumentos marcados: usa até 2 linhas e os botões ao lado não quebram */
+  #contador{flex:1 1 auto; min-width:0; overflow-wrap:anywhere; padding-right:8px; line-height:1.25;
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden}
+  .botoes{flex:none; flex-wrap:nowrap}
+  .shuffle{white-space:nowrap}
+  .filtros{position:relative; margin-top:8px}
+  .filtros[hidden]{display:none}
+  .filtros-rail{
+    display:flex; gap:8px; overflow-x:auto; margin:0 -16px -3px; padding:5px 16px 10px;
+    scroll-snap-type:x proximity; scroll-padding:0 16px; scrollbar-width:none; overscroll-behavior-x:contain;
+  }
+  .filtros-rail::-webkit-scrollbar{display:none}
+  .filtros::before, .filtros::after{
+    content:""; position:absolute; top:0; bottom:4px; width:30px; z-index:1; pointer-events:none;
+    opacity:0; transition:opacity .2s;
+  }
+  .filtros::before{left:-16px; background:linear-gradient(90deg, var(--bg) 30%, transparent)}
+  .filtros::after{right:-16px; background:linear-gradient(270deg, var(--bg) 30%, transparent)}
+  .filtros.mais-esq::before, .filtros.mais-dir::after{opacity:1}
+  .chip{
+    --h:38;
+    flex:none; display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:0 13px;
+    border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--text);
+    font:inherit; font-size:.92rem; font-weight:600; line-height:1; cursor:pointer; scroll-snap-align:start;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+    transition:background-color .15s, border-color .15s, box-shadow .15s, color .15s, transform .08s;
+  }
+  .chip-emoji{font-size:1.1rem; line-height:1; margin-left:-2px}
+  .chip-qtd{
+    display:inline-flex; align-items:center; justify-content:center; min-width:24px; height:24px; padding:0 7px; margin-right:-5px;
+    border-radius:999px; background:hsl(var(--h) 55% 91%); color:hsl(var(--h) 60% 26%);
+    font-size:.78rem; font-weight:700; font-variant-numeric:tabular-nums;
+  }
+  @media (hover:hover){ .chip:hover{border-color:hsl(var(--h) 45% 62%)} }
+  .chip:active{transform:scale(.96)}
+  .chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .chip[aria-pressed="true"]{
+    background:hsl(var(--h) 72% 90%); border-color:hsl(var(--h) 62% 40%); color:hsl(var(--h) 65% 20%); font-weight:700;
+    box-shadow:inset 0 0 0 1px hsl(var(--h) 62% 40%), 0 3px 10px hsl(var(--h) 62% 40% / .22);
+  }
+  .chip[aria-pressed="true"] .chip-qtd{background:hsl(var(--h) 62% 27%); color:#fff}
+  @media (prefers-color-scheme: dark){
+    .chip-qtd{background:hsl(var(--h) 26% 22%); color:hsl(var(--h) 70% 78%)}
+    @media (hover:hover){ .chip:hover{border-color:hsl(var(--h) 40% 45%)} }
+    .chip[aria-pressed="true"]{
+      background:hsl(var(--h) 34% 19%); border-color:hsl(var(--h) 58% 58%); color:hsl(var(--h) 80% 86%);
+      box-shadow:inset 0 0 0 1px hsl(var(--h) 58% 58%), 0 3px 12px hsl(var(--h) 60% 50% / .18);
+    }
+    .chip[aria-pressed="true"] .chip-qtd{background:hsl(var(--h) 58% 68%); color:hsl(var(--h) 40% 10%)}
+  }
+  .chip-todos[aria-pressed="true"]{background:var(--text); border-color:var(--text); color:var(--bg); box-shadow:none}
+  .chip-todos[aria-pressed="true"] .chip-qtd{background:rgba(127,127,127,.32); color:var(--bg)}
+  @media (min-width:640px){
+    .filtros-rail{flex-wrap:wrap; overflow:visible; margin:0; padding:3px 0 6px}
+    .filtros::before, .filtros::after{display:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .chip{transition:none}
+    .chip:active{transform:none}
+  }
+  .empty p{margin:0 0 12px}
+  .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .btn{
+    display:inline-flex; align-items:center; gap:7px; text-decoration:none; font-size:.92rem; font-weight:600;
+    padding:10px 14px; border-radius:10px; border:1px solid var(--line); color:var(--text); background:transparent;
+  }
+  .btn.wpp{background:var(--wpp); border-color:var(--wpp); color:#fff}
+  .btn.wpp:active{background:var(--wpp-dark)}
+  .fone{display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px}
+  .fone-num{
+    color:var(--text); font-weight:600; font-size:.97rem; font-variant-numeric:tabular-nums;
+    text-decoration:underline; text-decoration-style:dotted; text-underline-offset:4px;
+  }
+  .copiar{
+    font:inherit; font-size:.8rem; color:var(--muted); background:transparent; cursor:pointer;
+    border:1px solid var(--line); border-radius:999px; padding:5px 12px; min-height:30px;
+  }
+  .copiar:active{background:var(--accent-soft)}
+  .btn svg{width:18px; height:18px; fill:currentColor; flex:none}
+  .btn{max-width:100%}
+  .btn span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .obs{
+    margin-top:10px; padding:8px 11px; background:var(--bg); border-left:3px solid var(--line); border-radius:6px;
+    color:var(--muted); font-size:.88rem; line-height:1.45; white-space:pre-line; overflow-wrap:anywhere;
+  }
+  .btn.so-icone{padding:10px 12px}
+  .fone .rotulo{flex-basis:100%; margin-bottom:-6px; color:var(--muted); font-size:.82rem}
+  .wpp-mini{
+    display:inline-flex; align-items:center; justify-content:center; flex:none; width:34px; height:34px;
+    border-radius:50%; background:var(--wpp); color:#fff;
+  }
+  .wpp-mini:active{background:var(--wpp-dark)}
+  .fone.com-wpp{gap:8px}
+  .fone.com-wpp .fone-num{font-size:.87rem}
+  .fone.com-wpp .copiar{padding:5px 9px; font-size:.78rem}
+  .fone.com-wpp .wpp-mini{width:30px; height:30px}
+  .fone.com-wpp .wpp-mini svg{width:16px; height:16px}
+  .wpp-mini svg{width:18px; height:18px; fill:currentColor}
+  .empty{text-align:center; color:var(--muted); padding:40px 0}
+  footer{margin-top:26px; text-align:center; color:var(--muted); font-size:.8rem; line-height:1.6}
+  footer a{color:inherit}
+  footer .creditos{margin-top:6px}
+
+  /* selos (ex.: IFC) e balão explicativo */
+  .selo{
+    display:inline-flex; align-items:center; vertical-align:middle; margin-left:6px; min-height:24px;
+    background:#fdf0c8; color:#7a5500; border:1px solid #e3c36b; border-radius:999px;
+    padding:2px 9px; font:inherit; font-size:.72rem; font-weight:800; letter-spacing:.04em; cursor:pointer;
+  }
+  .selo::after{
+    content:"i"; display:inline-flex; align-items:center; justify-content:center;
+    width:14px; height:14px; margin-left:5px; border:1.5px solid currentColor; border-radius:50%;
+    font:italic 700 .64rem Georgia,serif; letter-spacing:0;
+  }
+  .selo[aria-expanded="true"]{background:#f5dc92}
+  .balao{
+    position:absolute; z-index:20; background:var(--card); color:var(--text);
+    border:1px solid #d6a62b; border-radius:12px; padding:12px 14px 13px;
+    box-shadow:0 8px 28px rgba(0,0,0,.25); font-size:.88rem; line-height:1.45; font-weight:400;
+  }
+  .balao[hidden]{display:none}
+  .balao-titulo{font-weight:700; margin-bottom:5px; color:#9a6c00}
+  .balao-seta{
+    position:absolute; left:var(--seta,50%); top:-7px; width:12px; height:12px; background:var(--card);
+    border:1px solid #d6a62b; border-right:0; border-bottom:0; transform:translateX(-50%) rotate(45deg);
+  }
+  .balao.acima .balao-seta{top:auto; bottom:-7px; transform:translateX(-50%) rotate(225deg)}
+  @media (prefers-color-scheme: dark){
+    .selo{background:#3a2f10; color:#f0c860; border-color:#6b5420}
+    .selo[aria-expanded="true"]{background:#4a3c14}
+    .avatar.colorido{background:hsl(var(--h) 28% 20%); color:hsl(var(--h) 60% 74%)}
+    .balao{border-color:#6b5420}
+    .balao-titulo{color:#f0c860}
+    .balao-seta{border-color:#6b5420}
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-ig" gradientUnits="userSpaceOnUse" x1="2" y1="22" x2="22" y2="2">
+      <stop offset="0" stop-color="#feda75"/>
+      <stop offset=".28" stop-color="#fa7e1e"/>
+      <stop offset=".52" stop-color="#d62976"/>
+      <stop offset=".78" stop-color="#962fbf"/>
+      <stop offset="1" stop-color="#4f5bd5"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-ig" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#g-ig)" stroke-width="2.1"/>
+    <circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#g-ig)" stroke-width="2.1"/>
+    <circle cx="17.4" cy="6.6" r="1.3" fill="url(#g-ig)"/>
+  </symbol>
+  <symbol id="i-yt" viewBox="0 0 24 24">
+    <rect x="1.5" y="4.5" width="21" height="15" rx="4.6" fill="#ff0000"/>
+    <path d="M10 8.6v6.8l5.9-3.4z" fill="#fff"/>
+  </symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2.5"/>
+      <path d="M3.5 7.5l8.5 6 8.5-6"/>
+    </g>
+  </symbol>
+  <symbol id="i-link" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </g>
+  </symbol>
+</svg>
+<div class="wrap">
+  <header>
+    <h1>🪗 Contatos dos Músicos</h1>
+    <p class="sub">Chame pelo WhatsApp ou toque no número para ligar.</p>
+  </header>
+
+  <div class="tools">
+    <input id="busca" class="search" type="search" placeholder="Buscar por nome, cidade ou instrumento…" autocomplete="off">
+    <div id="filtros" class="filtros" hidden>
+      <div id="filtros-rail" class="filtros-rail" role="group" aria-label="Filtrar por instrumento"></div>
+    </div>
+    <div class="meta">
+      <span id="contador" aria-live="polite" aria-atomic="true"></span>
+      <span class="botoes">
+        <button id="perto" class="shuffle" type="button">📍 Perto de mim</button>
+        <button id="embaralhar" class="shuffle" type="button">🔀 Embaralhar</button>
+      </span>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <ul id="lista"></ul>
+  <div id="vazio" class="empty" hidden>
+    <p id="vazio-texto">Nenhum contato encontrado.</p>
+    <button id="limpar" class="shuffle" type="button" hidden>Limpar filtros</button>
+  </div>
+
+  <footer>
+    A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
+    <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
+    Lista de Contatos de Músicos · v11
+  </footer>
+</div>
+
+<div id="balao" class="balao" role="dialog" aria-live="polite" hidden>
+  <div id="balao-titulo" class="balao-titulo"></div>
+  <div id="balao-texto"></div>
+  <span class="balao-seta"></span>
+</div>
+
+<div id="foto-zoom" class="foto-zoom" role="dialog" aria-modal="true" aria-label="Foto ampliada" hidden>
+  <button id="foto-fechar" class="foto-fechar" type="button" aria-label="Fechar">✕</button>
+  <img id="foto-img" alt="">
+  <div id="foto-legenda" class="legenda"></div>
+</div>
+
+<script>
+let CONTATOS = [];   // carregado de Lista_Contatos_Musicos_contatos.json (cada contato ganha coords a partir de Lista_Contatos_Musicos_cidades.json)
+
+
+/* ---------- utilitários ---------- */
+const $ = id => document.getElementById(id);
+const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
+// Fisher-Yates com gerador aleatório do navegador
+function embaralhar(arr){
+  const a = arr.slice();
+  const buf = new Uint32Array(1);
+  for(let i=a.length-1;i>0;i--){
+    crypto.getRandomValues(buf);
+    const j = buf[0] % (i+1);
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+const FAIXA_KM = 0;   // 0 = só empata quem está na mesma cidade; ex.: 25 = quem difere menos de 25 km fica embaralhado
+let pos = null;       // posição da pessoa; fica só na memória do aparelho
+
+function distKm(a, b){
+  const R = 6371, rad = x => x*Math.PI/180;
+  const dLat = rad(b[0]-a[0]), dLon = rad(b[1]-a[1]);
+  const h = Math.sin(dLat/2)**2 + Math.cos(rad(a[0]))*Math.cos(rad(b[0]))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+
+// menor distância até qualquer cidade do contato; Infinity se não houver localização/coordenadas
+function distanciaDe(c){
+  if(!pos || !Array.isArray(c.coords) || !c.coords.length) return Infinity;
+  return Math.min(...c.coords.map(p => distKm([pos.lat, pos.lon], p)));
+}
+
+// 1º sorteia tudo; 2º, se houver localização, ordena por distância (a ordenação é estável,
+// então os empates mantêm a ordem aleatória do sorteio)
+function ordenar(){
+  const base = embaralhar(CONTATOS);
+  if(!pos) return base;
+  const chave = c => {
+    const d = distanciaDe(c);
+    return (FAIXA_KM > 0 && isFinite(d)) ? Math.floor(d / FAIXA_KM) : d;
+  };
+  const k = new Map(base.map(c => [c, chave(c)]));
+  return base.sort((x, y) => {
+    const a = k.get(x), b = k.get(y);
+    return a === b ? 0 : (a < b ? -1 : 1);
+  });
+}
+
+function textoDist(d){ return d < 5 ? "menos de 5 km" : "≈ " + Math.round(d) + " km"; }
+function status(t){ $("status").textContent = t; }
+function atualizarBotao(){ $("perto").textContent = pos ? "📍 Só aleatório" : "📍 Perto de mim"; }
+
+function pedirLocalizacao(){
+  if(!("geolocation" in navigator)){
+    status("Seu navegador não oferece localização. Lista em ordem aleatória.");
+    return;
+  }
+  status("Pedindo sua localização…");
+  navigator.geolocation.getCurrentPosition(p => {
+    pos = {lat:p.coords.latitude, lon:p.coords.longitude};
+    ordem = ordenar();
+    atualizarBotao(); render();
+    status("📍 Do mais perto para o mais longe (em linha reta). Na mesma cidade, a ordem é aleatória.");
+  }, err => {
+    atualizarBotao();
+    status(err && err.code === 1
+      ? "Localização não liberada. Lista em ordem aleatória. Para usar, libere nas configurações do navegador."
+      : "Não consegui pegar sua localização. Lista em ordem aleatória.");
+  }, {enableHighAccuracy:false, timeout:10000, maximumAge:600000});
+}
+
+/* ---------- selos ----------
+   Para dar um selo a um contato, coloque o código dele em "selos" no arquivo de contatos
+   (ex.: "selos": ["IFC"]). Para criar um selo novo, acrescente uma entrada aqui. */
+const SELOS = {
+  IFC: {
+    sigla: "IFC",
+    nome: "Integrante Fixo de Conjunto",
+    texto: "Este músico é integrante fixo de um conjunto (banda, grupo ou dupla). A agenda dele é a do conjunto, por isso ele dificilmente aceita free-lances. Dá para convidar, mas combine com bastante antecedência e esteja aberto a receber um \"não\"."
+  }
+};
+
+let balaoDe = null;   // botão do selo que está com o balão aberto
+
+function fecharBalao(){
+  $("balao").hidden = true;
+  if(balaoDe){ balaoDe.setAttribute("aria-expanded", "false"); balaoDe = null; }
+}
+
+function alternarBalao(btn, selo){
+  if(balaoDe === btn){ fecharBalao(); return; }
+  fecharBalao();
+  const bal = $("balao");
+  $("balao-titulo").textContent = selo.sigla + " · " + selo.nome;
+  $("balao-texto").textContent = selo.texto;
+
+  const largura = Math.min(290, window.innerWidth - 16);
+  bal.style.width = largura + "px";
+  bal.style.visibility = "hidden";
+  bal.hidden = false;
+
+  const r = btn.getBoundingClientRect();
+  const alto = bal.offsetHeight;
+  const centro = r.left + r.width/2;
+  const esq = Math.max(8, Math.min(centro - largura/2, window.innerWidth - largura - 8));
+  const cabeAbaixo = r.bottom + alto + 14 <= window.innerHeight;
+  const cabeAcima = r.top - alto - 14 >= 0;
+  const abaixo = cabeAbaixo || !cabeAcima;
+
+  bal.classList.toggle("acima", !abaixo);
+  bal.style.left = (esq + window.scrollX) + "px";
+  bal.style.top = ((abaixo ? r.bottom + 10 : r.top - alto - 10) + window.scrollY) + "px";
+  bal.style.setProperty("--seta", Math.max(16, Math.min(centro - esq, largura - 16)) + "px");
+  bal.style.visibility = "visible";
+
+  btn.setAttribute("aria-expanded", "true");
+  balaoDe = btn;
+}
+
+document.addEventListener("click", e => {
+  if(!e.target.closest(".selo") && !e.target.closest(".balao")) fecharBalao();
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape"){ fecharBalao(); fecharFoto(); } });
+let larguraAnterior = window.innerWidth;
+window.addEventListener("resize", () => {   // só fecha ao girar/redimensionar (a barra do navegador também dispara resize no celular)
+  if(window.innerWidth !== larguraAnterior){ larguraAnterior = window.innerWidth; fecharBalao(); }
+});
+
+function iniciais(nome){
+  // ignora texto entre parênteses, como "(teste)", e pega só letras
+  const p = nome.replace(/\(.*?\)/g, "").trim().split(/\s+/).filter(Boolean);
+  const letra = w => (w.match(/\p{L}/u) || [""])[0];
+  return (letra(p[0]||"") + (p.length>1 ? letra(p[p.length-1]) : "")).toUpperCase() || "?";
+}
+
+/* ---------- avatares ----------
+   Para pôr foto, coloque no contato "foto": "nome-do-arquivo.jpg" (o arquivo fica na pasta PASTA_FOTOS
+   do repositório). Sem foto, ou se o arquivo não for encontrado, aparece o círculo com as iniciais. */
+const PASTA_FOTOS = "fotos/";   // pasta das fotos no repositório, com a barra no fim
+const COR_POR_NOME = true;      // true = cada pessoa tem uma cor própria nas iniciais; false = todas laranja
+
+function matiz(nome){           // o mesmo nome sempre dá a mesma cor
+  let h = 0;
+  for(const ch of norm(nome)) h = (h*31 + ch.charCodeAt(0)) >>> 0;
+  return h % 360;
+}
+
+function urlFoto(foto){
+  if(!foto) return "";
+  foto = String(foto).trim();
+  if(!foto) return "";
+  return /^https?:\/\//i.test(foto) ? foto : PASTA_FOTOS + encodeURI(foto);
+}
+
+function criarAvatar(c){
+  const av = document.createElement("div");
+  av.className = "avatar";
+  av.setAttribute("aria-hidden", "true");   // decorativo: o nome já está ao lado
+  av.textContent = iniciais(c.nome);
+  if(COR_POR_NOME){
+    av.classList.add("colorido");
+    av.style.setProperty("--h", matiz(c.nome));
+  }
+  const src = urlFoto(c.foto);
+  if(src){
+    const img = document.createElement("img");
+    img.alt = ""; img.loading = "lazy"; img.decoding = "async";
+    img.addEventListener("load", () => { img.classList.add("ok"); tornarClicavel(av, c, src); });
+    img.addEventListener("error", () => img.remove());   // sem arquivo: ficam as iniciais
+    img.src = src;
+    av.appendChild(img);
+  }
+  return av;
+}
+
+let avatarAberto = null;   // avatar que abriu a foto (o foco volta para ele ao fechar)
+
+function abrirFoto(av, c, src){
+  fecharBalao();
+  $("foto-img").src = src;
+  $("foto-img").alt = "Foto de " + c.nome;
+  $("foto-legenda").textContent = c.nome;
+  $("foto-zoom").hidden = false;
+  document.body.style.overflow = "hidden";
+  avatarAberto = av;
+  $("foto-fechar").focus({preventScroll:true});
+}
+
+function fecharFoto(){
+  if($("foto-zoom").hidden) return;
+  $("foto-zoom").hidden = true;
+  $("foto-img").removeAttribute("src");
+  document.body.style.overflow = "";
+  if(avatarAberto){ avatarAberto.focus({preventScroll:true}); avatarAberto = null; }
+}
+
+// só o avatar que de fato carregou a foto vira clicável
+function tornarClicavel(av, c, src){
+  av.classList.add("com-foto");
+  av.removeAttribute("aria-hidden");
+  av.setAttribute("role", "button");
+  av.setAttribute("aria-label", "Ver a foto de " + c.nome);
+  av.tabIndex = 0;
+  av.addEventListener("click", () => abrirFoto(av, c, src));
+  av.addEventListener("keydown", e => {
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); abrirFoto(av, c, src); }
+  });
+}
+
+$("foto-zoom").addEventListener("click", fecharFoto);   // toque em qualquer lugar (inclusive no ✕) fecha
+
+function linkInstagram(v){
+  if(!v) return "";
+  v = v.trim();
+  if(/^https?:\/\//i.test(v)) return v;
+  return "https://www.instagram.com/" + v.replace(/^@/,"");
+}
+
+// número só com dígitos e sem o 55 do Brasil
+function nacional(num){
+  const d = String(num||"").replace(/\D/g,"");
+  return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d;
+}
+
+const BOTOES_SO_ICONE = true;   // true = Instagram, YouTube e E-mail só com o símbolo (cabem mais por linha); false = símbolo + nome
+const MENSAGEM_WHATSAPP = "Olá, te encontrei pela lista Contatos dos Músicos.";   // "" = abre a conversa sem texto
+
+function linkWhatsapp(num){
+  const d = nacional(num);
+  if(!d) return "";
+  return "https://wa.me/55" + d + (MENSAGEM_WHATSAPP ? "?text=" + encodeURIComponent(MENSAGEM_WHATSAPP) : "");
+}
+
+function linkTel(num){
+  const d = nacional(num);
+  return d ? "tel:+55" + d : "";
+}
+
+function formatarTel(num){
+  const d = nacional(num);
+  if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return d;
+}
+
+async function copiarTexto(t){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(t);
+      return true;
+    }
+  }catch(e){ /* tenta o método antigo abaixo */ }
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, t.length);
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  }catch(e){ return false; }
+}
+
+/* ---------- campos opcionais: só aparecem quando o contato tem ---------- */
+const ehCelular = n => n.length === 11 && n[2] === "9";
+
+// aceita só endereços http(s); qualquer outro tipo (javascript:, data:...) é descartado
+function urlSegura(v){
+  v = String(v||"").trim();
+  if(!v || /\s/.test(v)) return "";
+  if(/^https?:\/\//i.test(v)) return v;
+  if(/^[a-z][a-z0-9+.\-]*:/i.test(v)) return "";
+  if(!/^[^\/]+\.[^\/]+/.test(v)) return "";
+  return "https://" + v;
+}
+
+function linkYoutube(v){
+  v = String(v||"").trim();
+  if(!v || /\s/.test(v)) return "";
+  if(/^https?:\/\//i.test(v)) return v;
+  if(/^(www\.|m\.)?youtube\.com\//i.test(v) || /^youtu\.be\//i.test(v)) return "https://" + v;
+  if(/^[a-z][a-z0-9+.\-]*:/i.test(v)) return "";
+  return "https://www.youtube.com/" + (v.startsWith("@") ? v : "@" + v);
+}
+
+function linkEmail(v){
+  v = String(v||"").trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "mailto:" + v : "";
+}
+
+// "telefones": ["16999990000", {"numero": "...", "rotulo": "Recados", "whatsapp": false}]
+function listaTelefones(c){
+  return (Array.isArray(c.telefones) ? c.telefones : []).map(t => {
+    if(typeof t === "string") t = {numero: t};
+    if(!t || typeof t !== "object") return null;
+    const numero = nacional(t.numero);
+    if(!numero) return null;
+    return {
+      numero,
+      rotulo: String(t.rotulo||"").trim(),
+      wpp: typeof t.whatsapp === "boolean" ? t.whatsapp : ehCelular(numero)
+    };
+  }).filter(Boolean);
+}
+
+// "links": [{"rotulo": "Site", "url": "https://..."}]
+function listaLinks(c){
+  return (Array.isArray(c.links) ? c.links : []).map(l => {
+    if(typeof l === "string") l = {url: l};
+    if(!l || typeof l !== "object") return null;
+    const url = urlSegura(l.url);
+    if(!url) return null;
+    return {url, rotulo: String(l.rotulo||"").trim() || "Link"};
+  }).filter(Boolean);
+}
+
+function criarIcone(id){
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  const use = document.createElementNS(NS, "use");
+  use.setAttribute("href", "#" + id);
+  svg.appendChild(use);
+  return svg;
+}
+
+function botaoLink(href, rotulo, icone, soIcone){
+  const a = document.createElement("a");
+  a.className = "btn" + (soIcone ? " so-icone" : "");
+  a.href = href;
+  if(!/^mailto:/i.test(href)){ a.target = "_blank"; a.rel = "noopener"; }
+  a.appendChild(criarIcone(icone));
+  if(soIcone){
+    a.title = rotulo;
+    a.setAttribute("aria-label", rotulo);
+  }else{
+    const sp = document.createElement("span");
+    sp.textContent = rotulo;
+    a.appendChild(sp);
+  }
+  return a;
+}
+
+function linhaTelefone(c, t){
+  const tel = formatarTel(t.numero);
+  const linha = document.createElement("div");
+  linha.className = "fone";
+  if(t.rotulo){
+    const r = document.createElement("span");
+    r.className = "rotulo"; r.textContent = t.rotulo;
+    linha.appendChild(r);
+  }
+  const num = document.createElement("a");
+  num.className = "fone-num"; num.href = linkTel(t.numero);
+  num.textContent = "📞 " + tel;
+  num.setAttribute("aria-label", "Ligar para " + c.nome + (t.rotulo ? " (" + t.rotulo + ")" : "") + ": " + tel);
+  const cp = document.createElement("button");
+  cp.type = "button"; cp.className = "copiar"; cp.textContent = "Copiar";
+  cp.setAttribute("aria-label", "Copiar o número de " + c.nome + (t.rotulo ? " (" + t.rotulo + ")" : ""));
+  cp.addEventListener("click", async () => {
+    const ok = await copiarTexto(tel);
+    cp.textContent = ok ? "Copiado ✓" : "Não copiou";
+    clearTimeout(cp._t);
+    cp._t = setTimeout(() => { cp.textContent = "Copiar"; }, 1600);
+  });
+  linha.append(num, cp);
+  if(t.wpp){
+    linha.classList.add("com-wpp");
+    const w = document.createElement("a");
+    w.className = "wpp-mini"; w.href = linkWhatsapp(t.numero); w.target = "_blank"; w.rel = "noopener";
+    w.setAttribute("aria-label", "Chamar " + c.nome + " no WhatsApp: " + tel);
+    w.innerHTML = ICONE_WPP;
+    linha.appendChild(w);
+  }
+  return linha;
+}
+
+const ICONE_WPP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.5 15.07L2 22l5.07-1.5A9.93 9.93 0 1 0 12.04 2Zm5.8 14.1c-.25.7-1.45 1.33-2 1.4-.52.07-1.17.1-1.9-.12a17 17 0 0 1-1.72-.64c-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.6-.38.8-.38l.58.01c.19.01.43-.07.67.5.25.6.85 2.07.92 2.22.08.15.13.33.03.52-.1.2-.15.32-.3.5-.15.17-.32.38-.45.51-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1 2.09 1.32 2.39 1.47.3.15.47.12.65-.07.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.12.08.72-.17 1.42Z"/></svg>';
+
+/* ---------- filtro por instrumento ----------
+   Os botões saem sozinhos dos instrumentos que existem nos contatos, em ordem alfabética.
+   Tocar em um ou mais botões mostra quem toca algum desses instrumentos; "Todos" limpa o filtro. */
+const USAR_EMOJI_NOS_BOTOES = true;           // false = botões só com o nome
+const MOSTRAR_QUANTIDADE_NOS_BOTOES = true;   // false = sem o número de contatos em cada botão
+const EMOJI_PADRAO = "🎵";                    // para o instrumento que não está na lista abaixo
+// chave = nome do instrumento em minúsculas e sem acento
+const EMOJI_INSTRUMENTO = {
+  acordeon: "🪗", sanfona: "🪗", gaita: "🪗",
+  teclado: "🎹", piano: "🎹", orgao: "🎹", sintetizador: "🎹",
+  bateria: "🥁", cajon: "🥁", percussao: "🥁", pandeiro: "🥁", zabumba: "🥁",
+  violao: "🎸", guitarra: "🎸", baixo: "🎸", cavaquinho: "🎸", viola: "🎸", bandolim: "🎸",
+  vocal: "🎤", voz: "🎤", cantor: "🎤", cantora: "🎤",
+  saxofone: "🎷", sax: "🎷",
+  trompete: "🎺", trombone: "🎺",
+  violino: "🎻", violoncelo: "🎻", rabeca: "🎻",
+  flauta: "🎶", clarinete: "🎶"
+};
+// matiz (0 a 360) da cor de cada instrumento; quem não está aqui ganha uma cor calculada a partir do nome
+const MATIZ_INSTRUMENTO = {acordeon: 24, sanfona: 44, teclado: 215, violao: 108, vocal: 318, baixo: 262, bateria: 354, cajon: 175};
+
+const chaveInstr = i => norm(String(i == null ? "" : i).trim());
+const temChave = (obj, k) => Object.prototype.hasOwnProperty.call(obj, k);
+const emojiInstr = nome => { const k = chaveInstr(nome); return temChave(EMOJI_INSTRUMENTO, k) ? EMOJI_INSTRUMENTO[k] : EMOJI_PADRAO; };
+const matizInstr = nome => { const k = chaveInstr(nome); return temChave(MATIZ_INSTRUMENTO, k) ? MATIZ_INSTRUMENTO[k] : matiz(nome); };
+
+const filtroInstr = new Set();   // chaves dos instrumentos marcados (vazio = todos)
+let nomesInstr = new Map();      // chave -> nome como aparece nos botões
+const passaInstr = c => !filtroInstr.size || c.instrumentos.some(i => filtroInstr.has(chaveInstr(i)));
+
+function criarChip(rotulo, qtd, matizCor, emoji){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.setAttribute("aria-pressed", "false");
+  b.setAttribute("aria-label", rotulo + ", " + qtd + (qtd === 1 ? " contato" : " contatos"));
+  if(matizCor !== null) b.style.setProperty("--h", matizCor);
+  if(emoji){
+    const e = document.createElement("span");
+    e.className = "chip-emoji"; e.setAttribute("aria-hidden", "true"); e.textContent = emoji;
+    b.appendChild(e);
+  }
+  const t = document.createElement("span");
+  t.className = "chip-nome"; t.textContent = rotulo;
+  b.appendChild(t);
+  if(MOSTRAR_QUANTIDADE_NOS_BOTOES){
+    const q = document.createElement("span");
+    q.className = "chip-qtd"; q.setAttribute("aria-hidden", "true"); q.textContent = String(qtd);
+    b.appendChild(q);
+  }
+  return b;
+}
+
+function atualizarChips(){
+  $("filtros-rail").querySelectorAll(".chip").forEach(b => {
+    const k = b.dataset.k;
+    b.setAttribute("aria-pressed", String(k ? filtroInstr.has(k) : filtroInstr.size === 0));
+  });
+}
+
+function atualizarFades(){   // sombra nas pontas da fileira quando ela rola para o lado (celular)
+  const r = $("filtros-rail"), f = $("filtros");
+  const sobra = r.scrollWidth - r.clientWidth;
+  f.classList.toggle("mais-esq", r.scrollLeft > 4);
+  f.classList.toggle("mais-dir", sobra > 4 && r.scrollLeft < sobra - 4);
+}
+$("filtros-rail").addEventListener("scroll", atualizarFades, {passive:true});
+window.addEventListener("resize", atualizarFades);
+
+function aoMudarFiltro(){
+  atualizarChips();
+  render();
+  // se a pessoa estava lá embaixo na lista, volta para o começo do resultado (logo abaixo da barra fixa)
+  const topo = $("lista").getBoundingClientRect().top + window.scrollY - document.querySelector(".tools").offsetHeight - 8;
+  if(window.scrollY > topo) window.scrollTo({top: Math.max(0, topo)});
+}
+function alternarInstr(k){ filtroInstr.has(k) ? filtroInstr.delete(k) : filtroInstr.add(k); aoMudarFiltro(); }
+function limparInstr(){ filtroInstr.clear(); aoMudarFiltro(); }
+function limparTudo(){ $("busca").value = ""; limparInstr(); }
+
+function montarFiltros(){
+  const mapa = new Map();   // chave -> {nome, qtd}
+  CONTATOS.forEach(c => {
+    const vistos = new Set();
+    c.instrumentos.forEach(i => {
+      const nome = String(i == null ? "" : i).trim(), k = chaveInstr(nome);
+      if(!k || vistos.has(k)) return;
+      vistos.add(k);
+      const e = mapa.get(k);
+      if(e) e.qtd++; else mapa.set(k, {nome, qtd: 1});
+    });
+  });
+  nomesInstr = new Map([...mapa].map(([k, v]) => [k, v.nome]));
+  filtroInstr.clear();
+  const rail = $("filtros-rail");
+  rail.textContent = "";
+  if(mapa.size < 2){ $("filtros").hidden = true; return; }   // com um instrumento só, filtrar não ajuda
+
+  const todos = criarChip("Todos", CONTATOS.length, null, "");
+  todos.classList.add("chip-todos"); todos.dataset.k = "";
+  todos.addEventListener("click", limparInstr);
+  rail.appendChild(todos);
+  [...mapa].sort((a, b) => a[1].nome.localeCompare(b[1].nome, "pt-BR", {sensitivity: "base"})).forEach(([k, v]) => {
+    const b = criarChip(v.nome, v.qtd, matizInstr(v.nome), USAR_EMOJI_NOS_BOTOES ? emojiInstr(v.nome) : "");
+    b.dataset.k = k;
+    b.addEventListener("click", () => alternarInstr(k));
+    rail.appendChild(b);
+  });
+  $("filtros").hidden = false;
+  atualizarChips();
+  requestAnimationFrame(atualizarFades);
+}
+
+/* ---------- estado e renderização ---------- */
+let ordem = [];
+
+function render(){
+  const q = norm($("busca").value.trim());
+  const lista = $("lista");
+  fecharBalao();
+  lista.textContent = "";
+
+  const visiveis = ordem.filter(c => passaInstr(c) && (
+    !q || norm(c.nome+" "+(c.cidades||[]).join(" ")+" "+c.instrumentos.join(" ")+" "+(c.selos||[]).map(id => id+" "+(SELOS[id] ? SELOS[id].nome : "")).join(" ")).includes(q)
+  ));
+
+  visiveis.forEach(c => {
+    const li = document.createElement("li");
+    li.className = "card";
+
+    const av = criarAvatar(c);
+
+    const corpo = document.createElement("div");
+
+    const nome = document.createElement("div");
+    nome.className = "name"; nome.textContent = c.nome;
+    (c.selos||[]).forEach(id => {
+      const selo = SELOS[id];
+      if(!selo) return;
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "selo"; b.textContent = selo.sigla;
+      b.setAttribute("aria-expanded", "false");
+      b.setAttribute("aria-label", selo.sigla + ": " + selo.nome + ". Toque para saber mais.");
+      b.addEventListener("click", () => alternarBalao(b, selo));
+      nome.appendChild(b);
+    });
+
+    const local = document.createElement("div");
+    local.className = "line";
+    const d = distanciaDe(c);
+    local.textContent = "📍 " + (c.cidades||[]).join(" e ") + (isFinite(d) ? " · " + textoDist(d) : "");
+
+    const tags = document.createElement("div");
+    tags.className = "tags";
+    c.instrumentos.forEach(inst => {
+      const t = document.createElement("span");
+      t.className = "tag " + norm(inst).replace(/[^a-z]/g,"");
+      t.style.setProperty("--h", matizInstr(inst));
+      t.textContent = inst;
+      tags.appendChild(t);
+    });
+
+    const acoes = document.createElement("div");
+    acoes.className = "actions";
+
+    const w = linkWhatsapp(c.whatsapp);
+    if(w){
+      const a = document.createElement("a");
+      a.className = "btn wpp"; a.href = w; a.target = "_blank"; a.rel = "noopener";
+      a.innerHTML = ICONE_WPP + "<span></span>";
+      a.querySelector("span").textContent = "WhatsApp";
+      acoes.appendChild(a);
+    }
+    const ig = linkInstagram(c.instagram);
+    if(ig) acoes.appendChild(botaoLink(ig, "Instagram de " + c.nome, "i-ig", BOTOES_SO_ICONE));
+    const yt = linkYoutube(c.youtube);
+    if(yt) acoes.appendChild(botaoLink(yt, "YouTube de " + c.nome, "i-yt", BOTOES_SO_ICONE));
+    const em = linkEmail(c.email);
+    if(em) acoes.appendChild(botaoLink(em, "E-mail de " + c.nome, "i-mail", BOTOES_SO_ICONE));
+    listaLinks(c).forEach(l => acoes.appendChild(botaoLink(l.url, l.rotulo, "i-link")));
+
+    corpo.append(nome, local, tags);
+
+    const obs = String(c.observacoes || "").trim();
+    if(obs){
+      const o = document.createElement("div");
+      o.className = "obs"; o.textContent = obs;
+      corpo.append(o);
+    }
+
+    if(formatarTel(c.whatsapp)) corpo.append(linhaTelefone(c, {numero: nacional(c.whatsapp), rotulo: "", wpp: false}));
+    listaTelefones(c).forEach(t => corpo.append(linhaTelefone(c, t)));
+
+    if(acoes.children.length) corpo.append(acoes);
+    li.append(av, corpo);
+    lista.appendChild(li);
+  });
+
+  $("vazio").hidden = visiveis.length > 0;
+  $("limpar").hidden = !(filtroInstr.size || q);
+  const marcados = [...filtroInstr].map(k => nomesInstr.get(k) || k).sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}));
+  $("contador").textContent = visiveis.length + (visiveis.length===1 ? " contato" : " contatos") + (marcados.length ? " · " + marcados.join(", ") : "");
+}
+
+$("busca").addEventListener("input", render);
+$("limpar").addEventListener("click", limparTudo);
+$("embaralhar").addEventListener("click", () => { ordem = ordenar(); render(); });
+$("perto").addEventListener("click", () => {
+  if(pos){
+    pos = null; ordem = ordenar();
+    atualizarBotao(); render();
+    status("Ordem aleatória.");
+  }else{
+    pedirLocalizacao();
+  }
+});
+
+async function carregarJSON(arquivo){
+  const r = await fetch(arquivo, {cache:"no-store"});
+  if(!r.ok) throw new Error(arquivo + " " + r.status);
+  return r.json();
+}
+
+async function iniciar(){
+  try{
+    const [contatos, cidades] = await Promise.all([
+      carregarJSON("Lista_Contatos_Musicos_contatos.json"),
+      carregarJSON("Lista_Contatos_Musicos_cidades.json")
+    ]);
+    // nome da cidade -> [lat, lon]; ignora maiúsculas, acentos e espaços nas pontas
+    const mapa = new Map(Object.entries(cidades).map(([n, v]) => [norm(n.trim()), [v.lat, v.lon]]));
+    const chave = n => norm(String(n||"").trim());
+    CONTATOS = contatos.map(c => ({
+      ...c,
+      cidades: Array.isArray(c.cidades) ? c.cidades : [],
+      instrumentos: Array.isArray(c.instrumentos) ? c.instrumentos.map(i => String(i == null ? "" : i).trim()).filter(Boolean) : [],
+      coords: (Array.isArray(c.cidades) ? c.cidades : []).map(n => mapa.get(chave(n))).filter(Boolean)
+    }));
+    const faltam = [...new Set(contatos.flatMap(c => (c.cidades||[]).filter(n => !mapa.has(chave(n)))))];
+    if(faltam.length) console.warn("Cidades sem coordenadas em Lista_Contatos_Musicos_cidades.json:", faltam);
+    montarFiltros();     // botões de instrumento, em ordem alfabética
+    ordem = ordenar();   // sorteio a cada abertura da página
+    render();
+    pedirLocalizacao();  // se liberada, reordena por proximidade
+  }catch(e){
+    $("contador").textContent = "";
+    $("filtros").hidden = true;
+    $("limpar").hidden = true;
+    $("vazio-texto").textContent = "Não consegui carregar a lista. Abra pelo link do site (não pelo arquivo direto).";
+    $("vazio").hidden = false;
+  }
+}
+iniciar();
+</script>
+</body>
+</html>
+
+<!--
+================================================================
+ LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
+ Arquivo: Lista_Contatos_Musicos_v11.html
+ Dados:   sem mudança: o HTML lê os mesmos arquivos do GitHub,
+          Lista_Contatos_Musicos_contatos.json e Lista_Contatos_Musicos_cidades.json
+          (no GitHub, o conteúdo do HTML vai para o index.html)
+================================================================
+
+v1 — 2026-10-06
+  - Primeira versão: página única com busca por nome, cidade ou
+    instrumento e botões de WhatsApp (wa.me) e Instagram.
+  - Ordem aleatória a cada abertura (Fisher-Yates com
+    crypto.getRandomValues) e botão "Embaralhar".
+  - 13 contatos importados de Contato_Acordeonistas.xlsx
+    (linhas vazias e "Teste" descartadas).
+  - Dados dentro do HTML, no bloco CONTATOS.
+  - Cidades padronizadas (ex.: "Alpinópolis mg" -> "Alpinópolis/MG").
+  - Página com noindex.
+----------------------------------------------------------------
+v2 — 2026-10-06
+  - Cada instrumento passou a ter seu próprio balão (acordeon e
+    teclado são instrumentos diferentes).
+  - Campo "instrumento" (texto) virou "instrumentos" (lista).
+  - Cor por instrumento: acordeon laranja, teclado azul,
+    violão verde, vocal rosa (com versão para tema escuro).
+  - A busca passou a considerar todos os instrumentos.
+----------------------------------------------------------------
+v3 — 2026-10-06
+  - Dados separados em Lista_Contatos_Musicos_v3.json (o "banco de dados"); o HTML
+    carrega o JSON com fetch (cache: no-store).
+  - Aviso na tela se o JSON não carregar (ex.: arquivo aberto
+    direto, fora do GitHub Pages).
+  - Funciona só pelo link do site; o arquivo local não lê o JSON.
+----------------------------------------------------------------
+v4 — 2026-10-06
+  - Nomes de arquivo passam a usar o nome do projeto + versão
+    (sem "index"): Lista_Contatos_Musicos_v4.html e Lista_Contatos_Musicos_v4.json.
+  - Versão visível no rodapé da página.
+  - Changelog incluído no arquivo (este bloco, após </html>).
+  - Dados e comportamento iguais aos da v3.
+  - Pendências: número do Eduardo Gregorio com 10 dígitos
+    (confirmar) e Instagram do Tin Fernandes (não informado).
+----------------------------------------------------------------
+v5 — 2026-10-06
+  - Ordenação por localização: ao abrir, a página pede a localização
+    do aparelho (navigator.geolocation) e ordena do contato mais
+    perto para o mais longe; quem está na mesma cidade fica em ordem
+    aleatória entre si (sorteio primeiro, ordenação estável depois).
+  - Se a pessoa negar, ou o aparelho não tiver localização: ordem
+    totalmente aleatória, como na v4.
+  - Novo botão "Perto de mim" / "Só aleatório" (liga e desliga);
+    "Embaralhar" sorteia de novo os empates.
+  - Cada card mostra a distância em linha reta (ex.: "≈ 42 km").
+  - JSON: novo campo coords, lista de [lat, lon] por contato (mais de
+    um par quando atende em mais de uma cidade, ex.: Rafael — vale a
+    menor distância).
+  - FAIXA_KM no script: 0 = empate só na mesma cidade; ex. 25 = quem
+    difere menos de 25 km fica embaralhado junto.
+  - A localização fica só na memória do aparelho: não é enviada nem
+    salva.
+  - Pendências: coordenadas aproximadas (centro de cada cidade);
+    número do Eduardo Gregorio com 10 dígitos (confirmar); Instagram
+    do Tin Fernandes (não informado).
+----------------------------------------------------------------
+v6 — 2026-10-06
+  - Banco de cidades separado dos contatos: novo arquivo
+    Lista_Contatos_Musicos_v6_cidades.json, com o nome de cada cidade
+    e suas coordenadas (lat, lon), escritas uma única vez.
+  - Contatos (Lista_Contatos_Musicos_v6_contatos.json): o campo cidade
+    (texto) e o campo coords saíram; entrou "cidades", uma lista só
+    com os nomes (ex.: ["Franca/SP", "Araxá/MG"]).
+  - O HTML carrega os dois arquivos e liga cada contato às
+    coordenadas pelo nome da cidade (ignora maiúsculas, acentos e
+    espaços nas pontas). Cidade que não estiver no arquivo de cidades
+    fica sem distância e vai para o fim da ordenação; o nome aparece no
+    console do navegador (aviso "Cidades sem coordenadas").
+  - Ordenação, distâncias e botões iguais aos da v5.
+  - 10 cidades cadastradas (as mesmas da v5).
+  - Pendências: coordenadas aproximadas (centro de cada cidade);
+    número do Eduardo Gregorio com 10 dígitos (confirmar); Instagram
+    do Tin Fernandes (não informado).
+----------------------------------------------------------------
+v7 — 2026-10-06
+  - Selo IFC (Integrante Fixo de Conjunto): novo campo "selos" nos
+    contatos (ex.: "selos": ["IFC"]). O selo aparece ao lado do nome
+    e, ao tocar, abre um balão explicando o significado: integrante
+    fixo de um conjunto (banda, grupo ou dupla), agenda do conjunto,
+    dificilmente aceita free-lances. O balão fecha tocando de novo no
+    selo, tocando fora ou com Esc. O texto fica no bloco SELOS do
+    script (um lugar só; aceita selos novos no futuro).
+  - A busca também encontra por selo (ex.: "IFC").
+  - Créditos no rodapé (Criado por Saulo Henrique Fernandes).
+  - Arquivos de dados sem versão no nome, para só copiar e colar:
+    Lista_Contatos_Musicos_contatos.json e Lista_Contatos_Musicos_cidades.json.
+    O HTML continua com a versão no nome; no GitHub o conteúdo dele
+    vai para o index.html.
+  - Contato de teste "Fulano (teste)": selo IFC, Ribeirão Preto/SP,
+    instrumento Sanfona, sem WhatsApp e sem Instagram de propósito.
+    Remover antes de divulgar a lista.
+  - Cidade nova no banco de cidades: Ribeirão Preto/SP.
+  - Correção: card sem botões (WhatsApp/Instagram) não deixa mais
+    um espaço vazio embaixo.
+  - Correção: as iniciais do avatar ignoram texto entre parênteses
+    (antes "Fulano (teste)" virava "F(").
+  - Pendências: coordenadas aproximadas (centro de cada cidade);
+    número do Eduardo Gregorio com 10 dígitos (confirmar); Instagram
+    do Tin Fernandes (não informado); confirmar o nome nos créditos.
+----------------------------------------------------------------
+v8 — 2026-10-06
+  - Avatares: se o contato tiver "foto" (ex.: "foto": "fulano.jpg"),
+    a foto aparece no círculo; o arquivo fica na pasta fotos/ do
+    repositório (constante PASTA_FOTOS no script). Sem foto, ou com
+    arquivo não encontrado, aparecem as iniciais (reserva automática).
+  - O círculo de iniciais ganhou cor própria por pessoa, calculada a
+    partir do nome (COR_POR_NOME = false volta ao laranja único).
+  - Ferramenta separada para preparar as fotos: Preparador_Fotos_
+    Contatos_v1.html (enquadra em círculo, gera JPEG 256x256 leve e já
+    sugere o nome do arquivo e a linha "foto" para o JSON).
+  - Telefone visível no card: número formatado (toque para ligar) e
+    botão "Copiar". Usa o mesmo campo "whatsapp" do contato; o botão
+    de WhatsApp continua igual.
+  - Número do Eduardo Gregorio corrigido (faltava o último dígito):
+    16994250769.
+  - Bancos de dados com a versão só no nome do arquivo (Lista_Contatos_Musicos_v8_
+    contatos.json e Lista_Contatos_Musicos_v8_cidades.json). As cidades não mudaram
+    desde a v7.
+  - Fulano (teste) ganhou foto de exemplo (fotos/fulano.jpg);
+    remover junto com o contato.
+  - Texto abaixo do título atualizado.
+  - Pendências: coordenadas aproximadas (centro de cada cidade);
+    Instagram do Tin Fernandes (não informado); confirmar o nome nos
+    créditos.
+----------------------------------------------------------------
+v9 — 2026-10-07
+  - Ao tocar no avatar de quem tem foto, a foto abre ampliada numa
+    janela sobre a lista, com o nome embaixo. Fecha tocando em
+    qualquer lugar, no ✕ ou com Esc; o rolar da página fica travado
+    enquanto está aberta e o foco volta para o avatar.
+  - Só fica clicável o avatar cuja foto carregou de verdade (quem
+    está só com as iniciais continua como antes). Acessível pelo
+    teclado (Tab, Enter ou espaço) e anunciado como botão.
+  - A foto é exibida em até 380 px. As fotos do painel têm 256 px, então
+    ficam levemente ampliadas; uma saída maior no painel deixa nítida.
+  - Dados e comportamento do resto iguais aos da v8.
+  - Pendências: coordenadas aproximadas (centro de cada cidade);
+    Instagram do Tin Fernandes (não informado); confirmar o nome nos
+    créditos; contato sem cidade mostra um pino vazio; contato sem o
+    campo "instrumentos" derruba a lista (o painel sempre preenche).
+----------------------------------------------------------------
+v10 — 2026-10-07
+  - Botão do Instagram com o símbolo do Instagram; novo botão do
+    YouTube ("youtube": "@canal" ou link do canal) com o símbolo do
+    YouTube.
+  - Novos campos opcionais, que só aparecem no cartão de quem os tem
+    (os demais cartões ficam exatamente como estavam):
+      "observacoes": texto livre, mostrado em um recado abaixo dos
+        instrumentos (respeita quebras de linha);
+      "email": botão "E-mail" (abre o aplicativo de e-mail);
+      "telefones": outros números (texto, ou objeto com "rotulo" e,
+        se quiser, "whatsapp": false); cada um aparece com número
+        para ligar e botão Copiar, e os celulares ganham um botão
+        verde do WhatsApp;
+      "links": outros links, cada um com "rotulo" e "url", como
+        botão com ícone de link.
+  - WhatsApp abre a conversa já com a mensagem "Olá, te encontrei
+    pela lista Contato de Acordeonistas." (constante
+    MENSAGEM_WHATSAPP no script; vazia = sem texto). A pessoa ainda
+    precisa tocar em enviar.
+  - Segurança: links e YouTube só aceitam http(s); outros tipos
+    (javascript:, data:...) são ignorados; e-mail inválido é
+    ignorado; todo texto é exibido como texto, nunca como HTML.
+  - Instagram, YouTube e E-mail aparecem só com o símbolo (botão
+    quadrado, com nome acessível e dica ao passar o mouse), para
+    caber mais botões por linha no celular; BOTOES_SO_ICONE = false
+    mostra símbolo + nome. Links livres sempre mostram o rótulo.
+  - Botões com texto longo são cortados com reticências.
+  - Rótulo do telefone (ex.: Recados) fica numa linha acima do número.
+  - Dados: o Fulano (teste) ganhou valores de exemplo em todos os
+    campos novos (telefones fictícios 11 90000-000x, e-mail
+    exemplo.com) para mostrar o resultado; remover junto com o
+    contato.
+  - Pendências: coordenadas aproximadas (centro de cada cidade);
+    Instagram do Tin Fernandes (não informado); confirmar o nome nos
+    créditos; contato sem cidade mostra um pino vazio; contato sem o
+    campo "instrumentos" derruba a lista (o painel sempre preenche).
+----------------------------------------------------------------
+v11 — 2026-11-05
+  - A página deixou de ser só de acordeonistas: título "Contatos dos
+    Músicos" (o mesmo que você já tinha posto no GitHub) e mensagem do
+    WhatsApp "Olá, te encontrei pela lista Contatos dos Músicos."
+    (constante MENSAGEM_WHATSAPP). O 🪗 do título ficou como estava.
+  - Botões de instrumento logo abaixo da busca: um para cada
+    instrumento que existe nos contatos, em ordem alfabética (Acordeon,
+    Baixo, Bateria...), mais o botão "Todos". Eles saem sozinhos dos
+    dados: instrumento novo no contatos.json ganha botão, e o botão
+    some quando ninguém mais toca aquele instrumento. Com um
+    instrumento só na lista, os botões não aparecem.
+  - Cada botão mostra o emoji do instrumento, o nome e quantos
+    contatos tocam. Tocar em um ou mais botões mostra quem toca algum
+    deles (ex.: Baixo + Bateria); tocar de novo desmarca; "Todos"
+    limpa o filtro. Funciona junto com a busca por texto, e
+    "Embaralhar" e "Perto de mim" continuam valendo dentro do
+    filtro. O contador mostra o filtro (ex.: "3 contatos · Baixo,
+    Bateria"), em até 2 linhas; "Perto de mim" e "Embaralhar" não
+    quebram mais de linha por causa disso. Sem resultado, aparece o
+    botão "Limpar filtros". Se a pessoa estava lá embaixo na lista, a
+    página volta para o começo do resultado.
+  - No celular os botões ficam numa fileira que rola para o lado, com
+    sombra nas pontas avisando que tem mais; no computador quebram em
+    linhas. Marcado = fundo e borda na cor do instrumento, negrito e
+    contador cheio (não depende só da cor). Funciona pelo teclado
+    (Tab, Enter ou espaço) e o leitor de tela anuncia, por exemplo,
+    "Bateria, 2 contatos, botão ativado" e, depois de filtrar, o novo
+    total de contatos. O realce ao passar o mouse só existe em
+    aparelhos com mouse (no celular não fica "grudado").
+  - Cada instrumento tem a sua cor, igual nos botões e nas etiquetas
+    dos cartões (antes só acordeon, teclado, violão e vocal tinham;
+    os outros ficavam laranja). As cores dos quatro antigos mudaram
+    um pouco, pois agora vêm de uma regra só. Instrumento que não
+    está nas listas do script ganha uma cor calculada do nome e o
+    emoji 🎵. O contraste do texto das etiquetas e dos botões foi
+    conferido (mínimo 4,5:1, padrão WCAG AA) nos 360 tons possíveis,
+    nos temas claro e escuro.
+  - Ajustes no bloco "filtro por instrumento" do script:
+    USAR_EMOJI_NOS_BOTOES, MOSTRAR_QUANTIDADE_NOS_BOTOES,
+    EMOJI_INSTRUMENTO e MATIZ_INSTRUMENTO.
+  - Correção: contato sem o campo "instrumentos" não derruba mais a
+    lista (aparece sem etiquetas).
+  - Dados: sem mudança. A v11 lê os mesmos arquivos do GitHub
+    (Lista_Contatos_Musicos_contatos.json e
+    Lista_Contatos_Musicos_cidades.json), sem campo novo.
+  - Pendências: o botão "Sanfona" só existe por causa do contato de
+    teste Fulano (teste) e some junto com ele; coordenadas
+    aproximadas (centro de cada cidade); contato sem cidade mostra um
+    pino vazio.
+================================================================
+-->

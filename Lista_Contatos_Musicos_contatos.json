@@ -1,0 +1,156 @@
+[
+  {
+    "nome": "Saulo Henrique Fernandes",
+    "foto": "saulo-henrique-fernandes.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Acordeon", "Teclado"],
+    "instagram": "saulohenriquef",
+    "whatsapp": "35988089192"
+  },
+  {
+    "nome": "Zezé",
+    "foto": "zeze.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "Zezesantosoficial",
+    "whatsapp": "35992015091"
+  },
+  {
+    "nome": "Guilherme Henrique Soares",
+    "foto": "guilherme-henrique-soares.jpg",
+    "cidades": ["Franca/SP"],
+    "instrumentos": ["Acordeon", "Teclado"],
+    "instagram": "guisoareson",
+    "whatsapp": "16988241722"
+  },
+  {
+    "nome": "Eduardo Gregorio",
+    "foto": "eduardo-gregorio.jpg",
+    "cidades": ["Franca/SP"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "gregorio.eduu",
+    "whatsapp": "16994250768"
+  },
+  {
+    "nome": "Willer",
+    "cidades": ["Rifaina/SP"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "will_sanfoneiro",
+    "whatsapp": "16994486573"
+  },
+  {
+    "nome": "Guilherme Henrique Teixeira Pires",
+    "cidades": ["Formiga/MG"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "Guilhermesanfoneiroo",
+    "whatsapp": "37999577472"
+  },
+  {
+    "nome": "Bruno Oliveira",
+    "cidades": ["Franca/SP"],
+    "instrumentos": ["Acordeon", "Teclado"],
+    "instagram": "brunogoliveiira",
+    "whatsapp": "16991952543"
+  },
+  {
+    "nome": "Rafael Filipe Vaz",
+    "cidades": ["Franca/SP", "Araxá/MG"],
+    "instrumentos": ["Acordeon", "Violão", "Vocal"],
+    "instagram": "Rafaelvaz_acordeon",
+    "whatsapp": "34988590641"
+  },
+  {
+    "nome": "Heitor Preda",
+    "cidades": ["Pedregulho/SP"],
+    "instrumentos": ["Acordeon", "Teclado"],
+    "instagram": "heitor_preda",
+    "whatsapp": "16992221623"
+  },
+  {
+    "nome": "Tin Fernandes",
+    "foto": "tin-fernandes.jpg",
+    "cidades": ["Pratápolis/MG"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "",
+    "whatsapp": "35999797216"
+  },
+  {
+    "nome": "Marcelinho Sanfoneiro",
+    "cidades": ["Guará/SP"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "Marcelinho__Sanfoneiro",
+    "whatsapp": "16991875115"
+  },
+  {
+    "nome": "Brígido Martins",
+    "cidades": ["Brodowski/SP"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "brigidomg",
+    "whatsapp": "16992346414"
+  },
+  {
+    "nome": "Matheus Faria Gaiteiro",
+    "foto": "matheus-faria-gaiteiro.jpg",
+    "cidades": ["Alpinópolis/MG"],
+    "instrumentos": ["Acordeon"],
+    "instagram": "matheus.gaiteiro",
+    "whatsapp": "35998446436"
+  },
+  {
+    "nome": "Fulano (teste)",
+    "foto": "fulano.jpg",
+    "cidades": ["Ribeirão Preto/SP"],
+    "instrumentos": ["Sanfona"],
+    "selos": ["IFC"],
+    "instagram": "",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Moacir Tarabay (China)",
+    "foto": "moacir-tarabay-china.jpg",
+    "cidades": ["Conceição da Aparecida/MG"],
+    "instrumentos": ["Teclado"],
+    "instagram": "chinadipi",
+    "whatsapp": "35997345959"
+  },
+  {
+    "nome": "Paulo Neri",
+    "foto": "paulo-neri.jpg",
+    "cidades": ["Passos/MG", "São Paulo/SP"],
+    "instrumentos": ["Bateria", "Cajon"],
+    "instagram": "pauloneri_ph",
+    "whatsapp": "35992439930"
+  },
+  {
+    "nome": "Wesley So",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Cajon"],
+    "instagram": "wesleyferreira14_",
+    "whatsapp": "35999763939"
+  },
+  {
+    "nome": "Juninho Atiles",
+    "foto": "juninho-atiles.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Baixo", "Violão"],
+    "instagram": "juninhoatilesbass",
+    "whatsapp": "35991276373"
+  },
+  {
+    "nome": "Edson Fellype",
+    "foto": "edson-fellype.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Cajon", "Vocal"],
+    "instagram": "edsonfellype.cajon",
+    "whatsapp": "37998605073"
+  },
+  {
+    "nome": "Luiza",
+    "foto": "luiza.jpg",
+    "cidades": ["Itaú de Minas/MG"],
+    "instrumentos": ["Bateria"],
+    "instagram": "Luiza_batera",
+    "whatsapp": "35920008809",
+    "observacoes": "Pego freelance em toda região : precisar e só chamar 🥁🙏🏻"
+  }
+]
