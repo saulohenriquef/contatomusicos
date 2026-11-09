@@ -133,6 +133,37 @@
   }
   @media (prefers-reduced-motion: reduce){ .chip{transition:none} .chip:active{transform:none} }
 
+  /* instrumentos: títulos dos grupos, número da ordem no balão e a lista "Sua ordem" */
+  #chipsInstr{row-gap:12px}
+  .grupo-titulo{flex:0 0 100%; margin:8px 0 -4px; color:var(--muted); font-size:.76rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+  .grupo-titulo:first-child{margin-top:0}
+  #chipsInstr .chip{position:relative}
+  #chipsInstr .chip[data-ordem]::after{
+    content:attr(data-ordem); position:absolute; top:-9px; right:-6px; min-width:22px; height:22px; padding:0 6px;
+    display:grid; place-items:center; border-radius:11px; box-shadow:0 0 0 2px var(--card);
+    background:hsl(var(--h) 66% 26%); color:#fff; font-size:.78rem; font-weight:800; line-height:1;
+  }
+  .ordem{margin-top:14px; padding:10px 12px 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg)}
+  .ordem-titulo{margin:0; font-size:.92rem; font-weight:700}
+  .ordem-titulo small{display:block; margin-top:2px; color:var(--muted); font-size:.8rem; font-weight:400; line-height:1.4}
+  .ordem-lista{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:6px}
+  .ordem-item{display:flex; align-items:center; gap:10px; min-height:52px; padding:4px 6px 4px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card)}
+  .ordem-n{flex:0 0 auto; width:24px; height:24px; display:grid; place-items:center; border-radius:12px; background:hsl(var(--h) 66% 26%); color:#fff; font-size:.8rem; font-weight:800; line-height:1}
+  .ordem-nome{flex:1 1 auto; min-width:0; font-size:.92rem; font-weight:600; line-height:1.25; overflow-wrap:anywhere}
+  .seta{
+    flex:0 0 auto; width:44px; height:44px; display:inline-grid; place-items:center; border:1px solid var(--line); border-radius:10px;
+    background:var(--bg); color:var(--text); font:inherit; font-size:1.2rem; line-height:1; cursor:pointer; touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .seta:active:not(:disabled){transform:scale(.94)}
+  .seta:disabled{opacity:.3; cursor:default}
+  .seta:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  @media (hover:hover){ .seta:hover:not(:disabled){border-color:var(--accent)} }
+  @media (prefers-color-scheme: dark){
+    #chipsInstr .chip[data-ordem]::after, .ordem-n{background:hsl(var(--h) 72% 72%); color:hsl(var(--h) 50% 10%)}
+  }
+  @media (prefers-reduced-motion: reduce){ .seta:active:not(:disabled){transform:none} }
+
   /* linhas de outros telefones e links */
   .itens{display:grid; gap:10px; margin-top:8px}
   .item{display:grid; grid-template-columns:1fr auto; gap:8px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--bg)}
@@ -307,15 +338,23 @@
       <label class="campo" for="fNome">Seu nome (ou nome artístico) <b aria-hidden="true">*</b></label>
       <input id="fNome" class="entrada" type="text" maxlength="80" autocomplete="name" placeholder="Ex.: Fulano de Tal">
 
-      <div class="campo" id="rotInstr">Instrumentos que você toca <b aria-hidden="true">*</b></div>
-      <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr"></div>
+      <div class="campo" id="rotInstr">Instrumentos e funções <b aria-hidden="true">*</b></div>
+      <p id="dicaInstr" class="dica">Toque nos instrumentos na ordem em que quer que apareçam. O número no balão mostra a posição.</p>
+      <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr" aria-describedby="dicaInstr"></div>
 
       <label class="campo" for="fOutroInstr">Não achou o seu? Escreva aqui</label>
       <div class="linha">
-        <input id="fOutroInstr" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Saxofone" aria-describedby="msgInstr">
+        <input id="fOutroInstr" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Berimbau" aria-describedby="msgInstr">
         <button id="addInstr" class="btn" type="button">Adicionar</button>
       </div>
       <p id="msgInstr" class="dica" aria-live="polite"></p>
+
+      <div id="ordemInstr" class="ordem" hidden>
+        <p id="ordemTit" class="ordem-titulo">Sua ordem
+          <small>Use as setas para mudar a ordem.</small>
+        </p>
+        <ol id="listaOrdem" class="ordem-lista" aria-labelledby="ordemTit"></ol>
+      </div>
 
       <label class="marcar" for="fIfc">
         <input id="fIfc" type="checkbox">
@@ -451,7 +490,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v2
+    Cadastro de Músicos · Lista de Contatos de Músicos · v3.1
   </footer>
 </div>
 
@@ -466,7 +505,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v2";
+const VERSAO = "v3.1";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v1.rules).
@@ -495,13 +534,26 @@ const MAX_TELEFONES = 3, MAX_LINKS = 3, MAX_ROTULO = 30, MAX_URL = 200, MAX_EMAI
 const RASCUNHO_DIAS = 3;                 // o que foi preenchido e não enviado fica guardado neste aparelho por até esse tempo
 const CHAVE_RASCUNHO = "cadastroMusicos.rascunho";
 const ARQ_CIDADES = "Lista_Contatos_Musicos_cidades.json";   // se a página estiver no mesmo site da lista, as cidades dela viram sugestões
-const INSTRUMENTOS = ["Acordeon", "Teclado", "Violão", "Guitarra", "Baixo", "Bateria", "Cajon", "Vocal"];
+// o que já vem escrito para escolher, em grupos (o nome é o que vai para a lista). Quem não achar o seu escreve em "Não achou o seu?".
+// Os 8 de antes ficam no começo, na mesma ordem. Para acrescentar um, é só colocar o nome no grupo certo (a ordem aqui é a ordem na tela).
+// os balões que já vêm escritos, em ordem alfabética (o nome é o que vai para a lista). Quem não achar o seu escreve em "Não achou o seu?".
+// Para acrescentar um, é só colocar o nome aqui: a página põe tudo em ordem alfabética.
+const COLACAO = (a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"});
+const INSTRUMENTOS = ["Acordeon", "Teclado", "Violão", "Guitarra", "Baixo", "Bateria", "Cajon", "Vocal", "Cavaquinho", "Viola caipira", "Bandolim", "Banjo", "Ukulele", "Violino", "Violoncelo", "Contrabaixo acústico", "Harpa", "Piano", "Órgão", "Saxofone", "Trompete", "Trombone", "Clarinete", "Flauta", "Gaita de boca", "Tuba", "Trompa", "Percussão", "Pandeiro", "Zabumba", "Triângulo", "Surdo", "Tantã", "Repique", "Congas", "Backing vocal", "DJ", "T. Som", "T. Luz", "Roadie"].sort(COLACAO);
 const CIDADES_SUGERIDAS = ["Alpinópolis/MG", "Araxá/MG", "Brodowski/SP", "Conceição da Aparecida/MG", "Formiga/MG", "Franca/SP", "Guará/SP", "Itaú de Minas/MG", "Passos/MG", "Pedregulho/SP", "Pratápolis/MG", "Ribeirão Preto/SP", "Rifaina/SP", "São Paulo/SP"];
 const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
 // nomes que as pessoas escrevem e o instrumento que eles viram na lista (chave em minúsculas e sem acento)
-const SINONIMOS_INSTRUMENTO = {acordeonista: "Acordeon", acordeom: "Acordeon", baterista: "Bateria", batera: "Bateria", tecladista: "Teclado", baixista: "Baixo", violonista: "Violão", guitarrista: "Guitarra", cajonista: "Cajon", cantor: "Vocal", cantora: "Vocal", voz: "Vocal", canto: "Vocal"};
+const SINONIMOS_INSTRUMENTO = {acordeonista: "Acordeon", acordeom: "Acordeon", baterista: "Bateria", batera: "Bateria", tecladista: "Teclado", baixista: "Baixo", violonista: "Violão", guitarrista: "Guitarra", cajonista: "Cajon", cantor: "Vocal", cantora: "Vocal", voz: "Vocal", canto: "Vocal",
+  pianista: "Piano", saxofonista: "Saxofone", sax: "Saxofone", trompetista: "Trompete", trombonista: "Trombone", clarinetista: "Clarinete", flautista: "Flauta", violinista: "Violino", violoncelista: "Violoncelo", cello: "Violoncelo",
+  cavaquinista: "Cavaquinho", bandolinista: "Bandolim", harpista: "Harpa", percussionista: "Percussão", pandeirista: "Pandeiro", zabumbeiro: "Zabumba",
+  backing: "Backing vocal", "back vocal": "Backing vocal", "backing vocals": "Backing vocal",
+  "tecnico de som": "T. Som", "tecnico de audio": "T. Som", "tecnico de luz": "T. Luz", "tecnico de iluminacao": "T. Luz", iluminador: "T. Luz", roadies: "Roadie"};
 // emoji e cor (matiz de 0 a 360) de cada instrumento: os mesmos da lista
-const EMOJI_INSTRUMENTO = {acordeon: "🪗", sanfona: "🪗", gaita: "🪗", teclado: "🎹", piano: "🎹", orgao: "🎹", sintetizador: "🎹", bateria: "🥁", cajon: "🥁", percussao: "🥁", pandeiro: "🥁", zabumba: "🥁", violao: "🎸", guitarra: "🎸", baixo: "🎸", cavaquinho: "🎸", viola: "🎸", bandolim: "🎸", vocal: "🎤", voz: "🎤", cantor: "🎤", cantora: "🎤", saxofone: "🎷", sax: "🎷", trompete: "🎺", trombone: "🎺", violino: "🎻", violoncelo: "🎻", rabeca: "🎻", flauta: "🎶", clarinete: "🎶"};
+const EMOJI_INSTRUMENTO = {acordeon: "🪗", sanfona: "🪗", gaita: "🪗", teclado: "🎹", piano: "🎹", orgao: "🎹", sintetizador: "🎹", bateria: "🥁", cajon: "🥁", percussao: "🥁", pandeiro: "🥁", zabumba: "🥁", violao: "🎸", guitarra: "🎸", baixo: "🎸", cavaquinho: "🎸", viola: "🎸", bandolim: "🎸", vocal: "🎤", voz: "🎤", cantor: "🎤", cantora: "🎤", saxofone: "🎷", sax: "🎷", trompete: "🎺", trombone: "🎺", violino: "🎻", violoncelo: "🎻", rabeca: "🎻", flauta: "🎶", clarinete: "🎶",
+  // v3: os instrumentos novos (a lista pública ainda mostra 🎵 para os que não conhece)
+  "viola caipira": "🎸", ukulele: "🎸", banjo: "🪕", "contrabaixo acustico": "🎻", harpa: "🎼", "gaita de boca": "🎶", tuba: "🎺", trompa: "🎺",
+  triangulo: "🥁", surdo: "🥁", tanta: "🥁", repique: "🥁", congas: "🥁", "backing vocal": "🎤", dj: "🎧",
+  "t. som": "🎚️", "t. audio": "🎛️", "t. luz": "💡", roadie: "🧰"};
 const MATIZ_INSTRUMENTO = {acordeon: 24, sanfona: 44, teclado: 215, violao: 108, vocal: 318, baixo: 262, bateria: 354, cajon: 175};
 const TEXTO_AUTORIZACAO = "Autorizo que meu nome, minha foto, minhas cidades, meus instrumentos e meus contatos (como WhatsApp e Instagram) apareçam na lista pública de músicos, que qualquer pessoa pode abrir. Sei que posso pedir para corrigir ou tirar meu cadastro da lista quando quiser.";
 const ICONE_WPP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.5 15.07L2 22l5.07-1.5A9.93 9.93 0 1 0 12.04 2Zm5.8 14.1c-.25.7-1.45 1.33-2 1.4-.52.07-1.17.1-1.9-.12a17 17 0 0 1-1.72-.64c-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.6-.38.8-.38l.58.01c.19.01.43-.07.67.5.25.6.85 2.07.92 2.22.08.15.13.33.03.52-.1.2-.15.32-.3.5-.15.17-.32.38-.45.51-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1 2.09 1.32 2.39 1.47.3.15.47.12.65-.07.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.12.08.72-.17 1.42Z"/></svg>';
@@ -701,27 +753,80 @@ function instrumentoCanonico(txt){
   return {nome: t.charAt(0).toUpperCase() + (tudoIgual ? t.slice(1).toLowerCase() : t.slice(1))};
 }
 
+function chipInstrumento(nome){
+  const pos = instr.findIndex(i => norm(i) === norm(nome));      // -1 = não marcado
+  const b = criar("button", "chip");
+  b.type = "button";
+  b.dataset.k = nome;
+  b.setAttribute("aria-pressed", String(pos >= 0));
+  if(pos >= 0){
+    b.dataset.ordem = String(pos + 1);                            // o número aparece no canto do balão (veja o CSS)
+    b.setAttribute("aria-label", nome + ", posição " + (pos + 1));
+  }
+  b.style.setProperty("--h", matizInstr(nome));
+  const em = criar("span", "chip-emoji", emojiInstr(nome));
+  em.setAttribute("aria-hidden", "true");
+  b.append(em, criar("span", "", nome));
+  b.addEventListener("click", () => alternarInstrumento(nome));
+  return b;
+}
+
 function desenharInstrumentos(foco){
   const box = $("chipsInstr");
   box.textContent = "";
   const base = new Set(INSTRUMENTOS.map(norm));
-  [...INSTRUMENTOS, ...instr.filter(i => !base.has(norm(i)))].forEach(nome => {
-    const marcado = instr.some(i => norm(i) === norm(nome));
-    const b = criar("button", "chip");
-    b.type = "button";
-    b.dataset.k = nome;
-    b.setAttribute("aria-pressed", String(marcado));
-    b.style.setProperty("--h", matizInstr(nome));
-    const em = criar("span", "chip-emoji", emojiInstr(nome));
-    em.setAttribute("aria-hidden", "true");
-    b.append(em, criar("span", "", nome));
-    b.addEventListener("click", () => alternarInstrumento(nome));
-    box.appendChild(b);
-  });
+  const extras = instr.filter(i => !base.has(norm(i)));         // os que a pessoa escreveu
+  [...INSTRUMENTOS, ...extras].sort(COLACAO).forEach(nome => box.appendChild(chipInstrumento(nome)));      // tudo junto, em ordem alfabética
+  desenharOrdem();
   if(foco){
-    const alvo = [...box.children].find(x => x.dataset.k === foco);
+    const alvo = [...box.querySelectorAll("button")].find(x => x.dataset.k === foco);
     if(alvo) alvo.focus({preventScroll: true});
   }
+}
+
+// "Sua ordem": a lista dos marcados, com setas para subir e descer (só aparece com 2 ou mais)
+function desenharOrdem(){
+  const caixa = $("ordemInstr"), lista = $("listaOrdem");
+  lista.textContent = "";
+  caixa.hidden = instr.length < 2;
+  if(instr.length < 2) return;
+  instr.forEach((nome, i) => {
+    const li = criar("li", "ordem-item");
+    li.dataset.k = nome;
+    li.style.setProperty("--h", matizInstr(nome));
+    const n = criar("span", "ordem-n", String(i + 1));
+    n.setAttribute("aria-hidden", "true");
+    const em = criar("span", "", emojiInstr(nome));
+    em.setAttribute("aria-hidden", "true");
+    const nm = criar("span", "ordem-nome");
+    nm.append(em, document.createTextNode(" " + nome));
+    li.append(n, nm, botaoSeta(nome, i, -1), botaoSeta(nome, i, 1));
+    lista.appendChild(li);
+  });
+}
+function botaoSeta(nome, i, sentido){
+  const b = criar("button", "seta", sentido < 0 ? "↑" : "↓");
+  b.type = "button";
+  b.dataset.sentido = sentido < 0 ? "sobe" : "desce";
+  b.setAttribute("aria-label", (sentido < 0 ? "Subir " : "Descer ") + nome + " (é o " + (i + 1) + "º)");
+  b.disabled = sentido < 0 ? i === 0 : i === instr.length - 1;
+  b.addEventListener("click", () => moverInstrumento(nome, sentido));
+  return b;
+}
+function moverInstrumento(nome, sentido){
+  const i = instr.findIndex(x => norm(x) === norm(nome)), j = i + sentido;
+  if(i < 0 || j < 0 || j >= instr.length) return;
+  [instr[i], instr[j]] = [instr[j], instr[i]];
+  avisar("msgInstr", nome + " agora é o " + (j + 1) + "º.");
+  desenharInstrumentos();
+  // o foco acompanha o instrumento que mexeu: no mesmo botão, ou no outro se ele chegou na ponta da lista
+  const li = [...$("listaOrdem").children].find(x => x.dataset.k === nome);
+  if(li){
+    const botoes = [...li.querySelectorAll(".seta")];
+    const alvo = botoes.find(b => b.dataset.sentido === (sentido < 0 ? "sobe" : "desce") && !b.disabled) || botoes.find(b => !b.disabled);
+    if(alvo) alvo.focus({preventScroll: true});
+  }
+  mudou();
 }
 
 function alternarInstrumento(nome){
@@ -737,7 +842,7 @@ function alternarInstrumento(nome){
   limparErro("chipsInstr");
   if(i >= 0 && ehExtra){
     desenharInstrumentos();
-    const primeiro = $("chipsInstr").firstChild;
+    const primeiro = $("chipsInstr").querySelector("button");
     if(primeiro) primeiro.focus({preventScroll: true});
   }else{
     desenharInstrumentos(nome);
@@ -1155,7 +1260,7 @@ function coletar(){
   if(!nome) falha("fNome", "Escreva o seu nome (ou nome artístico).");
   else if(nome.length < 2) falha("fNome", "O nome está curto demais.");
 
-  if(!instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento.");
+  if(!instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento ou função.");
   if(!cidades.length) falha("fCidade", "Adicione pelo menos uma cidade onde você toca.");
 
   const whats = nacional($("fWhats").value);
@@ -1784,7 +1889,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v2.html
+ Arquivo: Cadastro_Musicos_v3.1.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com status "pendente",
           o contato no mesmo formato do
@@ -1795,6 +1900,53 @@ iniciar();
           FIREBASE vazio (ou ?demo=1 no endereço) a página não envia
           nada: fica em modo demonstração, como na v1.
 ================================================================
+
+v3.1 — 2026-11-09
+  - Os balões de instrumento agora ficam todos juntos, em ordem
+    alfabética (sem os grupos). O que a pessoa escreve em "Não achou
+    o seu?" entra na mesma lista, no lugar certo do alfabeto.
+  - Sai o texto "o 1º é o que você toca melhor": a página só fala em
+    ordem. O número no balão e a caixa "Sua ordem" (setas ↑ e ↓)
+    continuam; a ordem escolhida é a que vai no cadastro.
+  - T. Áudio saiu: era a mesma coisa que T. Som. "Técnico de áudio"
+    escrito à mão vira T. Som. São 40 balões.
+  - Sem mudança: limite de 8, rascunho, envio, formato do cadastro e
+    regras do Firestore.
+
+v3 — 2026-11-09
+  - Mais instrumentos já escritos: de 8 para 41 balões, em grupos
+    (Mais comuns, Cordas e teclas, Sopros, Percussão, Voz e DJ,
+    Equipe técnica). Os 8 de antes continuam no começo, na mesma
+    ordem. Entram, por exemplo, Cavaquinho, Viola caipira, Piano,
+    Saxofone, Violino, Pandeiro, Zabumba, Triângulo, Backing vocal
+    e DJ. Para acrescentar mais um, é só colocar o nome no grupo
+    certo da lista GRUPOS_INSTRUMENTOS, no começo do script.
+  - Equipe técnica: T. Som, T. Áudio, T. Luz e Roadie. O campo
+    passou a se chamar "Instrumentos e funções" (a conferência ao
+    enviar pede "pelo menos um instrumento ou função").
+  - Ordem dos instrumentos: o número no canto do balão (1, 2, 3…)
+    mostra a ordem em que a pessoa tocou nos balões; o 1º é o que
+    ela toca melhor. Tocar de novo num balão marcado desmarca, e os
+    números seguintes se ajustam. Essa é a ordem que vai no cadastro
+    (a lista "instrumentos") e, portanto, a que aparece no cartão da
+    lista pública.
+  - "Sua ordem": com 2 ou mais marcados aparece uma lista com setas
+    ↑ e ↓ para subir ou descer um instrumento sem desmarcar nada.
+  - O que a pessoa escreve em "Não achou o seu?" entra na mesma
+    ordem e ganha balão no grupo "Que você escreveu". Nomes escritos
+    de outro jeito viram o nome certo: pianista vira Piano, sax vira
+    Saxofone, "técnico de som" vira T. Som, "técnico de áudio" vira
+    T. Áudio, "técnico de luz" vira T. Luz, e assim por diante.
+  - Emoji próprio para os novos (a lista pública ainda mostra 🎵
+    para os que não conhece). As cores continuam calculadas pelo
+    nome, as mesmas da lista. O número do balão tem contraste de
+    pelo menos 4,5:1 em qualquer cor, no claro e no escuro.
+  - Acessibilidade: o balão marcado diz a posição ("Acordeon,
+    posição 1"); as setas dizem o nome e a posição; ao mover, o foco
+    fica no instrumento que mexeu e um aviso diz a nova posição.
+  - Sem mudança: limite de 8 marcados, rascunho (guarda a ordem),
+    envio, formato do cadastro no Firebase e regras do Firestore (as
+    de Firestore_Regras_Cadastros_v1.rules aceitam os nomes novos).
 
 v2 — 2026-11-06
   - Envio de verdade: ao tocar em "Enviar meu cadastro", a página
