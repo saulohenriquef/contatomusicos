@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Contatos dos Músicos 2</title>
+<title>Contatos dos Músicos</title>
 <style>
   :root{
     --bg:#f6f4ef; --card:#ffffff; --text:#1d1b16; --muted:#6d685c;
@@ -191,6 +191,16 @@
   footer{margin-top:26px; text-align:center; color:var(--muted); font-size:.8rem; line-height:1.6}
   footer a{color:inherit}
   footer .creditos{margin-top:6px}
+  .cadastre{margin:0 0 22px; padding:16px; background:var(--card); border:1px solid var(--line); border-radius:14px; display:grid; gap:6px; justify-items:center}
+  .cadastre strong{color:var(--text); font-size:.98rem}
+  .cadastre span{font-size:.86rem}
+  .cadastre .btn-cadastre{
+    display:inline-block; margin-top:6px; padding:12px 20px; min-height:44px; border-radius:999px;
+    background:var(--accent); color:#fff; font-weight:700; font-size:.95rem; text-decoration:none;
+  }
+  .cadastre .btn-cadastre:active{filter:brightness(.92)}
+  .cadastre .btn-cadastre:focus-visible{outline:3px solid var(--text); outline-offset:2px}
+  @media (prefers-color-scheme: dark){ .cadastre .btn-cadastre{color:#14120f} }
 
   /* selos (ex.: IFC) e balão explicativo */
   .selo{
@@ -287,9 +297,14 @@
   </div>
 
   <footer>
+    <div class="cadastre">
+      <strong>Toca e não está na lista?</strong>
+      <span>Músicos e técnicos podem se cadastrar. O cadastro é conferido antes de entrar na lista.</span>
+      <a class="btn-cadastre" id="linkCadastro" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html" rel="noopener">Quero me cadastrar</a>
+    </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v11
+    Lista de Contatos de Músicos · v11.1
   </footer>
 </div>
 
@@ -387,7 +402,7 @@ const SELOS = {
   IFC: {
     sigla: "IFC",
     nome: "Integrante Fixo de Conjunto",
-    texto: "Este músico é integrante fixo de um conjunto (banda, grupo ou dupla) e por isso possui agenda dependente e limitada"
+    texto: "Este músico é integrante fixo de um conjunto (banda, grupo ou dupla). A agenda dele é a do conjunto, por isso ele dificilmente aceita free-lances. Dá para convidar, mas combine com bastante antecedência e esteja aberto a receber um \"não\"."
   }
 };
 
@@ -948,7 +963,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v11.html
+ Arquivo: Lista_Contatos_Musicos_v11.1.html
  Dados:   sem mudança: o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json e Lista_Contatos_Musicos_cidades.json
           (no GitHub, o conteúdo do HTML vai para o index.html)
@@ -1180,6 +1195,17 @@ v11 — 2026-11-05
   - Pendências: o botão "Sanfona" só existe por causa do contato de
     teste Fulano (teste) e some junto com ele; coordenadas
     aproximadas (centro de cada cidade); contato sem cidade mostra um
-    pino vazio...
+    pino vazio.
+----------------------------------------------------------------
+v11.1 — 2026-11-09
+  - No final da página, antes dos créditos, entrou um convite com o
+    botão "Quero me cadastrar", que leva ao cadastro:
+    https://saulohenriquef.github.io/contatomusicos/cadastro.html
+    O botão fica no tema claro e no escuro, tem 44 pixels de altura
+    (fácil de tocar) e abre na mesma aba.
+  - O texto avisa que o cadastro é conferido antes de entrar na lista
+    (os cadastros chegam como pendentes e você aprova pelo painel).
+  - Sem mudança: dados, filtros, busca, cartões, fotos, localização.
+
 ================================================================
 -->
