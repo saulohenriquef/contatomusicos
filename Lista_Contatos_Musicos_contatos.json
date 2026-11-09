@@ -160,5 +160,15 @@
     "instrumentos": ["Bateria", "T. Som"],
     "instagram": "raphael_wq",
     "whatsapp": "35992092324"
+  },
+  {
+    "nome": "Lim",
+    "foto": "lim.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Baixo", "Bateria", "Teclado", "Violão", "Vocal", "Guitarra", "B. Vocal"],
+    "selos": ["IFC"],
+    "instagram": "negrolim.oficial",
+    "whatsapp": "35988694753",
+    "observacoes": "Faço free lances normalmente."
   }
 ]
