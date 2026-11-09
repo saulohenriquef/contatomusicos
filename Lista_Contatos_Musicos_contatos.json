@@ -173,9 +173,10 @@
   },
   {
     "nome": "Matheus Santos",
+    "foto": "matheus-santos.jpg",
     "cidades": ["Passos/MG"],
     "instrumentos": ["Roadie"],
-    "instagram": "",
+    "instagram": "theusrsantos",
     "whatsapp": "35988892588"
   }
 ]
