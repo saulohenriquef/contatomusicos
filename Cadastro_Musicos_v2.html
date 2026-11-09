@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>Cadastro de Músicos</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --text:#1d1b16; --muted:#6d685c;
+    --line:#e6e1d4; --accent:#b4531a; --accent-soft:#f6e6d9;
+    --wpp:#1fa855; --wpp-dark:#178a45; --botao:#13803d; --botao-ativo:#0e6a31;
+    --erro:#c0392b; --aviso:#9a6c00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14120f; --card:#1e1b17; --text:#f1ece1; --muted:#a39d8f;
+      --line:#2e2a23; --accent:#e08a4f; --accent-soft:#33261b;
+      --wpp:#25b862; --wpp-dark:#1fa055; --botao:#13803d; --botao-ativo:#0e6a31;
+      --erro:#ff7b6b; --aviso:#f0c860;
+    }
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text); line-height:1.4;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);
+  }
+  .wrap{max-width:520px; margin:0 auto; padding:20px 16px 40px; counter-reset:passo}
+  h1{margin:8px 0 4px; font-size:1.5rem; letter-spacing:-.01em}
+  .sub{margin:0; color:var(--muted); font-size:.95rem; line-height:1.45}
+  .demo{
+    margin:14px 0 0; padding:10px 12px; border:1px dashed var(--aviso); border-radius:10px;
+    background:var(--card); font-size:.86rem; line-height:1.45;
+  }
+  .rascunho{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px;
+    margin:14px 0 0; padding:10px 12px; border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:10px; background:var(--card); font-size:.86rem; line-height:1.4;
+  }
+
+  /* passos */
+  .passo{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:12px}
+  .passo h2{margin:0 0 4px; font-size:1.02rem}
+  .passo h2::before{counter-increment:passo; content:counter(passo) ". "; color:var(--accent)}
+  .passo.sem-numero h2::before{content:none}
+  .passo h2 small{font-weight:400; color:var(--muted); font-size:.85rem}
+  .passo.soltando{outline:3px dashed var(--accent); outline-offset:-6px}
+  .dica{color:var(--muted); font-size:.82rem; line-height:1.4; margin:6px 0 0; overflow-wrap:anywhere}
+  .dica.aviso{color:var(--aviso)}
+  .dica.erro{color:var(--erro)}
+  .dica.centro{text-align:center}
+
+  /* botões */
+  .btn{
+    position:relative; display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    text-decoration:none; font:inherit; font-size:.95rem; font-weight:650; color:var(--text); background:transparent;
+    border:1px solid var(--line); border-radius:10px; padding:10px 15px; min-height:44px;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .btn:active{background:var(--accent-soft)}
+  .btn:focus-visible, label.btn:focus-within{outline:2px solid var(--accent); outline-offset:2px}
+  .btn.principal{background:var(--botao); border-color:var(--botao); color:#fff}
+  .btn.principal:active{background:var(--botao-ativo)}
+  .btn.grande{width:100%; min-height:50px; font-size:1.02rem}
+  .btn.pequeno{min-height:36px; padding:6px 12px; font-size:.85rem}
+  .btn:disabled{opacity:.55; cursor:not-allowed}
+  input[type=file]{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
+  .acoes{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
+
+  /* campos */
+  .campo{display:block; font-size:.88rem; color:var(--muted); margin:16px 0 5px}
+  .passo h2 + .campo{margin-top:10px}
+  .campo b{color:var(--erro); font-weight:700}
+  .entrada{
+    width:100%; padding:12px 13px; font:inherit; font-size:1rem; color:var(--text);
+    background:var(--bg); border:1px solid var(--line); border-radius:10px; outline:none;
+  }
+  .entrada:focus{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+  .entrada[aria-invalid="true"]{border-color:var(--erro); box-shadow:0 0 0 1px var(--erro)}
+  textarea.entrada{resize:vertical; line-height:1.4; min-height:84px}
+  select.entrada{width:auto; min-width:84px}
+  .linha{display:flex; gap:8px; align-items:stretch; flex-wrap:wrap}
+  .linha .entrada{flex:1 1 170px; min-width:0}
+  .linha select.entrada{flex:0 0 auto}
+  .linha .btn{flex:0 0 auto}
+  .linha-cidade{display:grid; grid-template-columns:minmax(0,1fr) 92px auto; gap:8px; align-items:stretch}
+  .linha-cidade .entrada{width:100%; min-width:0}
+  .linha-cidade select.entrada{min-width:0}
+  @media (max-width:480px){
+    .linha-cidade{grid-template-columns:92px minmax(0,1fr)}
+    .linha-cidade #fCidade{grid-column:1 / -1}
+  }
+  .marcar{display:flex; gap:10px; align-items:flex-start; margin-top:12px; font-size:.9rem; line-height:1.4; cursor:pointer; padding:8px; border-radius:10px; border:1px solid transparent}
+  .marcar input{margin-top:3px; width:20px; height:20px; flex:none; accent-color:var(--accent)}
+  .marcar small{display:block; color:var(--muted); font-size:.8rem; margin-top:3px}
+  .grupo-erro{outline:2px solid var(--erro); outline-offset:3px; border-radius:10px}
+  .marcar.grupo-erro{outline-offset:-2px}
+  details{margin-top:14px}
+  summary{cursor:pointer; color:var(--text); font-size:.92rem; font-weight:600; padding:10px 0; min-height:44px}
+  summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+
+  /* chips (instrumentos e cidades) */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .chip{
+    --h:38;
+    display:inline-flex; align-items:center; gap:7px; min-height:42px; padding:6px 14px; max-width:100%;
+    border-radius:999px; border:1px solid var(--line); background:var(--bg); color:var(--text);
+    font:inherit; font-size:.92rem; font-weight:600; line-height:1.2; text-align:left; overflow-wrap:anywhere; cursor:pointer;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+    transition:background-color .15s, border-color .15s, box-shadow .15s, color .15s, transform .08s;
+  }
+  .chip-emoji{font-size:1.1rem; line-height:1; margin-left:-2px}
+  @media (hover:hover){ .chip:hover{border-color:hsl(var(--h) 45% 62%)} }
+  .chip:active{transform:scale(.96)}
+  .chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .chip[aria-pressed="true"]{
+    background:hsl(var(--h) 72% 90%); border-color:hsl(var(--h) 62% 40%); color:hsl(var(--h) 65% 20%); font-weight:700;
+    box-shadow:inset 0 0 0 1px hsl(var(--h) 62% 40%), 0 3px 10px hsl(var(--h) 62% 40% / .22);
+  }
+  .chip-rem{background:var(--accent-soft); border-color:var(--accent); color:var(--accent); font-weight:650}
+  .chip-rem .x{font-size:.8rem; opacity:.8}
+  @media (prefers-color-scheme: dark){
+    @media (hover:hover){ .chip:hover{border-color:hsl(var(--h) 40% 45%)} }
+    .chip[aria-pressed="true"]{
+      background:hsl(var(--h) 34% 19%); border-color:hsl(var(--h) 58% 58%); color:hsl(var(--h) 80% 86%);
+      box-shadow:inset 0 0 0 1px hsl(var(--h) 58% 58%), 0 3px 12px hsl(var(--h) 60% 50% / .18);
+    }
+  }
+  @media (prefers-reduced-motion: reduce){ .chip{transition:none} .chip:active{transform:none} }
+
+  /* linhas de outros telefones e links */
+  .itens{display:grid; gap:10px; margin-top:8px}
+  .item{display:grid; grid-template-columns:1fr auto; gap:8px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--bg)}
+  .item .campos{display:grid; gap:8px; min-width:0}
+  .item .entrada{background:var(--card)}
+  .btn.x{min-width:44px; padding:0 12px; align-self:start}
+
+  /* foto */
+  .foto-vazia{margin-top:10px; padding:14px; border:1px dashed var(--line); border-radius:12px; background:var(--bg); color:var(--muted); font-size:.88rem; line-height:1.45}
+  .palco{
+    --S:min(320px, calc(100vw - 64px));
+    position:relative; width:var(--S); height:var(--S); margin:12px auto 0; overflow:hidden;
+    border-radius:12px; background:#222; touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none;
+  }
+  .palco:focus-visible{outline:3px solid var(--accent); outline-offset:3px}
+  .palco.arrastando{cursor:grabbing}
+  .palco canvas{display:block; width:100%; height:100%}
+  .mascara{
+    position:absolute; inset:0; border-radius:50%; pointer-events:none;
+    box-shadow:0 0 0 999px rgba(0,0,0,.5); border:2px solid rgba(255,255,255,.9);
+  }
+  .zoom{display:flex; align-items:center; gap:10px; margin-top:12px}
+  .zoom input{flex:1; accent-color:var(--accent); min-height:32px}
+  .zoom span{color:var(--muted); font-size:1.1rem; width:14px; text-align:center}
+  .previas{display:flex; align-items:center; gap:14px; margin-top:12px}
+  .previas canvas{border-radius:50%; background:#ddd; border:1px solid var(--line)}
+  .previas small{color:var(--muted); font-size:.8rem; line-height:1.35}
+  #erroFoto{margin:10px 0 0; font-size:.88rem; color:var(--erro)}
+
+  /* prévia: mesmo visual do cartão da lista */
+  .previa-fundo{margin-top:10px; padding:12px; background:var(--bg); border-radius:12px}
+  .cartoes{list-style:none; margin:0; padding:0}
+  .cartao{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px; display:grid; grid-template-columns:48px minmax(0,1fr); gap:12px; align-items:start;
+  }
+  .avatar{
+    position:relative; overflow:hidden;
+    width:48px; height:48px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem;
+  }
+  .avatar.colorido{background:hsl(var(--h) 55% 90%); color:hsl(var(--h) 55% 30%)}
+  .avatar canvas{position:absolute; inset:0; width:100%; height:100%}
+  .name{font-weight:650; font-size:1.05rem; line-height:1.25; overflow-wrap:anywhere}
+  .name.vazio, .line.vazio{opacity:.55}
+  .line{color:var(--muted); font-size:.88rem; margin-top:3px; overflow-wrap:anywhere}
+  .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .tag{
+    display:inline-block; max-width:100%; overflow-wrap:anywhere; font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:999px;
+    background:hsl(var(--h,24) 58% 91%); color:hsl(var(--h,24) 60% 27%);
+  }
+  .selo{
+    display:inline-flex; align-items:center; vertical-align:middle; margin-left:6px; min-height:24px;
+    background:#fdf0c8; color:#7a5500; border:1px solid #e3c36b; border-radius:999px;
+    padding:2px 9px; font-size:.72rem; font-weight:800; letter-spacing:.04em;
+  }
+  .selo::after{
+    content:"i"; display:inline-flex; align-items:center; justify-content:center;
+    width:14px; height:14px; margin-left:5px; border:1.5px solid currentColor; border-radius:50%;
+    font:italic 700 .64rem Georgia,serif; letter-spacing:0;
+  }
+  .obs{
+    margin-top:10px; padding:8px 11px; background:var(--bg); border-left:3px solid var(--line); border-radius:6px;
+    color:var(--muted); font-size:.88rem; line-height:1.45; white-space:pre-line; overflow-wrap:anywhere;
+  }
+  .fone{display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px}
+  .fone-num{color:var(--text); font-weight:600; font-size:.97rem; font-variant-numeric:tabular-nums; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:4px}
+  .fone .rotulo{flex-basis:100%; margin-bottom:-6px; color:var(--muted); font-size:.82rem; overflow-wrap:anywhere}
+  .copiar{font-size:.8rem; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:5px 12px}
+  .fone.com-wpp{gap:8px}
+  .fone.com-wpp .fone-num{font-size:.87rem}
+  .fone.com-wpp .copiar{padding:5px 9px; font-size:.78rem}
+  .wpp-mini{display:inline-flex; align-items:center; justify-content:center; flex:none; width:30px; height:30px; border-radius:50%; background:var(--wpp); color:#fff}
+  .wpp-mini svg{width:16px; height:16px; fill:currentColor}
+  .actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .pbtn{
+    display:inline-flex; align-items:center; gap:7px; font-size:.92rem; font-weight:600;
+    padding:10px 14px; border-radius:10px; border:1px solid var(--line); color:var(--text); max-width:100%;
+  }
+  .pbtn.wpp{background:var(--wpp); border-color:var(--wpp); color:#fff}
+  .pbtn.so-icone{padding:10px 12px}
+  .pbtn svg{width:18px; height:18px; fill:currentColor; flex:none}
+  .pbtn span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  @media (prefers-color-scheme: dark){
+    .tag{background:hsl(var(--h,24) 28% 17%); color:hsl(var(--h,24) 68% 72%)}
+    .avatar.colorido{background:hsl(var(--h) 28% 20%); color:hsl(var(--h) 60% 74%)}
+    .selo{background:#3a2f10; color:#f0c860; border-color:#6b5420}
+  }
+
+  /* erros e envio */
+  .erros{margin-top:14px; padding:12px 14px; border:1px solid var(--erro); border-radius:10px; background:var(--card); font-size:.9rem}
+  @supports (background:color-mix(in srgb, red 10%, white)){
+    .erros{background:color-mix(in srgb, var(--erro) 9%, var(--card))}
+  }
+  .erros strong{color:var(--erro)}
+  .erros ul{margin:6px 0 0; padding-left:20px}
+  .erros li{margin:5px 0}
+  .ir{font:inherit; color:var(--text); text-decoration:underline; text-underline-offset:2px; background:none; border:0; padding:0; cursor:pointer; text-align:left}
+  .ir:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+  .enviar-bloco{margin-top:16px}
+  .isca{position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden}
+
+  /* tela de recebido */
+  .ok-titulo{margin:0 0 6px; font-size:1.25rem}
+  .cod{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:1.05em; letter-spacing:.08em; white-space:nowrap}
+  .caixa-demo{margin-top:16px; padding:12px; border:1px dashed var(--aviso); border-radius:10px; background:var(--bg)}
+  .caixa-demo p{margin:0 0 8px; font-size:.88rem; line-height:1.45}
+  .codigo{
+    display:block; margin:8px 0 0; padding:10px 12px; background:var(--card); border:1px solid var(--line);
+    border-radius:8px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.76rem; line-height:1.5;
+    overflow:auto; max-height:320px; color:var(--text); white-space:pre; user-select:text;
+  }
+  code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85em}
+  footer{margin-top:26px; text-align:center; color:var(--muted); font-size:.8rem; line-height:1.6}
+  footer a{color:inherit}
+  footer .creditos{margin-top:6px}
+  .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-ig" gradientUnits="userSpaceOnUse" x1="2" y1="22" x2="22" y2="2">
+      <stop offset="0" stop-color="#feda75"/>
+      <stop offset=".28" stop-color="#fa7e1e"/>
+      <stop offset=".52" stop-color="#d62976"/>
+      <stop offset=".78" stop-color="#962fbf"/>
+      <stop offset="1" stop-color="#4f5bd5"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-ig" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#g-ig)" stroke-width="2.1"/>
+    <circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#g-ig)" stroke-width="2.1"/>
+    <circle cx="17.4" cy="6.6" r="1.3" fill="url(#g-ig)"/>
+  </symbol>
+  <symbol id="i-yt" viewBox="0 0 24 24">
+    <rect x="1.5" y="4.5" width="21" height="15" rx="4.6" fill="#ff0000"/>
+    <path d="M10 8.6v6.8l5.9-3.4z" fill="#fff"/>
+  </symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2.5"/>
+      <path d="M3.5 7.5l8.5 6 8.5-6"/>
+    </g>
+  </symbol>
+  <symbol id="i-link" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <h1>🪗 Cadastro de músicos</h1>
+    <p class="sub">Entre na lista de contatos dos músicos. Leva uns 2 minutos, e o seu cadastro é conferido antes de aparecer na lista.</p>
+    <p id="avisoDemo" class="demo" hidden>🧪 <strong>Modo demonstração.</strong> Nada do que você preencher é enviado a lugar nenhum: pode testar à vontade.</p>
+    <noscript><p class="demo">Para preencher o cadastro, ative o JavaScript do navegador.</p></noscript>
+  </header>
+
+  <div id="avisoRascunho" class="rascunho" role="status" hidden>
+    <span>Recuperei o que você já tinha preenchido neste aparelho.</span>
+    <button id="recomecar" class="btn pequeno" type="button">Começar de novo</button>
+  </div>
+
+  <form id="formulario" novalidate>
+
+    <section class="passo" aria-labelledby="t1">
+      <h2 id="t1">Seus dados</h2>
+
+      <label class="campo" for="fNome">Seu nome (ou nome artístico) <b aria-hidden="true">*</b></label>
+      <input id="fNome" class="entrada" type="text" maxlength="80" autocomplete="name" placeholder="Ex.: Fulano de Tal">
+
+      <div class="campo" id="rotInstr">Instrumentos que você toca <b aria-hidden="true">*</b></div>
+      <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr"></div>
+
+      <label class="campo" for="fOutroInstr">Não achou o seu? Escreva aqui</label>
+      <div class="linha">
+        <input id="fOutroInstr" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Saxofone" aria-describedby="msgInstr">
+        <button id="addInstr" class="btn" type="button">Adicionar</button>
+      </div>
+      <p id="msgInstr" class="dica" aria-live="polite"></p>
+
+      <label class="marcar" for="fIfc">
+        <input id="fIfc" type="checkbox">
+        <span>Sou integrante fixo de um conjunto (banda, grupo ou dupla)
+          <small>Aparece o selo IFC ao lado do seu nome, avisando que a sua agenda é a do conjunto. Deixe desmarcado se toca avulso.</small>
+        </span>
+      </label>
+    </section>
+
+    <section class="passo" aria-labelledby="t2">
+      <h2 id="t2">Onde você toca</h2>
+
+      <label class="campo" for="fCidade">Cidade(s) <b aria-hidden="true">*</b></label>
+      <div class="linha-cidade">
+        <input id="fCidade" class="entrada" type="text" list="listaCidades" maxlength="70" autocomplete="off" placeholder="Ex.: Franca" aria-describedby="msgCidade">
+        <select id="fUf" class="entrada" aria-label="Estado (UF)"><option value="">UF</option></select>
+        <button id="addCidade" class="btn" type="button">Adicionar</button>
+      </div>
+      <datalist id="listaCidades"></datalist>
+      <div id="chipsCidades" class="chips"></div>
+      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se toca em mais de uma cidade, adicione todas (até 5).</p>
+      <p id="msgCidade" class="dica" aria-live="polite"></p>
+    </section>
+
+    <section class="passo" aria-labelledby="t3">
+      <h2 id="t3">Como falar com você</h2>
+
+      <label class="campo" for="fWhats">WhatsApp, com DDD <b aria-hidden="true">*</b></label>
+      <input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="dicaWhats">
+      <p id="dicaWhats" class="dica" aria-live="polite"></p>
+
+      <label class="campo" for="fInsta">Instagram <span>(opcional)</span></label>
+      <input id="fInsta" class="entrada" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario ou link do perfil" aria-describedby="dicaInsta">
+      <p id="dicaInsta" class="dica" aria-live="polite"></p>
+
+      <details id="maisContatos">
+        <summary>Mais formas de contato (e-mail, YouTube, outros números, links)</summary>
+
+        <label class="campo" for="fEmail">E-mail</label>
+        <input id="fEmail" class="entrada" type="email" inputmode="email" maxlength="120" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="nome@exemplo.com">
+
+        <label class="campo" for="fYoutube">YouTube</label>
+        <input id="fYoutube" class="entrada" type="text" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@canal ou link do canal">
+
+        <div class="campo" id="rotTels">Outros telefones</div>
+        <div id="listaTels" class="itens" role="group" aria-labelledby="rotTels"></div>
+        <div class="acoes"><button id="addTel" class="btn pequeno" type="button">+ Adicionar outro número</button></div>
+
+        <div class="campo" id="rotLinks">Outros links (site, vídeos, repertório…)</div>
+        <div id="listaLinks" class="itens" role="group" aria-labelledby="rotLinks"></div>
+        <div class="acoes"><button id="addLink" class="btn pequeno" type="button">+ Adicionar link</button></div>
+      </details>
+    </section>
+
+    <section id="sFoto" class="passo" aria-labelledby="t4">
+      <h2 id="t4">Foto e recado <small>(opcional)</small></h2>
+
+      <div id="fotoVazia" class="foto-vazia">Com foto, fica mais fácil te reconhecerem; sem foto, aparecem as suas iniciais, e tudo bem. A foto é enquadrada aqui, no seu aparelho: só uma versão pequena (256 px) é enviada, nunca a original.</div>
+
+      <p id="erroFoto" role="alert" hidden></p>
+      <div class="acoes">
+        <label class="btn" id="rotuloArquivo"><input id="arquivo" type="file" accept="image/*"><span id="textoEscolher">📷 Escolher ou tirar foto</span></label>
+        <button id="tirarFoto" class="btn" type="button" hidden>Remover foto</button>
+      </div>
+
+      <div id="editorFoto" hidden>
+        <div id="palco" class="palco" tabindex="0" role="group" aria-label="Enquadramento da foto. Arraste para mover. Com o teclado, as setas movem e mais e menos ampliam.">
+          <canvas id="cv"></canvas>
+          <div class="mascara"></div>
+        </div>
+        <p class="dica centro">Arraste para mover. Para ampliar, use o controle abaixo (ou dois dedos). Deixe o rosto no meio do círculo.</p>
+        <div class="zoom">
+          <span aria-hidden="true">−</span>
+          <input id="zoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom da foto">
+          <span aria-hidden="true">+</span>
+        </div>
+        <div class="previas">
+          <canvas id="p96" width="192" height="192" style="width:96px;height:96px" aria-hidden="true"></canvas>
+          <canvas id="p48" width="96" height="96" style="width:48px;height:48px" aria-hidden="true"></canvas>
+          <small>Assim ela aparece na lista<br>(tamanho real à direita).</small>
+        </div>
+      </div>
+
+      <label class="campo" for="fObs">Recado para quem for te chamar <span>(opcional)</span></label>
+      <textarea id="fObs" class="entrada" rows="3" maxlength="300" placeholder="Ex.: toco só aos finais de semana; levo meu equipamento" aria-describedby="dicaObs"></textarea>
+      <p id="dicaObs" class="dica">0/300</p>
+    </section>
+
+    <section class="passo" aria-labelledby="t5">
+      <h2 id="t5">Conferir e enviar</h2>
+      <p class="dica">Assim você vai aparecer na lista. A foto e os dados mudam aqui na hora:</p>
+      <div class="previa-fundo"><ul id="previa" class="cartoes" aria-label="Prévia do seu cartão na lista"></ul></div>
+
+      <label class="marcar" id="rotAutoriza" for="fAutoriza">
+        <input id="fAutoriza" type="checkbox">
+        <span id="textoAutoriza"></span>
+      </label>
+
+      <div class="isca" aria-hidden="true">
+        <label for="campoIsca">Não preencha este campo</label>
+        <input id="campoIsca" name="contato_extra" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div id="erros" class="erros" role="alert" hidden></div>
+      <div class="enviar-bloco">
+        <button id="enviar" class="btn principal grande" type="submit">Enviar meu cadastro</button>
+      </div>
+      <p class="dica centro">Seus dados são usados só para esta lista.</p>
+    </section>
+  </form>
+
+  <section id="sucesso" class="passo sem-numero" aria-labelledby="tsuc" hidden>
+    <h2 id="tsuc" class="ok-titulo" tabindex="-1">✅ Cadastro recebido!</h2>
+    <p id="textoSucesso"></p>
+    <p id="linhaCodigo" class="dica" hidden>Código do seu cadastro: <strong id="codigoCadastro" class="cod"></strong>. Se precisar falar com o organizador, é só informar esse código.</p>
+    <p class="dica">Se precisar corrigir alguma coisa ou sair da lista, é só pedir ao organizador.</p>
+    <div id="caixaDemo" class="caixa-demo" hidden>
+      <p><strong>🧪 Demonstração.</strong> Nada foi enviado. Isto é o que seria enviado (a foto aparece abreviada):</p>
+      <p id="tamanhoDemo" class="dica"></p>
+      <pre id="jsonDemo" class="codigo" tabindex="0" aria-label="Conteúdo do cadastro em JSON"></pre>
+      <div class="acoes">
+        <button id="copiarDemo" class="btn pequeno" type="button">📋 Copiar o cadastro</button>
+        <button id="baixarDemo" class="btn pequeno" type="button">⬇ Baixar (.json)</button>
+      </div>
+      <p id="msgDemo" class="dica" aria-live="polite"></p>
+    </div>
+    <div class="acoes">
+      <a class="btn" href="./">Ver a lista de músicos</a>
+      <a id="falarOrganizador" class="btn" href="#" target="_blank" rel="noopener" hidden>Falar com o organizador</a>
+      <button id="outroCadastro" class="btn" type="button">Fazer outro cadastro</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
+    Cadastro de Músicos · Lista de Contatos de Músicos · v2
+  </footer>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const norm = s => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+const criar = (tag, classe, texto) => { const e = document.createElement(tag); if(classe) e.className = classe; if(texto != null) e.textContent = texto; return e; };
+const temChave = (obj, k) => Object.prototype.hasOwnProperty.call(obj, k);
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
+
+/* ---------- ajustes ---------- */
+const VERSAO = "v2";
+const PAGINA = "Cadastro_Musicos_" + VERSAO;
+// Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
+// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v1.rules).
+// Onde achar: Firebase > engrenagem > Configurações do projeto > Seus aplicativos > firebaseConfig (projectId e apiKey).
+// Enquanto estiverem vazios — ou com ?demo=1 no endereço da página — ela fica em MODO DEMONSTRAÇÃO e não envia nada a lugar nenhum.
+const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
+const COLECAO = "cadastros";             // pasta do banco onde cada cadastro vira um documento (as regras só deixam criar aqui)
+let API_FIRESTORE = "https://firestore.googleapis.com";
+let TEMPO_ENVIO_MS = 25000;              // espera máxima por uma tentativa de envio (milissegundos)
+const CONFIGURADO = /^[a-z][a-z0-9-]{3,28}[a-z0-9]$/.test(FIREBASE.projectId) && /^AIza[\w-]{30,}$/.test(FIREBASE.apiKey);
+const DEMO = !CONFIGURADO || /[?&]demo=1(&|#|$)/.test(location.search);   // true = o cadastro NÃO é enviado (só mostra o que seria enviado)
+let DEMO_ESPERA_MS = 700;                // na demonstração, quanto tempo o "Enviando…" dura (milissegundos)
+let DEMO_SIMULAR_FALHA = false;          // true = a demonstração falha ao enviar (para ver a mensagem de erro)
+let MIN_SEGUNDOS = 8;                    // proteção contra robôs: antes disso, desde que a página abriu, o envio é recusado
+const WHATSAPP_OBRIGATORIO = true;       // false = basta ter qualquer forma de contato
+const ORGANIZADOR_WHATSAPP = "";         // WhatsApp do organizador, só dígitos com DDD (ex.: 35999990000); vazio = sem o botão "Falar com o organizador"
+const MENSAGEM_ORGANIZADOR = "Olá, fiz meu cadastro na lista de músicos e preciso de ajuda.";
+const SAIDA = 256;                       // lado da foto final, em pixels
+const QUALIDADE = 0.85;                  // qualidade do JPEG (0 a 1)
+const ZOOM_MAX = 4;                      // quanto dá para ampliar (4 = 4x)
+const LADO_MAX = 1600;                   // fotos maiores que isso são reduzidas antes, para ficarem mais nítidas no final
+let MAX_FOTO_BYTES = 120 * 1024;         // a foto final nunca passa disso (reduz a qualidade se precisar)
+const MAX_ARQUIVO_MB = 30;               // arquivos de foto maiores que isso são recusados
+const MAX_NOME = 80, MAX_OBS = 300, MAX_INSTR = 8, MAX_NOME_INSTR = 30, MAX_CIDADES = 5, MAX_NOME_CIDADE = 60;
+const MAX_TELEFONES = 3, MAX_LINKS = 3, MAX_ROTULO = 30, MAX_URL = 200, MAX_EMAIL = 120;
+const RASCUNHO_DIAS = 3;                 // o que foi preenchido e não enviado fica guardado neste aparelho por até esse tempo
+const CHAVE_RASCUNHO = "cadastroMusicos.rascunho";
+const ARQ_CIDADES = "Lista_Contatos_Musicos_cidades.json";   // se a página estiver no mesmo site da lista, as cidades dela viram sugestões
+const INSTRUMENTOS = ["Acordeon", "Teclado", "Violão", "Guitarra", "Baixo", "Bateria", "Cajon", "Vocal"];
+const CIDADES_SUGERIDAS = ["Alpinópolis/MG", "Araxá/MG", "Brodowski/SP", "Conceição da Aparecida/MG", "Formiga/MG", "Franca/SP", "Guará/SP", "Itaú de Minas/MG", "Passos/MG", "Pedregulho/SP", "Pratápolis/MG", "Ribeirão Preto/SP", "Rifaina/SP", "São Paulo/SP"];
+const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
+// nomes que as pessoas escrevem e o instrumento que eles viram na lista (chave em minúsculas e sem acento)
+const SINONIMOS_INSTRUMENTO = {acordeonista: "Acordeon", acordeom: "Acordeon", baterista: "Bateria", batera: "Bateria", tecladista: "Teclado", baixista: "Baixo", violonista: "Violão", guitarrista: "Guitarra", cajonista: "Cajon", cantor: "Vocal", cantora: "Vocal", voz: "Vocal", canto: "Vocal"};
+// emoji e cor (matiz de 0 a 360) de cada instrumento: os mesmos da lista
+const EMOJI_INSTRUMENTO = {acordeon: "🪗", sanfona: "🪗", gaita: "🪗", teclado: "🎹", piano: "🎹", orgao: "🎹", sintetizador: "🎹", bateria: "🥁", cajon: "🥁", percussao: "🥁", pandeiro: "🥁", zabumba: "🥁", violao: "🎸", guitarra: "🎸", baixo: "🎸", cavaquinho: "🎸", viola: "🎸", bandolim: "🎸", vocal: "🎤", voz: "🎤", cantor: "🎤", cantora: "🎤", saxofone: "🎷", sax: "🎷", trompete: "🎺", trombone: "🎺", violino: "🎻", violoncelo: "🎻", rabeca: "🎻", flauta: "🎶", clarinete: "🎶"};
+const MATIZ_INSTRUMENTO = {acordeon: 24, sanfona: 44, teclado: 215, violao: 108, vocal: 318, baixo: 262, bateria: 354, cajon: 175};
+const TEXTO_AUTORIZACAO = "Autorizo que meu nome, minha foto, minhas cidades, meus instrumentos e meus contatos (como WhatsApp e Instagram) apareçam na lista pública de músicos, que qualquer pessoa pode abrir. Sei que posso pedir para corrigir ou tirar meu cadastro da lista quando quiser.";
+const ICONE_WPP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.5 15.07L2 22l5.07-1.5A9.93 9.93 0 1 0 12.04 2Zm5.8 14.1c-.25.7-1.45 1.33-2 1.4-.52.07-1.17.1-1.9-.12a17 17 0 0 1-1.72-.64c-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.6-.38.8-.38l.58.01c.19.01.43-.07.67.5.25.6.85 2.07.92 2.22.08.15.13.33.03.52-.1.2-.15.32-.3.5-.15.17-.32.38-.45.51-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1 2.09 1.32 2.39 1.47.3.15.47.12.65-.07.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.12.08.72-.17 1.42Z"/></svg>';
+
+/* ---------- estado ---------- */
+let instr = [];                  // instrumentos marcados, na ordem em que foram marcados
+let cidades = [];                // ["Franca/SP"]
+let telefones = [];              // [{rotulo, numero}]
+let links = [];                  // [{rotulo, url}]
+const CIDADE_UF = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([A-Z]{2})$/u;   // "Cidade/UF" como a página guarda
+let cidadesConhecidas = CIDADES_SUGERIDAS.slice();
+let mapaConhecidas = new Map();  // chave sem acento -> grafia certa
+const abriuEm = Date.now();
+let enviando = false;
+let finalizado = false;          // true = o cadastro já foi enviado (para de guardar rascunho)
+let restaurando = false;
+let textoCompletoDemo = "", nomeArquivoDemo = "cadastro.json";
+
+// foto
+let fonte = null;                // imagem (ou canvas reduzido) usada para desenhar
+let iw = 0, ih = 0;              // tamanho da fonte
+let S = 300;                     // lado do palco, em pixels de tela
+let z = 1;                       // zoom (1 = foto cobre o quadrado justo)
+let cx = 0, cy = 0;              // posição do centro da foto dentro do palco
+let fotoCache = null;            // JPEG (data URL) do enquadramento atual; null = precisa gerar de novo
+let fotoRestaurada = null;       // JPEG recuperado do rascunho e ainda sem ajustes (vai como está)
+let avatarPrevia = null;         // canvas da foto dentro do cartão de prévia
+
+/* ---------- utilidades de texto ---------- */
+// tira caracteres de controle e os que invertem o sentido do texto (um nome não pode "virar do avesso" no painel)
+function semControle(s, manterQuebras){
+  return String(s == null ? "" : s).normalize("NFC")
+    .replace(manterQuebras ? /[\u0000-\u0009\u000B-\u001F\u007F-\u009F]/g : /[\u0000-\u001F\u007F-\u009F]/g, " ")
+    .replace(/[​-‏‪-‮⁠-⁤⁦-⁯﻿]/g, "");
+}
+const limparNome = v => semControle(v).replace(/\s+/g, " ").trim().slice(0, MAX_NOME);
+const limparRotulo = v => semControle(v).replace(/\s+/g, " ").trim().slice(0, MAX_ROTULO);
+function limparObs(v){
+  return semControle(String(v == null ? "" : v).replace(/\r\n?/g, "\n"), true)
+    .replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_OBS);
+}
+function definir(o, k, v){ if(v === null || v === undefined || v === "") delete o[k]; else o[k] = v; }
+
+const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e"]);
+function titulo(t){
+  const cap = p => p.split("-").map(x => x.charAt(0).toUpperCase() + x.slice(1)).join("-");
+  return t.toLowerCase().split(" ").map((p, i) => (i > 0 && MINUSCULAS.has(p)) ? p : cap(p)).join(" ");
+}
+function slug(t){
+  return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+}
+
+// número só com dígitos e sem o 55 do Brasil
+function nacional(num){
+  const d = String(num == null ? "" : num).replace(/\D/g, "");
+  return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d;
+}
+function formatarTel(num){
+  const d = nacional(num);
+  if(d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return d;
+}
+const ehCelular = n => n.length === 11 && n[2] === "9";
+
+const emailValido = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+// só endereços http(s); qualquer outro tipo (javascript:, data:...) é recusado
+function urlSegura(v){
+  v = String(v == null ? "" : v).trim();
+  if(!v || /\s/.test(v)) return "";
+  if(/^https?:\/\//i.test(v)) return v;
+  if(/^[a-z][a-z0-9+.\-]*:/i.test(v)) return "";
+  if(!/^[^\/]+\.[^\/]+/.test(v)) return "";
+  return "https://" + v;
+}
+
+const INSTA_RESERVADOS = new Set(["p", "reel", "reels", "stories", "explore", "accounts", "tv", "direct", "about", "legal", "web", "developer"]);
+// Instagram: guarda só o usuário (sem @ e sem o endereço); {valor} ou {erro}
+function instaDoCampo(v){
+  v = semControle(v).trim();
+  if(!v) return {valor: ""};
+  const m = v.match(/^(?:https?:\/\/)?(?:www\.|m\.)?instagram\.com\/([^\/?#\s]+)/i);
+  let h = v;
+  if(m){
+    h = m[1];
+    if(INSTA_RESERVADOS.has(h.toLowerCase())) return {erro: "Instagram: cole o link do seu perfil (instagram.com/seuusuario), não o de uma publicação."};
+  }else if(/^[a-z][a-z0-9+.\-]*:\/\//i.test(v) || /[\/\s]/.test(v)){
+    return {erro: "Instagram: escreva @seuusuario ou cole o link do seu perfil."};
+  }
+  h = h.replace(/^@/, "");
+  if(!/^[A-Za-z0-9._]{1,30}$/.test(h)) return {erro: "Instagram: o usuário só tem letras, números, ponto e sublinhado (até 30 caracteres)."};
+  return {valor: h};
+}
+
+// YouTube: @canal ou link do canal; {valor} ou {erro}
+function youtubeDoCampo(v){
+  v = semControle(v).trim();
+  if(!v) return {valor: ""};
+  const erro = {erro: "YouTube: use @canal ou o link do canal (youtube.com…). Outros sites vão em \"Outros links\"."};
+  if(/\s/.test(v) || v.length > MAX_URL) return erro;
+  if(/^https?:\/\//i.test(v)) return /^https?:\/\/((www|m|music)\.)?(youtube\.com|youtu\.be)\//i.test(v) ? {valor: v} : erro;
+  if(/^((www|m|music)\.)?(youtube\.com|youtu\.be)\//i.test(v)) return {valor: "https://" + v};
+  const canal = v.replace(/^@/, "");
+  // um nome solto vira @nome; endereço de outro site ou texto com barra não serve aqui
+  if(v.includes("/") || (!v.startsWith("@") && canal.includes(".")) || !/^[\p{L}\p{N}._\-·]{1,100}$/u.test(canal)) return erro;
+  return {valor: "@" + canal};
+}
+
+/* ---------- cores e iniciais (as mesmas da lista) ---------- */
+function matiz(nome){           // o mesmo nome sempre dá a mesma cor
+  let h = 0;
+  for(const ch of norm(nome)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return h % 360;
+}
+function iniciais(nome){
+  const p = String(nome).replace(/\(.*?\)/g, "").trim().split(/\s+/).filter(Boolean);
+  const letra = w => (w.match(/\p{L}/u) || [""])[0];
+  return (letra(p[0] || "") + (p.length > 1 ? letra(p[p.length - 1]) : "")).toUpperCase() || "?";
+}
+const matizInstr = nome => { const k = norm(nome); return temChave(MATIZ_INSTRUMENTO, k) ? MATIZ_INSTRUMENTO[k] : matiz(nome); };
+const emojiInstr = nome => { const k = norm(nome); return temChave(EMOJI_INSTRUMENTO, k) ? EMOJI_INSTRUMENTO[k] : "🎵"; };
+
+/* ---------- avisos e erros nos campos ---------- */
+function avisar(id, texto, tipo){
+  const p = $(id);
+  p.className = "dica" + (tipo ? " " + tipo : "");
+  p.textContent = texto || "";
+}
+function limparErro(id){
+  const el = id ? $(id) : null;
+  if(!el) return;
+  el.removeAttribute("aria-invalid");
+  el.classList.remove("grupo-erro");
+  const rot = el.type === "checkbox" ? el.closest("label") : null;
+  if(rot) rot.classList.remove("grupo-erro");
+}
+function limparTodosErros(){
+  document.querySelectorAll("[aria-invalid]").forEach(e => e.removeAttribute("aria-invalid"));
+  document.querySelectorAll(".grupo-erro").forEach(e => e.classList.remove("grupo-erro"));
+  $("erros").hidden = true;
+}
+function marcarErros(erros){
+  erros.forEach(e => {
+    const el = $(e.campo);
+    if(!el) return;
+    if(el.type === "checkbox"){ const r = el.closest("label"); if(r) r.classList.add("grupo-erro"); }
+    else if(el.matches("input, textarea, select")) el.setAttribute("aria-invalid", "true");
+    else el.classList.add("grupo-erro");
+  });
+}
+function irPara(campo){
+  let el = $(campo);
+  if(!el) return;
+  const det = el.closest("details");
+  if(det) det.open = true;
+  if(campo === "chipsInstr") el = el.querySelector("button") || el;
+  rolarPara(el, "center");
+  el.focus({preventScroll: true});
+}
+function mostrarErros(erros){
+  const box = $("erros");
+  box.textContent = "";
+  box.appendChild(criar("strong", "", erros.length === 1 ? "Falta ajustar 1 coisa:" : "Faltam ajustar " + erros.length + " coisas:"));
+  const ul = criar("ul");
+  erros.forEach(e => {
+    const li = criar("li");
+    const b = criar("button", "ir", e.texto);
+    b.type = "button";
+    b.addEventListener("click", () => irPara(e.campo));
+    li.appendChild(b);
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  box.hidden = false;
+}
+function mostrarAviso(texto){
+  const box = $("erros");
+  box.textContent = "";
+  box.appendChild(criar("strong", "", texto));
+  box.hidden = false;
+  rolarPara(box, "center");
+}
+
+/* ---------- instrumentos ---------- */
+function instrumentoCanonico(txt){
+  const t = semControle(txt).replace(/\s+/g, " ").trim();
+  if(!t) return {erro: "Escreva o nome do instrumento."};
+  if(t.length > MAX_NOME_INSTR) return {erro: "O nome do instrumento está grande demais."};
+  if(!/^[\p{L}\p{N}][\p{L}\p{M}\p{N}'’ .\-]*$/u.test(t)) return {erro: "Use só letras e números no nome do instrumento."};
+  const k = norm(t);
+  if(temChave(SINONIMOS_INSTRUMENTO, k)) return {nome: SINONIMOS_INSTRUMENTO[k]};
+  const base = INSTRUMENTOS.find(i => norm(i) === k);
+  if(base) return {nome: base};
+  const tudoIgual = t === t.toLowerCase() || t === t.toUpperCase();
+  return {nome: t.charAt(0).toUpperCase() + (tudoIgual ? t.slice(1).toLowerCase() : t.slice(1))};
+}
+
+function desenharInstrumentos(foco){
+  const box = $("chipsInstr");
+  box.textContent = "";
+  const base = new Set(INSTRUMENTOS.map(norm));
+  [...INSTRUMENTOS, ...instr.filter(i => !base.has(norm(i)))].forEach(nome => {
+    const marcado = instr.some(i => norm(i) === norm(nome));
+    const b = criar("button", "chip");
+    b.type = "button";
+    b.dataset.k = nome;
+    b.setAttribute("aria-pressed", String(marcado));
+    b.style.setProperty("--h", matizInstr(nome));
+    const em = criar("span", "chip-emoji", emojiInstr(nome));
+    em.setAttribute("aria-hidden", "true");
+    b.append(em, criar("span", "", nome));
+    b.addEventListener("click", () => alternarInstrumento(nome));
+    box.appendChild(b);
+  });
+  if(foco){
+    const alvo = [...box.children].find(x => x.dataset.k === foco);
+    if(alvo) alvo.focus({preventScroll: true});
+  }
+}
+
+function alternarInstrumento(nome){
+  const k = norm(nome), i = instr.findIndex(x => norm(x) === k);
+  const ehExtra = !INSTRUMENTOS.some(x => norm(x) === k);
+  if(i >= 0){
+    instr.splice(i, 1);
+  }else{
+    if(instr.length >= MAX_INSTR){ avisar("msgInstr", "Dá para marcar até " + MAX_INSTR + " instrumentos.", "aviso"); return; }
+    instr.push(nome);
+  }
+  avisar("msgInstr", "");
+  limparErro("chipsInstr");
+  if(i >= 0 && ehExtra){
+    desenharInstrumentos();
+    const primeiro = $("chipsInstr").firstChild;
+    if(primeiro) primeiro.focus({preventScroll: true});
+  }else{
+    desenharInstrumentos(nome);
+  }
+  mudou();
+}
+
+function adicionarInstrumentoDigitado(){
+  const campo = $("fOutroInstr");
+  if(!campo.value.trim()){ avisar("msgInstr", "Escreva o nome do instrumento.", "erro"); return false; }
+  const r = instrumentoCanonico(campo.value);
+  if(r.erro){ avisar("msgInstr", r.erro, "erro"); return false; }
+  const k = norm(r.nome);
+  if(instr.some(x => norm(x) === k)){
+    avisar("msgInstr", r.nome + " já está marcado.", "aviso");
+    campo.value = "";
+    return true;
+  }
+  if(instr.length >= MAX_INSTR){ avisar("msgInstr", "Dá para marcar até " + MAX_INSTR + " instrumentos.", "erro"); return false; }
+  instr.push(r.nome);
+  campo.value = "";
+  avisar("msgInstr", r.nome + " adicionado.");
+  limparErro("chipsInstr");
+  desenharInstrumentos();
+  mudou();
+  return true;
+}
+
+/* ---------- cidades ---------- */
+function desenharSugestoes(){
+  const dl = $("listaCidades");
+  dl.textContent = "";
+  cidadesConhecidas.forEach(n => { const o = document.createElement("option"); o.value = n; dl.appendChild(o); });
+  mapaConhecidas = new Map(cidadesConhecidas.map(n => [norm(n), n]));
+}
+
+// se a página estiver no mesmo site da lista, as cidades que a lista já tem viram sugestões (aberta como arquivo, não tenta)
+async function carregarCidadesDoSite(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  try{
+    const r = await fetch(ARQ_CIDADES, {cache: "no-store"});
+    if(!r.ok) return;
+    const j = await r.json();
+    const nomes = Object.keys(j || {}).filter(n => { const m = n.match(CIDADE_UF); return m && UFS.includes(m[2]); });
+    if(!nomes.length) return;
+    cidadesConhecidas = [...new Set([...nomes, ...CIDADES_SUGERIDAS])].sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}));
+    desenharSugestoes();
+  }catch(e){ /* fica a lista que já vem na página */ }
+}
+
+// lê o que está nos campos de cidade: {cidade: "Franca/SP"} ou {erro}
+function lerCidade(){
+  const bruto = semControle($("fCidade").value).replace(/\s+/g, " ").trim();
+  if(!bruto) return {erro: "Escreva o nome da cidade."};
+  let nome = bruto, uf = $("fUf").value;
+  const comSep = bruto.match(/^(.+?)\s*[\/,\-–]\s*([A-Za-z]{2})$/);
+  const semSep = bruto.match(/^(.+?)\s+([A-Za-z]{2})$/);
+  const m = comSep || semSep;
+  if(m){
+    const sigla = m[2].toUpperCase();
+    if(UFS.includes(sigla)){ nome = m[1].trim(); uf = sigla; }
+    else if(comSep) return {erro: "“" + m[2] + "” não é a sigla de um estado. Exemplo: Franca/SP."};
+  }
+  if(!uf) return {erro: "Escolha o estado (UF) da cidade."};
+  if(nome.length < 2 || !/^[\p{L}][\p{L}\p{M}'’ .\-]*$/u.test(nome)) return {erro: "Escreva só o nome da cidade, com letras (sem números ou símbolos)."};
+  if(nome.length > MAX_NOME_CIDADE) return {erro: "O nome da cidade está grande demais."};
+  if(nome === nome.toLowerCase() || nome === nome.toUpperCase()) nome = titulo(nome);
+  const final = nome + "/" + uf;
+  return {cidade: mapaConhecidas.get(norm(final)) || final};
+}
+
+function desenharCidades(){
+  const box = $("chipsCidades");
+  box.textContent = "";
+  cidades.forEach((nome, i) => {
+    const b = criar("button", "chip chip-rem");
+    b.type = "button";
+    b.setAttribute("aria-label", "Remover " + nome);
+    b.append("📍 " + nome + " ", criar("span", "x", "✕"));
+    b.addEventListener("click", () => {
+      cidades.splice(i, 1);
+      desenharCidades();
+      avisar("msgCidade", nome + " removida.");
+      mudou();
+      const prox = $("chipsCidades").children[Math.min(i, cidades.length - 1)];
+      (prox || $("fCidade")).focus({preventScroll: true});
+    });
+    box.appendChild(b);
+  });
+}
+
+function adicionarCidade(){
+  const r = lerCidade();
+  if(r.erro){ avisar("msgCidade", r.erro, "erro"); return false; }
+  const k = norm(r.cidade);
+  if(cidades.some(x => norm(x) === k)){
+    avisar("msgCidade", r.cidade + " já está na lista.", "aviso");
+    $("fCidade").value = "";
+    return true;
+  }
+  if(cidades.length >= MAX_CIDADES){ avisar("msgCidade", "Dá para adicionar até " + MAX_CIDADES + " cidades.", "erro"); return false; }
+  cidades.push(r.cidade);
+  $("fCidade").value = "";
+  avisar("msgCidade", r.cidade + " adicionada.");
+  limparErro("fCidade");
+  desenharCidades();
+  mudou();
+  return true;
+}
+
+/* ---------- outros telefones e links ---------- */
+function campoDeLinha(tipo, id, nomeAcessivel, dica, valor, max, aoMudar){
+  const el = criar("input", "entrada");
+  el.type = tipo; el.id = id; el.value = valor || ""; el.maxLength = max;
+  el.placeholder = dica;
+  el.setAttribute("aria-label", nomeAcessivel);
+  el.autocomplete = "off";
+  el.addEventListener("input", () => { aoMudar(el.value); el.removeAttribute("aria-invalid"); mudou(); });
+  return el;
+}
+
+function desenharTelefones(foco){
+  const box = $("listaTels");
+  box.textContent = "";
+  telefones.forEach((t, i) => {
+    const linha = criar("div", "item");
+    const campos = criar("div", "campos");
+    const rot = campoDeLinha("text", "tel-" + i + "-rotulo", "Telefone " + (i + 1) + ": para que serve (opcional)", "Para que serve (ex.: Recados)", t.rotulo, MAX_ROTULO, v => { t.rotulo = v; });
+    const num = campoDeLinha("tel", "tel-" + i + "-numero", "Telefone " + (i + 1) + ": número com DDD", "(35) 3232-1234", t.numero, 20, v => { t.numero = v; });
+    num.inputMode = "tel";
+    campos.append(rot, num);
+    const x = criar("button", "btn x", "✕");
+    x.type = "button";
+    x.setAttribute("aria-label", "Remover o telefone " + (i + 1));
+    x.addEventListener("click", () => { telefones.splice(i, 1); desenharTelefones(); mudou(); $("addTel").focus({preventScroll: true}); });
+    linha.append(campos, x);
+    box.appendChild(linha);
+  });
+  $("addTel").disabled = telefones.length >= MAX_TELEFONES;
+  if(foco && $(foco)) $(foco).focus();
+}
+
+function desenharLinks(foco){
+  const box = $("listaLinks");
+  box.textContent = "";
+  links.forEach((l, i) => {
+    const linha = criar("div", "item");
+    const campos = criar("div", "campos");
+    const rot = campoDeLinha("text", "link-" + i + "-rotulo", "Link " + (i + 1) + ": nome do botão (opcional)", "Nome do botão (ex.: Site)", l.rotulo, MAX_ROTULO, v => { l.rotulo = v; });
+    const url = campoDeLinha("text", "link-" + i + "-url", "Link " + (i + 1) + ": endereço", "https://…", l.url, MAX_URL, v => { l.url = v; });
+    url.inputMode = "url"; url.setAttribute("autocapitalize", "off"); url.spellcheck = false;
+    campos.append(rot, url);
+    const x = criar("button", "btn x", "✕");
+    x.type = "button";
+    x.setAttribute("aria-label", "Remover o link " + (i + 1));
+    x.addEventListener("click", () => { links.splice(i, 1); desenharLinks(); mudou(); $("addLink").focus({preventScroll: true}); });
+    linha.append(campos, x);
+    box.appendChild(linha);
+  });
+  $("addLink").disabled = links.length >= MAX_LINKS;
+  if(foco && $(foco)) $(foco).focus();
+}
+
+/* ---------- foto: enquadramento (o mesmo do painel) ---------- */
+const palco = $("palco"), cv = $("cv"), ctx = cv.getContext("2d");
+const saida = document.createElement("canvas");
+saida.width = saida.height = SAIDA;
+const sctx = saida.getContext("2d");
+sctx.imageSmoothingQuality = "high";
+ctx.imageSmoothingQuality = "high";
+
+const base = () => S / Math.min(iw, ih);
+const escala = () => base() * z;
+
+function limitar(){
+  const s = escala(), hw = iw * s / 2, hh = ih * s / 2;
+  cx = Math.min(hw, Math.max(S - hw, cx));
+  cy = Math.min(hh, Math.max(S - hh, cy));
+}
+function ajustarCanvas(){
+  const novo = palco.clientWidth;
+  if(!novo) return;
+  const dpr = window.devicePixelRatio || 1;
+  if(fonte && S){ const k = novo / S; cx *= k; cy *= k; }
+  S = novo;
+  cv.width = Math.round(S * dpr);
+  cv.height = Math.round(S * dpr);
+}
+function desenhar(){
+  const dpr = cv.width / S;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, S, S);
+  if(!fonte){ sctx.clearRect(0, 0, SAIDA, SAIDA); previas(); return; }
+  limitar();
+  const s = escala(), w = iw * s, h = ih * s;
+  ctx.drawImage(fonte, cx - w / 2, cy - h / 2, w, h);
+  // foto final (o que será enviado)
+  const k = SAIDA / S;
+  sctx.fillStyle = "#fff";
+  sctx.fillRect(0, 0, SAIDA, SAIDA);
+  sctx.drawImage(fonte, (cx - w / 2) * k, (cy - h / 2) * k, w * k, h * k);
+  previas();
+}
+function previas(){
+  [["p96", 192], ["p48", 96]].forEach(([id, lado]) => {
+    const c = $(id).getContext("2d");
+    c.imageSmoothingQuality = "high";
+    c.clearRect(0, 0, lado, lado);
+    c.drawImage(saida, 0, 0, lado, lado);
+  });
+  desenharAvatarPrevia();
+}
+function desenharAvatarPrevia(){
+  if(!avatarPrevia || !avatarPrevia.isConnected) return;
+  const g = avatarPrevia.getContext("2d");
+  g.imageSmoothingQuality = "high";
+  g.clearRect(0, 0, 96, 96);
+  g.drawImage(saida, 0, 0, 96, 96);
+}
+function fotoMexeu(){ fotoCache = null; fotoRestaurada = null; agendarRascunho(); }
+function definirZoom(novo){
+  if(!fonte) return;
+  novo = Math.min(ZOOM_MAX, Math.max(1, novo));
+  const s0 = escala();
+  const ix = (S / 2 - cx) / s0, iy = (S / 2 - cy) / s0;   // ponto da foto que está no centro
+  z = novo;
+  const s1 = escala();
+  cx = S / 2 - ix * s1;
+  cy = S / 2 - iy * s1;
+  $("zoom").value = z;
+  fotoMexeu();
+  desenhar();
+}
+function reduzir(im){
+  let w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+  if(Math.max(w, h) <= LADO_MAX) return im;
+  let origem = im;
+  while(Math.max(w, h) > LADO_MAX){
+    const k = Math.max(0.5, LADO_MAX / Math.max(w, h));   // no máximo pela metade a cada etapa
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * k));
+    c.height = Math.max(1, Math.round(h * k));
+    const g = c.getContext("2d");
+    g.imageSmoothingQuality = "high";
+    g.drawImage(origem, 0, 0, c.width, c.height);
+    origem = c; w = c.width; h = c.height;
+  }
+  return origem;
+}
+
+function mostrarErroFoto(t){ $("erroFoto").hidden = !t; $("erroFoto").textContent = t || ""; }
+
+function limparFoto(){
+  fonte = null; iw = ih = 0; z = 1;
+  fotoCache = null; fotoRestaurada = null;
+  $("zoom").value = 1;
+  $("editorFoto").hidden = true;
+  $("fotoVazia").hidden = false;
+  $("tirarFoto").hidden = true;
+  $("textoEscolher").textContent = "📷 Escolher ou tirar foto";
+  $("arquivo").value = "";
+  mostrarErroFoto("");
+  desenhar();
+}
+
+// origem: Image ou canvas já carregado; restaurada: JPEG do rascunho que ainda não foi mexido
+function usarImagem(origem, restaurada){
+  fonte = reduzir(origem);
+  iw = fonte.width; ih = fonte.height;
+  z = 1; $("zoom").value = 1;
+  $("fotoVazia").hidden = true;
+  $("editorFoto").hidden = false;
+  ajustarCanvas();                 // o palco precisa estar visível para ser medido
+  cx = S / 2; cy = S / 2;
+  $("tirarFoto").hidden = false;
+  $("textoEscolher").textContent = "📷 Trocar foto";
+  mostrarErroFoto("");
+  fotoCache = null; fotoRestaurada = restaurada || null;
+  desenhar();
+  mudou();
+}
+
+const ehImagem = f => /^image\//.test(f.type) || (!f.type && /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i.test(f.name));
+function receberArquivo(f){
+  mostrarErroFoto("");
+  if(!f) return;
+  if(!ehImagem(f)){ mostrarErroFoto("Esse arquivo não é uma imagem. Escolha uma foto em JPG ou PNG."); return; }
+  if(f.size > MAX_ARQUIVO_MB * 1024 * 1024){ mostrarErroFoto("Essa foto é grande demais (mais de " + MAX_ARQUIVO_MB + " MB). Escolha outra."); return; }
+  const url = URL.createObjectURL(f);
+  const im = new Image();
+  im.onload = () => { URL.revokeObjectURL(url); usarImagem(im); rolarPara($("palco"), "center"); };
+  im.onerror = () => {
+    URL.revokeObjectURL(url);
+    mostrarErroFoto("Não consegui abrir essa imagem. Tente uma foto em JPG ou PNG (fotos em HEIC podem não abrir em alguns aparelhos).");
+  };
+  im.src = url;
+}
+
+$("arquivo").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";             // deixa escolher o mesmo arquivo de novo
+  receberArquivo(f);
+});
+$("tirarFoto").addEventListener("click", () => { limparFoto(); mudou(); $("arquivo").focus({preventScroll: true}); });
+
+// arrastar um arquivo de imagem e soltar em qualquer parte da página (soltar fora do lugar nunca abre a imagem no lugar do cadastro)
+const sFoto = $("sFoto");
+const temArquivos = e => !!e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files");
+let arrastes = 0;
+window.addEventListener("dragenter", e => { if(!temArquivos(e)) return; e.preventDefault(); arrastes++; sFoto.classList.add("soltando"); });
+window.addEventListener("dragover", e => { if(!temArquivos(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+window.addEventListener("dragleave", () => { arrastes = Math.max(0, arrastes - 1); if(!arrastes) sFoto.classList.remove("soltando"); });
+window.addEventListener("drop", e => {
+  arrastes = 0;
+  sFoto.classList.remove("soltando");
+  if(!temArquivos(e)) return;
+  e.preventDefault();
+  const arquivos = [...e.dataTransfer.files];
+  const f = arquivos.find(ehImagem);
+  if(!f){
+    mostrarErroFoto(arquivos.length ? "Esse arquivo não é uma imagem. Escolha uma foto em JPG ou PNG." : "Não consegui pegar o arquivo arrastado. Use o botão \"Escolher ou tirar foto\".");
+    rolarPara($("erroFoto"), "center");
+    return;
+  }
+  if(finalizado) return;
+  receberArquivo(f);
+  rolarPara(sFoto, "start");
+});
+
+/* arrastar, pinça, roda do mouse, teclado */
+const ponteiros = new Map();
+let dist0 = 0;
+const distancia = () => { const [a, b] = [...ponteiros.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+palco.addEventListener("pointerdown", e => {
+  if(!fonte) return;
+  palco.setPointerCapture(e.pointerId);
+  ponteiros.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  palco.classList.add("arrastando");
+  if(ponteiros.size === 2) dist0 = distancia();
+});
+palco.addEventListener("pointermove", e => {
+  const p = ponteiros.get(e.pointerId);
+  if(!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if(ponteiros.size === 1){
+    cx += dx; cy += dy;
+    fotoMexeu();
+    desenhar();
+  }else if(ponteiros.size === 2){
+    const d = distancia();
+    if(dist0 > 0) definirZoom(z * d / dist0);
+    dist0 = d;
+    cx += dx / 2; cy += dy / 2;
+    fotoMexeu();
+    desenhar();
+  }
+});
+function soltar(e){
+  ponteiros.delete(e.pointerId);
+  if(ponteiros.size < 2) dist0 = 0;
+  if(!ponteiros.size) palco.classList.remove("arrastando");
+}
+palco.addEventListener("pointerup", soltar);
+palco.addEventListener("pointercancel", soltar);
+palco.addEventListener("wheel", e => {
+  if(!fonte) return;
+  e.preventDefault();
+  definirZoom(z * Math.exp(-e.deltaY * 0.0015));
+}, {passive: false});
+palco.addEventListener("keydown", e => {
+  if(!fonte) return;
+  const passo = 10;
+  if(e.key === "ArrowLeft") cx -= passo;
+  else if(e.key === "ArrowRight") cx += passo;
+  else if(e.key === "ArrowUp") cy -= passo;
+  else if(e.key === "ArrowDown") cy += passo;
+  else if(e.key === "+" || e.key === "="){ e.preventDefault(); definirZoom(z * 1.1); return; }
+  else if(e.key === "-" || e.key === "_"){ e.preventDefault(); definirZoom(z / 1.1); return; }
+  else return;
+  e.preventDefault();
+  fotoMexeu();
+  desenhar();
+});
+$("zoom").addEventListener("input", e => definirZoom(parseFloat(e.target.value)));
+window.addEventListener("resize", () => { ajustarCanvas(); desenhar(); });
+
+const bytesDoDataUrl = url => {
+  const b64 = url.slice(url.indexOf(",") + 1);
+  return Math.floor(b64.length * 3 / 4) - (b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0);
+};
+// a foto final em JPEG (data URL); null se não há foto
+function fotoAtual(){
+  if(!fonte) return null;
+  if(fotoRestaurada) return fotoRestaurada;
+  if(fotoCache) return fotoCache;
+  desenhar();
+  let url = "";
+  for(const q of [QUALIDADE, 0.75, 0.6, 0.45]){
+    url = saida.toDataURL("image/jpeg", q);
+    if(bytesDoDataUrl(url) <= MAX_FOTO_BYTES) break;
+  }
+  fotoCache = url;
+  return url;
+}
+
+/* ---------- ler e conferir o que foi preenchido ---------- */
+// devolve o contato (no mesmo formato do contatos.json, sem a foto) e a lista de problemas
+function coletar(){
+  const erros = [];
+  const falha = (campo, texto) => erros.push({campo, texto});
+
+  const nome = limparNome($("fNome").value);
+  if(!nome) falha("fNome", "Escreva o seu nome (ou nome artístico).");
+  else if(nome.length < 2) falha("fNome", "O nome está curto demais.");
+
+  if(!instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento.");
+  if(!cidades.length) falha("fCidade", "Adicione pelo menos uma cidade onde você toca.");
+
+  const whats = nacional($("fWhats").value);
+  const whatsOk = [10, 11].includes(whats.length);
+  if(!whats){ if(WHATSAPP_OBRIGATORIO) falha("fWhats", "Informe o seu WhatsApp, com DDD."); }
+  else if(!whatsOk) falha("fWhats", "O WhatsApp precisa ter DDD e número (10 ou 11 dígitos).");
+
+  const ig = instaDoCampo($("fInsta").value);
+  if(ig.erro) falha("fInsta", ig.erro);
+
+  let email = semControle($("fEmail").value).trim();
+  if(email && (email.length > MAX_EMAIL || !emailValido(email))){ falha("fEmail", "O e-mail não parece válido."); email = ""; }
+
+  const yt = youtubeDoCampo($("fYoutube").value);
+  if(yt.erro) falha("fYoutube", yt.erro);
+
+  const numeroDe = x => typeof x === "string" ? x : x.numero;
+  const tels = [];
+  telefones.forEach((t, i) => {
+    const bruto = String(t.numero || "").trim(), rotulo = limparRotulo(t.rotulo);
+    if(!bruto && !rotulo) return;
+    const d = nacional(bruto);
+    if(![10, 11].includes(d.length)){ falha("tel-" + i + "-numero", "Outro telefone " + (i + 1) + ": precisa ter DDD e número (10 ou 11 dígitos)."); return; }
+    if(d === whats || tels.some(x => numeroDe(x) === d)) return;
+    tels.push(rotulo ? {numero: d, rotulo} : d);
+  });
+
+  const lks = [];
+  links.forEach((l, i) => {
+    const bruto = semControle(l.url).trim(), rotulo = limparRotulo(l.rotulo);
+    if(!bruto && !rotulo) return;
+    if(!bruto){ falha("link-" + i + "-url", "Link " + (i + 1) + ": falta o endereço."); return; }
+    const url = urlSegura(bruto);
+    if(!url || url.length > MAX_URL){ falha("link-" + i + "-url", "Link " + (i + 1) + ": use um endereço que comece com http:// ou https://."); return; }
+    lks.push(rotulo ? {rotulo, url} : {url});
+  });
+
+  if(!WHATSAPP_OBRIGATORIO && !whats && !ig.valor && !email && !yt.valor && !tels.length && !lks.length) falha("fWhats", "Informe pelo menos uma forma de contato.");
+
+  const c = {};
+  c.nome = nome;
+  c.cidades = [...cidades];
+  c.instrumentos = [...instr];
+  definir(c, "selos", $("fIfc").checked ? ["IFC"] : null);
+  definir(c, "instagram", ig.valor || "");
+  definir(c, "youtube", yt.valor || "");
+  definir(c, "email", email);
+  definir(c, "whatsapp", whatsOk ? whats : "");
+  definir(c, "telefones", tels.length ? tels : null);
+  definir(c, "links", lks.length ? lks : null);
+  definir(c, "observacoes", limparObs($("fObs").value));
+  return {c, erros};
+}
+
+/* ---------- prévia: o cartão como vai aparecer na lista ---------- */
+function criarIcone(id){
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  const use = document.createElementNS(NS, "use");
+  use.setAttribute("href", "#" + id);
+  svg.appendChild(use);
+  return svg;
+}
+function botaoIcone(rotulo, icone){
+  const b = criar("span", "pbtn so-icone");
+  b.title = rotulo;
+  b.appendChild(criarIcone(icone));
+  const sr = criar("span", "sr", rotulo);
+  b.appendChild(sr);
+  return b;
+}
+function linhaFone(numero, rotulo, comWpp){
+  const linha = criar("div", "fone" + (comWpp ? " com-wpp" : ""));
+  if(rotulo) linha.appendChild(criar("span", "rotulo", rotulo));
+  linha.append(criar("span", "fone-num", "📞 " + formatarTel(numero)), criar("span", "copiar", "Copiar"));
+  if(comWpp){
+    const w = criar("span", "wpp-mini");
+    w.innerHTML = ICONE_WPP;
+    linha.appendChild(w);
+  }
+  return linha;
+}
+
+function montarCartao(c, comFoto){
+  const li = criar("li", "cartao");
+  const av = criar("div", "avatar colorido");
+  av.setAttribute("aria-hidden", "true");
+  av.style.setProperty("--h", matiz(c.nome || "Seu nome"));
+  avatarPrevia = null;
+  if(comFoto){
+    const k = criar("canvas");
+    k.width = k.height = 96;
+    av.appendChild(k);
+    avatarPrevia = k;
+    desenharAvatarPrevia();
+  }else{
+    av.textContent = c.nome ? iniciais(c.nome) : "?";
+  }
+
+  const corpo = criar("div");
+  const nome = criar("div", "name" + (c.nome ? "" : " vazio"), c.nome || "Seu nome");
+  if((c.selos || []).includes("IFC")) nome.appendChild(criar("span", "selo", "IFC"));
+  const local = criar("div", "line" + (c.cidades.length ? "" : " vazio"), "📍 " + (c.cidades.length ? c.cidades.join(" e ") : "Suas cidades"));
+  corpo.append(nome, local);
+  if(c.instrumentos.length){
+    const tags = criar("div", "tags");
+    c.instrumentos.forEach(i => { const t = criar("span", "tag", i); t.style.setProperty("--h", matizInstr(i)); tags.appendChild(t); });
+    corpo.appendChild(tags);
+  }
+  if(c.observacoes) corpo.appendChild(criar("div", "obs", c.observacoes));
+  if(c.whatsapp) corpo.appendChild(linhaFone(c.whatsapp, "", false));
+  (c.telefones || []).forEach(t => {
+    const numero = typeof t === "string" ? t : t.numero;
+    corpo.appendChild(linhaFone(numero, typeof t === "string" ? "" : t.rotulo, ehCelular(numero)));
+  });
+
+  const acoes = criar("div", "actions");
+  if(c.whatsapp){
+    const w = criar("span", "pbtn wpp");
+    w.innerHTML = ICONE_WPP + "<span></span>";
+    w.querySelector("span").textContent = "WhatsApp";
+    acoes.appendChild(w);
+  }
+  if(c.instagram) acoes.appendChild(botaoIcone("Instagram de " + c.nome, "i-ig"));
+  if(c.youtube) acoes.appendChild(botaoIcone("YouTube de " + c.nome, "i-yt"));
+  if(c.email) acoes.appendChild(botaoIcone("E-mail de " + c.nome, "i-mail"));
+  (c.links || []).forEach(l => {
+    const b = criar("span", "pbtn");
+    b.appendChild(criarIcone("i-link"));
+    b.appendChild(criar("span", "", l.rotulo || "Link"));
+    acoes.appendChild(b);
+  });
+  if(acoes.children.length) corpo.appendChild(acoes);
+
+  li.append(av, corpo);
+  return li;
+}
+
+function atualizarPrevia(){
+  const {c} = coletar();
+  const alvo = $("previa");
+  alvo.textContent = "";
+  alvo.appendChild(montarCartao(c, !!fonte));
+}
+
+let previaAgendada = false;
+function mudou(){
+  if(!previaAgendada){
+    previaAgendada = true;
+    requestAnimationFrame(() => { previaAgendada = false; atualizarPrevia(); });
+  }
+  agendarRascunho();
+}
+
+/* ---------- rascunho: o que foi preenchido fica guardado neste aparelho até enviar ---------- */
+let temporizadorRascunho = null;
+let rascunhoSujo = false;        // true = esta página já mexeu no formulário (só então ela mexe no rascunho guardado: outra aba aberta e vazia não apaga o rascunho desta)
+function agendarRascunho(){
+  if(restaurando || finalizado) return;
+  rascunhoSujo = true;
+  clearTimeout(temporizadorRascunho);
+  temporizadorRascunho = setTimeout(salvarRascunho, 400);
+}
+function estadoVazio(e){
+  return !String(e.nome || "").trim() && !(e.instr || []).length && !(e.cidades || []).length && !String(e.whats || "").trim() &&
+    !String(e.insta || "").trim() && !String(e.email || "").trim() && !String(e.youtube || "").trim() && !(e.tels || []).length &&
+    !(e.links || []).length && !String(e.obs || "").trim() && !e.ifc && !e.foto;
+}
+function estadoAtual(){
+  return {
+    v: 1, salvoEm: Date.now(),
+    nome: $("fNome").value, instr, cidades, ifc: $("fIfc").checked,
+    whats: $("fWhats").value, insta: $("fInsta").value, email: $("fEmail").value, youtube: $("fYoutube").value,
+    tels: telefones, links, obs: $("fObs").value,
+    foto: fonte ? fotoAtual() : null
+  };
+}
+function salvarRascunho(){
+  clearTimeout(temporizadorRascunho);
+  if(finalizado || restaurando || !rascunhoSujo) return;
+  try{
+    const e = estadoAtual();
+    if(estadoVazio(e)) localStorage.removeItem(CHAVE_RASCUNHO);
+    else localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(e));
+  }catch(err){ /* sem armazenamento (ou cheio): o cadastro funciona do mesmo jeito */ }
+}
+function apagarRascunho(){
+  clearTimeout(temporizadorRascunho);
+  try{ localStorage.removeItem(CHAVE_RASCUNHO); }catch(err){ /* tudo bem */ }
+}
+const cortar = (v, max) => String(v == null ? "" : v).slice(0, max);
+
+function restaurarRascunho(){
+  let bruto = null, e = null;
+  try{ bruto = localStorage.getItem(CHAVE_RASCUNHO); }catch(err){ return false; }
+  if(!bruto) return false;
+  try{ e = JSON.parse(bruto); }catch(err){ e = null; }
+  // rascunho estragado, de outra versão, vazio ou velho demais: não serve, e não precisa ficar guardado
+  if(!e || typeof e !== "object" || e.v !== 1 || !(Date.now() - Number(e.salvoEm) < RASCUNHO_DIAS * 864e5) || estadoVazio(e)){ apagarRascunho(); return false; }
+  restaurando = true;
+  try{
+    $("fNome").value = cortar(e.nome, MAX_NOME);
+    // instrumentos e cidades não são conferidos de novo ao enviar; por isso passam pela mesma conferência de quando são digitados
+    instr = [];
+    (Array.isArray(e.instr) ? e.instr : []).forEach(x => {
+      const r = instrumentoCanonico(typeof x === "string" ? x : "");
+      if(!r.erro && instr.length < MAX_INSTR && !instr.some(y => norm(y) === norm(r.nome))) instr.push(r.nome);
+    });
+    cidades = [];
+    (Array.isArray(e.cidades) ? e.cidades : []).forEach(x => {
+      const m = (typeof x === "string" ? x : "").match(CIDADE_UF);
+      if(m && UFS.includes(m[2]) && cidades.length < MAX_CIDADES && !cidades.some(y => norm(y) === norm(x))) cidades.push(x);
+    });
+    $("fIfc").checked = !!e.ifc;
+    $("fWhats").value = cortar(e.whats, 30);
+    $("fInsta").value = cortar(e.insta, MAX_URL);
+    $("fEmail").value = cortar(e.email, MAX_EMAIL);
+    $("fYoutube").value = cortar(e.youtube, MAX_URL);
+    telefones = (Array.isArray(e.tels) ? e.tels : []).slice(0, MAX_TELEFONES).map(t => ({rotulo: cortar(t && t.rotulo, MAX_ROTULO), numero: cortar(t && t.numero, 20)}));
+    links = (Array.isArray(e.links) ? e.links : []).slice(0, MAX_LINKS).map(l => ({rotulo: cortar(l && l.rotulo, MAX_ROTULO), url: cortar(l && l.url, MAX_URL)}));
+    $("fObs").value = cortar(e.obs, MAX_OBS);
+    if(e.youtube || e.email || telefones.length || links.length) $("maisContatos").open = true;
+    desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks();
+    dicaWhats(false); dicaInsta(false); dicaObs();
+    if(typeof e.foto === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(e.foto) && e.foto.length < 400000){
+      const im = new Image();
+      im.onload = () => { if(!finalizado) usarImagem(im, e.foto); };
+      im.src = e.foto;
+    }
+  }finally{
+    restaurando = false;
+  }
+  return true;
+}
+
+/* ---------- dicas ao vivo ---------- */
+function dicaObs(){ $("dicaObs").textContent = $("fObs").value.length + "/" + MAX_OBS; }
+
+function dicaWhats(terminou){
+  const d = nacional($("fWhats").value);
+  if(!d){ avisar("dicaWhats", ""); return; }
+  if(d.length === 11 && d[2] === "9") avisar("dicaWhats", "Fica assim na lista: " + formatarTel(d));
+  else if(d.length === 11) avisar("dicaWhats", "Celular tem o 9 depois do DDD. Confira: " + formatarTel(d), "aviso");
+  else if(d.length === 10) avisar("dicaWhats", "Só 10 dígitos: falta o 9 depois do DDD? " + formatarTel(d), "aviso");
+  else if(d.length > 11) avisar("dicaWhats", "Tem dígito sobrando: o número tem DDD + 9 dígitos (11 no total).", "erro");
+  else avisar("dicaWhats", terminou ? "Digite o DDD e o número (10 ou 11 dígitos). Agora há " + d.length + "." : "Digite o DDD e o número.", terminou ? "erro" : "");
+}
+function dicaInsta(terminou){
+  const v = $("fInsta").value;
+  if(!v.trim()){ avisar("dicaInsta", ""); return; }
+  const r = instaDoCampo(v);
+  if(r.erro) avisar("dicaInsta", terminou ? r.erro : "", terminou ? "erro" : "");
+  else avisar("dicaInsta", "Vai aparecer o botão para instagram.com/" + r.valor);
+}
+
+/* ---------- enviar ---------- */
+function novoId(){
+  const b = new Uint8Array(16);
+  if(window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
+  else for(let i = 0; i < b.length; i++) b[i] = Math.floor(Math.random() * 256);
+  return [...b].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+// o que será enviado: o contato no mesmo formato do contatos.json (sem "foto") e a foto à parte, em base64.
+// "status" começa sempre "pendente": só o painel (o dono, com senha) muda isso.
+function montarPayload(c, fotoUrl, segundos){
+  const p = {
+    formato: "cadastro-musico",
+    versao: 1,
+    status: "pendente",
+    id: novoId(),
+    enviadoEm: new Date().toISOString(),
+    contato: c,
+    fotoJpegBase64: fotoUrl ? fotoUrl.slice(fotoUrl.indexOf(",") + 1) : null,
+    autorizacao: {aceita: true, texto: TEXTO_AUTORIZACAO},
+    meta: {pagina: PAGINA, segundos}
+  };
+  return reaproveitarId(p);
+}
+
+// Se o envio falhou "no meio" (a internet caiu sem a página saber se o cadastro chegou), tocar em Enviar de novo
+// manda o MESMO documento (mesmo id): se o primeiro tinha chegado, o banco responde "já existe" e conta como enviado;
+// se o músico mudou qualquer coisa, é outro cadastro e ganha outro id. Assim nunca sai cadastro em dobro por causa de um clique repetido.
+let tentativa = null;                    // {assinatura, id, enviadoEm, duvida}: a última tentativa que não terminou bem
+function reaproveitarId(p){
+  const assinatura = JSON.stringify([p.contato, p.fotoJpegBase64]);
+  if(tentativa && tentativa.assinatura === assinatura){
+    p.id = tentativa.id;
+    p.enviadoEm = tentativa.enviadoEm;
+  }else{
+    tentativa = {assinatura, id: p.id, enviadoEm: p.enviadoEm, duvida: false};
+  }
+  return p;
+}
+const codigoCurto = id => String(id).slice(0, 8).toUpperCase();   // o "código" que o músico guarda e o painel mostra
+
+/* ---------- envio ao Firebase (Firestore, pela API REST: sem biblioteca, sem login) ---------- */
+// texto sem pedaço de emoji "cortado ao meio" (o banco recusa texto mal formado)
+function textoBemFormado(s){
+  s = String(s);
+  if(typeof s.toWellFormed === "function") return s.toWellFormed();
+  let r = "";
+  for(let i = 0; i < s.length; i++){
+    const c = s.charCodeAt(i);
+    if(c >= 0xD800 && c <= 0xDBFF && i + 1 < s.length && s.charCodeAt(i + 1) >= 0xDC00 && s.charCodeAt(i + 1) <= 0xDFFF){ r += s.charAt(i) + s.charAt(i + 1); i++; }
+    else if(c >= 0xD800 && c <= 0xDFFF) r += "�";
+    else r += s.charAt(i);
+  }
+  return r;
+}
+// valor do JavaScript -> valor "tipado" que o Firestore entende ({stringValue: ...}, {integerValue: "1"}, ...)
+function paraValor(v){
+  if(v === null) return {nullValue: null};
+  if(typeof v === "boolean") return {booleanValue: v};
+  if(typeof v === "number"){
+    if(!Number.isFinite(v)) throw new Error("número inválido");
+    return Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v};
+  }
+  if(typeof v === "string") return {stringValue: textoBemFormado(v)};
+  if(Array.isArray(v)) return {arrayValue: v.length ? {values: v.map(paraValor)} : {}};
+  if(typeof v === "object") return {mapValue: Object.keys(v).length ? {fields: paraCampos(v)} : {}};
+  throw new Error("tipo não suportado");
+}
+function paraCampos(o){
+  const f = {};
+  Object.keys(o).forEach(k => { if(o[k] !== undefined) f[k] = paraValor(o[k]); });
+  return f;
+}
+
+class ErroEnvio extends Error {
+  constructor(tipo, http){ super(tipo + (http ? " " + http : "")); this.tipo = tipo; this.http = http || 0; }
+}
+
+// Manda o cadastro como um documento novo (createDocument). Devolve se deu certo; senão lança ErroEnvio com o tipo do problema:
+//   rede / tempo / servidor (5xx e "ocupado") = pode ter chegado ou não;  limite (429) = não chegou;  negado (401/403) e config (400/404...) = o banco recusou.
+async function enviarCadastro(payload){
+  if(DEMO){
+    await esperar(DEMO_ESPERA_MS);
+    if(DEMO_SIMULAR_FALHA) throw new Error("falha simulada");
+    return {demo: true};
+  }
+  const doc = Object.assign({}, payload);
+  if(!doc.fotoJpegBase64) delete doc.fotoJpegBase64;            // sem foto = sem o campo
+  const url = API_FIRESTORE + "/v1/projects/" + encodeURIComponent(FIREBASE.projectId) + "/databases/(default)/documents/" + COLECAO +
+    "?documentId=" + encodeURIComponent(payload.id) + "&key=" + encodeURIComponent(FIREBASE.apiKey);
+  const controle = new AbortController();
+  let estourou = false;
+  const relogio = setTimeout(() => { estourou = true; controle.abort(); }, TEMPO_ENVIO_MS);
+  try{
+    const resp = await fetch(url, {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({fields: paraCampos(doc)}),
+      signal: controle.signal, credentials: "omit", cache: "no-store"
+    });
+    const http = resp.status;
+    let erro = null;
+    if(http !== 200){
+      try{ const corpo = await resp.json(); erro = corpo && corpo.error ? corpo.error : null; }catch(e){ /* sem corpo legível: vale o número */ }
+    }
+    if(http === 200) return {enviado: true};
+    const estado = erro && erro.status ? String(erro.status) : "";
+    if(http === 409 && estado === "ALREADY_EXISTS") return {enviado: true, jaExistia: true};   // uma tentativa anterior (mesmo id) tinha chegado
+    if(http === 429) throw new ErroEnvio("limite", http);
+    if(http >= 500 || http === 409 || http === 408) throw new ErroEnvio("servidor", http);
+    if(http === 401 || http === 403) throw new ErroEnvio("negado", http);
+    throw new ErroEnvio("config", http);
+  }catch(err){
+    if(err instanceof ErroEnvio) throw err;
+    throw new ErroEnvio(estourou ? "tempo" : "rede");
+  }finally{
+    clearTimeout(relogio);
+  }
+}
+
+// o que dizer à pessoa em cada tipo de problema
+function mensagemDeErro(err, payload){
+  const tipo = err instanceof ErroEnvio ? err.tipo : "rede";
+  const cod = codigoCurto(payload.id), n = err.http ? " (erro " + err.http + ")" : "";
+  if(tipo === "tempo") return "O envio demorou demais. Seus dados continuam aqui: confira a internet e toque em Enviar de novo.";
+  if(tipo === "limite") return "O servidor está muito ocupado agora. Seus dados continuam aqui: espere um minuto e toque em Enviar de novo.";
+  if(tipo === "servidor") return "O servidor teve um problema" + n + ". Seus dados continuam aqui: tente de novo daqui a pouco.";
+  if(tipo === "negado" && tentativa && tentativa.duvida)       // já houve uma tentativa que pode ter chegado: o "não" pode ser só "esse id já existe"
+    return "Não consegui confirmar se o cadastro chegou: ele pode já ter sido recebido (código " + cod + "). Para ter certeza, avise o organizador informando esse código.";
+  if(tipo === "negado" || tipo === "config")
+    return "O envio não foi aceito" + n + ". Seus dados continuam aqui. Avise o organizador, informando o código " + cod + ".";
+  return "Não consegui enviar agora. Seus dados continuam aqui: confira a internet e toque em Enviar de novo.";
+}
+// falha em que o cadastro PODE ter chegado: a próxima tentativa (mesmo id) precisa lembrar disso
+function marcarDuvida(err){
+  if(tentativa && err instanceof ErroEnvio && (err.tipo === "rede" || err.tipo === "tempo" || err.tipo === "servidor")) tentativa.duvida = true;
+}
+
+function atualizarBotaoEnviar(){
+  const b = $("enviar");
+  b.disabled = enviando;
+  b.textContent = enviando ? "Enviando…" : "Enviar meu cadastro";
+  $("formulario").setAttribute("aria-busy", String(enviando));
+}
+
+const semCampoRepetido = lista => {   // tira os problemas repetidos do mesmo campo (fica o primeiro)
+  const visto = new Set();
+  return lista.filter(e => { if(visto.has(e.campo)) return false; visto.add(e.campo); return true; });
+};
+const naOrdemDaPagina = lista => lista.map(e => ({e, el: $(e.campo)})).sort((a, b) => {
+  if(!a.el || !b.el || a.el === b.el) return 0;
+  return (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
+}).map(x => x.e);
+
+async function enviar(){
+  if(enviando) return;
+  if($("campoIsca").value){ concluir(null); return; }          // campo-isca preenchido: é robô; finge que deu certo
+
+  // o que foi escrito e ainda não foi adicionado (instrumento e cidade)
+  const pend = [];
+  if($("fOutroInstr").value.trim() && !adicionarInstrumentoDigitado())
+    pend.push({campo: "fOutroInstr", texto: "O instrumento que você escreveu ainda não foi adicionado. " + $("msgInstr").textContent});
+  if($("fCidade").value.trim() && !adicionarCidade())
+    pend.push({campo: "fCidade", texto: "A cidade que você escreveu ainda não foi adicionada. " + $("msgCidade").textContent});
+
+  const {c, erros} = coletar();
+  let todos = [...pend, ...erros];
+  if(!$("fAutoriza").checked) todos.push({campo: "fAutoriza", texto: "Marque a autorização para enviar o cadastro."});
+  todos = naOrdemDaPagina(semCampoRepetido(todos));
+  limparTodosErros();
+  if(todos.length){
+    marcarErros(todos);
+    mostrarErros(todos);
+    irPara(todos[0].campo);
+    return;
+  }
+
+  const segundos = Math.round((Date.now() - abriuEm) / 1000);
+  if(segundos < MIN_SEGUNDOS){
+    mostrarAviso("Confira os dados com calma e toque em Enviar de novo daqui a alguns segundos.");
+    return;
+  }
+
+  const payload = montarPayload(c, fotoAtual(), segundos);
+  enviando = true;
+  atualizarBotaoEnviar();
+  try{
+    await enviarCadastro(payload);
+    concluir(payload);
+  }catch(err){
+    mostrarAviso(mensagemDeErro(err, payload));
+    marcarDuvida(err);
+  }finally{
+    enviando = false;
+    atualizarBotaoEnviar();
+  }
+}
+
+/* ---------- tela de "recebido" ---------- */
+const kb = n => (n / 1024).toFixed(1).replace(".", ",") + " KB";
+
+function concluir(payload){
+  finalizado = true;
+  apagarRascunho();
+  const primeiro = payload ? payload.contato.nome.split(" ")[0] : "";
+  $("textoSucesso").textContent = (primeiro ? "Obrigado, " + primeiro + "! " : "Obrigado! ") +
+    "Seu cadastro foi recebido. Depois de conferido, ele entra na lista; você não precisa fazer mais nada.";
+  const mostrarDemo = DEMO && !!payload;
+  $("caixaDemo").hidden = !mostrarDemo;
+  $("linhaCodigo").hidden = DEMO || !payload;                  // o código só existe se o cadastro foi mesmo enviado
+  if(!DEMO && payload) $("codigoCadastro").textContent = codigoCurto(payload.id);
+  if(mostrarDemo){
+    const copia = JSON.parse(JSON.stringify(payload));
+    const b64 = copia.fotoJpegBase64;
+    if(b64) copia.fotoJpegBase64 = b64.slice(0, 40) + "… (" + b64.length + " caracteres no total)";
+    textoCompletoDemo = JSON.stringify(payload, null, 2);
+    nomeArquivoDemo = "cadastro-" + (slug(payload.contato.nome) || "musico") + ".json";
+    $("jsonDemo").textContent = JSON.stringify(copia, null, 2);
+    const total = new Blob([textoCompletoDemo]).size;
+    $("tamanhoDemo").textContent = (b64 ? "Foto: " + kb(bytesDoDataUrl("," + b64)) + " (256 × 256 px, JPEG). " : "Sem foto. ") + "Cadastro inteiro: " + kb(total) + ".";
+    avisar("msgDemo", "");
+  }
+  const org = nacional(ORGANIZADOR_WHATSAPP);
+  $("falarOrganizador").hidden = !org;
+  if(org) $("falarOrganizador").href = "https://wa.me/55" + org + "?text=" + encodeURIComponent(MENSAGEM_ORGANIZADOR);
+  $("formulario").hidden = true;
+  $("avisoRascunho").hidden = true;
+  $("sucesso").hidden = false;
+  zerarTudo();
+  tentativa = null;                                            // cadastro entregue: o próximo é sempre um id novo
+  window.scrollTo({top: 0, behavior: reduzMovimento() ? "auto" : "smooth"});
+  $("tsuc").focus({preventScroll: true});
+}
+
+function zerarTudo(){
+  clearTimeout(temporizadorRascunho);
+  instr = []; cidades = []; telefones = []; links = [];
+  ["fNome", "fCidade", "fOutroInstr", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "campoIsca"].forEach(id => { $(id).value = ""; });
+  $("fUf").value = "";
+  $("fIfc").checked = false;
+  $("fAutoriza").checked = false;
+  $("maisContatos").open = false;
+  ["msgInstr", "msgCidade", "dicaWhats", "dicaInsta"].forEach(id => avisar(id, ""));
+  dicaObs();
+  limparTodosErros();
+  limparFoto();
+  desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks();
+  mudou();
+}
+
+async function copiarTexto(t){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(t);
+      return true;
+    }
+  }catch(e){ /* tenta o método antigo abaixo */ }
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, t.length);
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  }catch(e){ return false; }
+}
+function baixarArquivo(conteudo, nome){
+  const url = URL.createObjectURL(conteudo);
+  const a = document.createElement("a");
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ---------- ligações ---------- */
+$("formulario").addEventListener("submit", e => { e.preventDefault(); enviar(); });
+// Enter num campo de uma linha não envia o cadastro (nos campos de cidade e de instrumento, adiciona)
+$("formulario").addEventListener("keydown", e => {
+  if(e.key !== "Enter" || !e.target.matches("input")) return;
+  if(e.target.type === "checkbox" || e.target.type === "file" || e.target.type === "range") return;
+  e.preventDefault();
+  if(e.target.id === "fCidade") adicionarCidade();
+  else if(e.target.id === "fOutroInstr") adicionarInstrumentoDigitado();
+});
+$("formulario").addEventListener("input", e => limparErro(e.target.id));
+$("formulario").addEventListener("change", e => limparErro(e.target.id));
+
+$("fNome").addEventListener("input", mudou);
+$("fWhats").addEventListener("input", () => { dicaWhats(false); mudou(); });
+$("fWhats").addEventListener("blur", () => {
+  const d = nacional($("fWhats").value);
+  if([10, 11].includes(d.length)) $("fWhats").value = formatarTel(d);
+  dicaWhats(true);
+  mudou();
+});
+$("fInsta").addEventListener("input", () => { dicaInsta(false); mudou(); });
+$("fInsta").addEventListener("blur", () => {
+  const r = instaDoCampo($("fInsta").value);
+  if(r.valor) $("fInsta").value = "@" + r.valor;
+  dicaInsta(true);
+  mudou();
+});
+["fEmail", "fYoutube", "fIfc"].forEach(id => $(id).addEventListener("input", mudou));
+$("fIfc").addEventListener("change", mudou);
+$("fObs").addEventListener("input", () => { dicaObs(); mudou(); });
+$("fCidade").addEventListener("input", () => avisar("msgCidade", ""));
+$("fOutroInstr").addEventListener("input", () => avisar("msgInstr", ""));
+$("addInstr").addEventListener("click", adicionarInstrumentoDigitado);
+$("addCidade").addEventListener("click", adicionarCidade);
+$("addTel").addEventListener("click", () => {
+  if(telefones.length >= MAX_TELEFONES) return;
+  telefones.push({rotulo: "", numero: ""});
+  desenharTelefones("tel-" + (telefones.length - 1) + "-numero");
+  mudou();
+});
+$("addLink").addEventListener("click", () => {
+  if(links.length >= MAX_LINKS) return;
+  links.push({rotulo: "", url: ""});
+  desenharLinks("link-" + (links.length - 1) + "-url");
+  mudou();
+});
+
+$("recomecar").addEventListener("click", () => {
+  if(!confirm("Apagar o que você preencheu e começar de novo?")) return;
+  zerarTudo();
+  apagarRascunho();
+  $("avisoRascunho").hidden = true;
+  window.scrollTo({top: 0, behavior: reduzMovimento() ? "auto" : "smooth"});
+});
+$("outroCadastro").addEventListener("click", () => {
+  finalizado = false;
+  $("sucesso").hidden = true;
+  $("formulario").hidden = false;
+  zerarTudo();
+  ajustarCanvas();
+  window.scrollTo({top: 0, behavior: reduzMovimento() ? "auto" : "smooth"});
+  $("fNome").focus({preventScroll: true});
+});
+$("copiarDemo").addEventListener("click", async () => {
+  const ok = await copiarTexto(textoCompletoDemo);
+  avisar("msgDemo", ok ? "Copiado ✓ (o cadastro inteiro, com a foto completa)." : "Não consegui copiar. Use \"Baixar\".", ok ? "" : "erro");
+});
+$("baixarDemo").addEventListener("click", () => {
+  baixarArquivo(new Blob([textoCompletoDemo], {type: "application/json"}), nomeArquivoDemo);
+  avisar("msgDemo", "Baixado: " + nomeArquivoDemo);
+});
+
+// ao sair da página (por exemplo, para abrir a câmera), guarda o rascunho na hora
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") salvarRascunho(); });
+window.addEventListener("pagehide", salvarRascunho);
+
+/* ---------- início ---------- */
+function iniciar(){
+  $("avisoDemo").hidden = !DEMO;
+  $("textoAutoriza").textContent = TEXTO_AUTORIZACAO;
+  UFS.forEach(uf => { const o = document.createElement("option"); o.value = uf; o.textContent = uf; $("fUf").appendChild(o); });
+  desenharSugestoes();
+  desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks();
+  dicaObs();
+  if(restaurarRascunho()) $("avisoRascunho").hidden = false;
+  desenhar();
+  atualizarPrevia();
+  carregarCidadesDoSite();
+}
+iniciar();
+</script>
+</body>
+</html>
+<!--
+================================================================
+ CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
+ Arquivo: Cadastro_Musicos_v2.html
+ Dados:   cada cadastro vira um documento na pasta "cadastros" do
+          Firestore (Firebase) do projeto, com status "pendente",
+          o contato no mesmo formato do
+          Lista_Contatos_Musicos_contatos.json (sem o campo "foto")
+          e a foto à parte, em base64. Só o dono do projeto (com
+          senha, pelo painel) lê, aprova ou apaga: as regras estão
+          em Firestore_Regras_Cadastros_v1.rules. Com o bloco
+          FIREBASE vazio (ou ?demo=1 no endereço) a página não envia
+          nada: fica em modo demonstração, como na v1.
+================================================================
+
+v2 — 2026-11-06
+  - Envio de verdade: ao tocar em "Enviar meu cadastro", a página
+    grava o cadastro no Firestore do projeto (API REST, sem
+    biblioteca e sem login do músico), como um documento novo da
+    pasta "cadastros" cujo nome é o id (32 letras/números). Os dados
+    do projeto (projectId e apiKey) ficam no bloco FIREBASE, no
+    começo do script; não são segredos. Quem protege o banco são as
+    regras do Firestore.
+  - Modo demonstração continua existindo: bloco FIREBASE vazio ou
+    ?demo=1 no endereço. Nesse modo aparece o aviso no alto e, no
+    fim, o JSON que seria enviado (igual à v1).
+  - Cadastro com o novo campo "status", sempre "pendente":
+    {formato, versao, status, id, enviadoEm, contato,
+    fotoJpegBase64, autorizacao, meta}. Sem foto, o campo
+    fotoJpegBase64 simplesmente não vai (na v1 ia null). Só o
+    painel, com a senha do dono, muda o status.
+  - Sem cadastro em dobro: se a internet cair no meio do envio e a
+    pessoa tocar em Enviar de novo, vai o MESMO id; se a primeira
+    tentativa já tinha chegado, o banco responde "já existe" e isso
+    conta como enviado. Mudou qualquer dado, é outro cadastro e
+    ganha outro id.
+  - A tela de "recebido" mostra o código do cadastro (8 letras e
+    números, o começo do id) para o músico guardar; o painel mostra
+    o mesmo código. Na demonstração o código não aparece.
+  - Problemas explicados em palavras, sempre com os dados ainda na
+    tela e o botão de enviar de volta: sem internet, demorou demais
+    (TEMPO_ENVIO_MS, 25 segundos), servidor ocupado ou com problema,
+    e envio recusado (nesse caso a mensagem traz o código para
+    avisar o organizador). Se uma tentativa que pode ter chegado for
+    seguida de um "recusado", a mensagem diz que o cadastro pode já
+    ter sido recebido.
+  - Chamadas externas: só o envio a firestore.googleapis.com ao
+    tocar em Enviar (mais a leitura opcional do cidades.json do
+    próprio site, como na v1). Nada é enviado antes disso, nem o
+    rascunho.
+  - Todo o resto é igual à v1: passos, prévia ao vivo, foto,
+    conferências, rascunho no aparelho, proteção contra robôs,
+    teclado e leitor de tela.
+  - Ajustes novos no começo do script: FIREBASE (projectId e apiKey),
+    COLECAO, API_FIRESTORE e TEMPO_ENVIO_MS.
+  - Junto desta versão: Firestore_Regras_Cadastros_v1.rules (regras
+    do banco) e Painel_Contatos_v12.html (caixa "Pendentes" para
+    cadastrar os músicos que se inscreveram por esta página).
+
+v1 — 2026-11-06
+  - Primeira versão: página pública em que cada músico preenche o
+    próprio cadastro, no lugar do formulário do Google. Esta versão
+    está em MODO DEMONSTRAÇÃO (DEMO = true, no começo do script):
+    nada é enviado a lugar nenhum. Ao tocar em "Enviar meu
+    cadastro", a página mostra o que seria enviado (com botões para
+    copiar e baixar esse JSON), para conferir o formato antes de
+    ligar o envio de verdade.
+  - Cinco passos numerados, feitos para o celular: 1. Seus dados
+    (nome, instrumentos, selo IFC); 2. Onde você toca (cidades);
+    3. Como falar com você (WhatsApp, Instagram e, em "Mais formas
+    de contato", e-mail, YouTube, outros telefones e links);
+    4. Foto e recado (opcionais); 5. Conferir e enviar.
+  - Prévia ao vivo: o passo 5 mostra o cartão exatamente como a
+    lista mostra (iniciais coloridas ou foto, cidades, instrumentos
+    com a cor de cada um, selo IFC, recado, telefones e botões),
+    atualizado a cada mudança. Texto longo sem espaço quebra a linha
+    em vez de alargar a página (testado a partir de 320 px).
+  - Instrumentos: botões com emoji e cor, como na lista (Acordeon,
+    Teclado, Violão, Guitarra, Baixo, Bateria, Cajon, Vocal), mais
+    "Não achou o seu? Escreva aqui". Nomes como "baterista" viram
+    "Bateria"; a grafia de instrumento conhecido é corrigida.
+  - Cidades: cidade + estado (UF) e "Adicionar" (até 5). Aceita
+    também "Franca/SP", "franca - sp" ou "Franca SP"; ajusta
+    maiúsculas e acentos pelas cidades já conhecidas. Sugere as
+    cidades da lista (e, se a página estiver no mesmo site da lista,
+    lê o Lista_Contatos_Musicos_cidades.json para sugerir todas; se
+    o arquivo faltar ou vier estragado, ficam as da própria página).
+    As coordenadas de cidade nova ficam para o painel.
+  - Contatos: WhatsApp obrigatório (DDD + número, com dica ao vivo
+    de como fica na lista; WHATSAPP_OBRIGATORIO muda isso).
+    Instagram aceita @usuario ou o link do perfil e guarda só o
+    usuário; link de publicação (/p/…) é recusado. YouTube aceita
+    @canal ou link do canal. Outros telefones (até 3, com
+    rótulo opcional) e outros links (até 3; só http/https).
+  - Foto: o enquadramento do painel (arrastar, pinça, zoom, roda do
+    mouse, teclado) com máscara redonda e prévia no tamanho real. Os
+    botões "Escolher ou tirar foto" e "Remover foto" ficam acima do
+    enquadramento, e a página rola até ele depois de escolher. A foto
+    é cortada no aparelho para 256 x 256 px, JPEG qualidade 0,85
+    (se passar de MAX_FOTO_BYTES, 120 KB, a qualidade baixa até
+    caber); a original não é enviada. Aceita soltar o arquivo na
+    página (soltar fora do lugar não abre mais a imagem no lugar do
+    cadastro).
+  - Conferência ao enviar: nome, pelo menos um instrumento, uma
+    cidade, WhatsApp e a autorização. Os problemas aparecem numa
+    lista (lida por leitor de tela), cada um leva ao campo, que fica
+    marcado; se o campo estiver em "Mais formas de contato", a
+    seção abre sozinha. O que foi escrito em "cidade" ou "outro
+    instrumento" e não foi adicionado é adicionado sozinho (ou
+    avisado). Enter dentro de um campo não envia o cadastro.
+  - Autorização (LGPD): o músico marca que sabe que nome, foto,
+    cidades, instrumentos e contatos aparecem numa lista pública e
+    que pode pedir correção ou saída. O texto vai junto no cadastro.
+    A autorização nunca fica guardada no rascunho: é marcada de novo.
+  - Rascunho: o que foi preenchido (inclusive a foto já enquadrada)
+    fica guardado só neste aparelho por até 3 dias, para não se
+    perder se o navegador recarregar ao voltar da câmera. Some ao
+    enviar; "Começar de novo" apaga. Rascunho velho, de outra
+    versão ou estragado é descartado. Instrumentos e cidades que
+    voltam do rascunho passam pela mesma conferência de quando são
+    digitados. Uma aba aberta e vazia não apaga o rascunho de outra.
+    Se o navegador não deixar guardar (aba anônima, sem espaço), a
+    página funciona igual, só sem rascunho.
+  - Proteção básica contra robôs: campo-isca escondido, tempo
+    mínimo de preenchimento (MIN_SEGUNDOS) e limites de tamanho em
+    todos os campos. Texto com caracteres de controle ou que
+    invertem a direção da escrita é limpo. Tudo o que a pessoa
+    digita é mostrado como texto (nunca como HTML) e links só
+    aceitam http/https.
+  - Depois de enviar: tela de "recebido" com o nome da pessoa,
+    link para a lista, "Fazer outro cadastro" e, se
+    ORGANIZADOR_WHATSAPP for preenchido, "Falar com o organizador".
+  - O que seria enviado: {formato, versao, id, enviadoEm, contato,
+    fotoJpegBase64, autorizacao, meta}. "contato" tem as mesmas
+    chaves e a mesma ordem do contatos.json (nome, cidades,
+    instrumentos, selos, instagram, youtube, email, whatsapp,
+    telefones, links, observacoes); só entram os campos preenchidos.
+  - Usável só com teclado (ordem do Tab, marca de foco em tudo),
+    com leitor de tela (avisos anunciados), no modo escuro e com
+    "reduzir movimento". Abre também direto do computador, como
+    arquivo, sem servidor.
+  - Tudo roda no aparelho. Nenhuma chamada externa (a única, opcional,
+    é ler o cidades.json do próprio site da lista).
+  - Ajustes no começo do script: DEMO, WHATSAPP_OBRIGATORIO,
+    ORGANIZADOR_WHATSAPP, MIN_SEGUNDOS, SAIDA, QUALIDADE, ZOOM_MAX,
+    MAX_FOTO_BYTES, INSTRUMENTOS, CIDADES_SUGERIDAS e os limites MAX_*.
+  - Ainda não faz: envio de verdade (Firebase) e a caixa
+    "Pendentes" no painel para aprovar os cadastros.
+-->
