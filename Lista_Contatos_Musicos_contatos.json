@@ -260,5 +260,14 @@
     "selos": ["IFC"],
     "instagram": "jonielson.thiago",
     "whatsapp": "35999445102"
+  },
+  {
+    "nome": "Caíque Branquinho",
+    "foto": "caique-branquinho.jpg",
+    "cidades": ["Franca/SP"],
+    "instrumentos": ["Violão", "Guitarra", "Viola caipira", "Vocal", "Produtor geral"],
+    "instagram": "caiquebranquinho_",
+    "whatsapp": "16991342971",
+    "observacoes": "Disponibilidade para viagens, transporte próprio, passaporte em dia."
   }
 ]
