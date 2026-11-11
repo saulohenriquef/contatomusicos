@@ -55,6 +55,7 @@
   },
   {
     "nome": "Rafael Filipe Vaz",
+    "foto": "rafael-filipe-vaz.jpg",
     "cidades": ["Franca/SP", "Araxá/MG"],
     "instrumentos": ["Acordeon", "Violão", "Vocal"],
     "instagram": "Rafaelvaz_acordeon",
@@ -77,6 +78,7 @@
   },
   {
     "nome": "Marcelinho Sanfoneiro",
+    "foto": "marcelinho-sanfoneiro.jpg",
     "cidades": ["Guará/SP"],
     "instrumentos": ["Acordeon"],
     "instagram": "Marcelinho__Sanfoneiro",
