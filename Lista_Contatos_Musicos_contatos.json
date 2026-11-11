@@ -241,5 +241,15 @@
     "instrumentos": ["Cajon", "Backing vocal", "Bateria"],
     "instagram": "edvaldosantosoficial",
     "whatsapp": "35997370689"
+  },
+  {
+    "nome": "Samu silva",
+    "foto": "samu-silva.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Roadie", "Produtor geral", "Fogueteiro"],
+    "selos": ["IFC"],
+    "instagram": "_samu.silva",
+    "email": "samul.silva97@gmail.com",
+    "whatsapp": "35984423730"
   }
 ]
