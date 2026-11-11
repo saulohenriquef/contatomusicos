@@ -229,5 +229,13 @@
     "instrumentos": ["Percussão", "Congas", "Cajon", "Pandeiro", "Repique", "Surdo", "Tantã"],
     "instagram": "matheusin__013",
     "whatsapp": "35999508221"
+  },
+  {
+    "nome": "Edivaldo Santos",
+    "foto": "edivaldo-santos.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Cajon", "Backing vocal", "Bateria"],
+    "instagram": "edvaldosantos",
+    "whatsapp": "35997370689"
   }
 ]
