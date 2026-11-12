@@ -269,5 +269,23 @@
     "instagram": "caiquebranquinho_",
     "whatsapp": "16991342971",
     "observacoes": "Disponibilidade para viagens, transporte próprio, passaporte em dia."
+  },
+  {
+    "nome": "Marquinho",
+    "foto": "marquinho.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Baixo"],
+    "selos": ["IFC"],
+    "instagram": "marquinh_oss",
+    "whatsapp": "35999600035"
+  },
+  {
+    "nome": "Robson Cícero",
+    "foto": "robson-cicero.jpg",
+    "cidades": ["Juruaia/MG"],
+    "instrumentos": ["Cajon", "Surdo"],
+    "selos": ["IFC"],
+    "instagram": "robson.cicero.359",
+    "whatsapp": "35998442386"
   }
 ]
