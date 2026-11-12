@@ -295,5 +295,13 @@
     "instrumentos": ["Bateria"],
     "instagram": "adison.nascimento",
     "whatsapp": "16991778517"
+  },
+  {
+    "nome": "Willian Erick",
+    "foto": "willian-erick.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["Bateria", "Cajon"],
+    "instagram": "willianbatera09",
+    "whatsapp": "35984728032"
   }
 ]
