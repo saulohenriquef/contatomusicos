@@ -303,5 +303,31 @@
     "instrumentos": ["Bateria", "Cajon"],
     "instagram": "willianbatera09",
     "whatsapp": "35984728032"
+  },
+  {
+    "nome": "William Coutinho",
+    "foto": "william-coutinho.jpg",
+    "cidades": ["Piumhi/MG"],
+    "instrumentos": ["Guitarra", "Violão"],
+    "instagram": "cooooutinho",
+    "whatsapp": "37999615341"
+  },
+  {
+    "nome": "Jefferson Cirilo",
+    "foto": "jefferson-cirilo.jpg",
+    "cidades": ["Piumhi/MG"],
+    "instrumentos": ["Bateria", "Cajon"],
+    "selos": ["IFC"],
+    "instagram": "jeffinhosilva169",
+    "whatsapp": "37999290508"
+  },
+  {
+    "nome": "Cristiano Reis",
+    "foto": "cristiano-reis.jpg",
+    "cidades": ["Piumhi/MG"],
+    "instrumentos": ["Produtor geral"],
+    "instagram": "cristianoreisprodutor",
+    "whatsapp": "35992376385",
+    "observacoes": "Planejamento Geral, coordenação da equipe, Logística, gestão de cronograma, comunicação, Resolução de problemas e supervisão operacional."
   }
 ]
