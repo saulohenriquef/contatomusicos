@@ -339,5 +339,21 @@
     "email": "patrickdl2000@gmail.com",
     "whatsapp": "35988941046",
     "observacoes": "Cerimônias, shows e gravações🎹"
+  },
+  {
+    "nome": "William Borges",
+    "foto": "william-borges.jpg",
+    "cidades": ["Alpinópolis/MG"],
+    "instrumentos": ["Percussão", "Cajon"],
+    "instagram": "william.borgeswb",
+    "whatsapp": "35999478084"
+  },
+  {
+    "nome": "Luan Henrique",
+    "foto": "luan-henrique.jpg",
+    "cidades": ["Santo Antônio da alegria/SP"],
+    "instrumentos": ["Guitarra", "Violão"],
+    "instagram": "luanzinho_henrique_ofc",
+    "whatsapp": "16981538138"
   }
 ]
