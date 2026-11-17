@@ -461,9 +461,9 @@
     </section>
 
     <section class="passo" aria-labelledby="t2">
-      <h2 id="t2">Onde você toca</h2>
+      <h2 id="t2">Onde você mora</h2>
 
-      <label class="campo" for="fCidade">Cidade(s) <b aria-hidden="true">*</b></label>
+      <label class="campo" for="fCidade">Cidade(s) onde você mora <b aria-hidden="true">*</b></label>
       <div class="linha-cidade">
         <input id="fCidade" class="entrada" type="text" list="listaCidades" maxlength="70" autocomplete="off" placeholder="Ex.: Franca" aria-describedby="msgCidade">
         <select id="fUf" class="entrada" aria-label="Estado (UF)"><option value="">UF</option></select>
@@ -471,7 +471,7 @@
       </div>
       <datalist id="listaCidades"></datalist>
       <div id="chipsCidades" class="chips"></div>
-      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se toca em mais de uma cidade, adicione todas (até 5).</p>
+      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se mora em mais de uma cidade (trabalha numa e mora em outra, tem casa de praia…), adicione todas (até 5).</p>
       <p id="msgCidade" class="dica" aria-live="polite"></p>
     </section>
 
@@ -486,27 +486,29 @@
         <button id="carregarExistente" class="btn pequeno" type="button" hidden>Editar o cadastro que já existe</button>
       </div>
 
-      <label class="campo" for="fInsta">Instagram <span>(opcional)</span></label>
-      <input id="fInsta" class="entrada" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario ou link do perfil" aria-describedby="dicaInsta">
-      <p id="dicaInsta" class="dica" aria-live="polite"></p>
-
-      <details id="maisContatos">
-        <summary>Mais formas de contato (e-mail, YouTube, outros números, links)</summary>
-
+      <div id="maisContatos">
         <label class="campo" for="fEmail">E-mail</label>
         <input id="fEmail" class="entrada" type="email" inputmode="email" maxlength="120" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="nome@exemplo.com">
-
-        <label class="campo" for="fYoutube">YouTube</label>
-        <input id="fYoutube" class="entrada" type="text" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@canal ou link do canal">
 
         <div class="campo" id="rotTels">Outros telefones</div>
         <div id="listaTels" class="itens" role="group" aria-labelledby="rotTels"></div>
         <div class="acoes"><button id="addTel" class="btn pequeno" type="button">+ Adicionar outro número</button></div>
+      </div>
+    </section>
 
-        <div class="campo" id="rotLinks">Outros links (site, vídeos, repertório…)</div>
+    <section class="passo" aria-labelledby="t3b">
+      <h2 id="t3b">Redes sociais e internet</h2>
+
+      <label class="campo" for="fInsta">Instagram <span>(opcional)</span></label>
+      <input id="fInsta" class="entrada" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario ou link do perfil" aria-describedby="dicaInsta">
+      <p id="dicaInsta" class="dica" aria-live="polite"></p>
+
+      <label class="campo" for="fYoutube">YouTube</label>
+        <input id="fYoutube" class="entrada" type="text" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@canal ou link do canal">
+
+      <div class="campo" id="rotLinks">Outros links (site, vídeos, repertório…)</div>
         <div id="listaLinks" class="itens" role="group" aria-labelledby="rotLinks"></div>
         <div class="acoes"><button id="addLink" class="btn pequeno" type="button">+ Adicionar link</button></div>
-      </details>
     </section>
 
     <section id="sFoto" class="passo" aria-labelledby="t4">
@@ -625,7 +627,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v5
+    Cadastro de Músicos · Lista de Contatos de Músicos · v5.1
   </footer>
 </div>
 
@@ -883,7 +885,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v5";
+const VERSAO = "v5.1";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v2.rules: publique-as ANTES desta página).
@@ -1691,7 +1693,7 @@ function coletar(){
   else if(nome.length < 2) falha("fNome", "O nome está curto demais.");
 
   if(!instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento ou função.");
-  if(!cidades.length) falha("fCidade", "Adicione pelo menos uma cidade onde você toca.");
+  if(!cidades.length) falha("fCidade", "Adicione pelo menos uma cidade onde você mora.");
 
   const whats = nacional($("fWhats").value);
   const whatsOk = [10, 11].includes(whats.length);
@@ -2892,7 +2894,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v5.html
+ Arquivo: Cadastro_Musicos_v5.1.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -2905,6 +2907,17 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v5.1 — 2026-11-17
+  - "Onde você toca" virou "Onde você mora": o campo é para as
+    cidades em que a pessoa mora (pode ser mais de uma: trabalha numa
+    e mora em outra, tem casa de praia...). Até 5, como antes.
+  - "Como falar com você" agora tem o WhatsApp, o e-mail e outros
+    números, sempre abertos (sumiu o "Mais formas de contato").
+  - Nova parte "Redes sociais e internet", sempre aberta: Instagram,
+    YouTube e outros links.
+  - Não mudou: campos, limites, envio, edição pelo telefone e prévia.
+
+----------------------------------------------------------------
 v5 — 2026-11-16
   (a v4 que ficou pelo caminho não foi usada: a v5 continua da v3.1)
   - Editar o próprio cadastro, sem refazer tudo. No alto da página há
