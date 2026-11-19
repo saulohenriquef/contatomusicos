@@ -33,6 +33,11 @@
     background:var(--card); border:1px solid var(--line); border-radius:12px; outline:none;
   }
   .search:focus{border-color:var(--accent)}
+  .abas,.subabas{display:flex; gap:7px; flex-wrap:wrap; margin:10px 0}
+  .aba{border:1px solid var(--line); border-radius:999px; padding:7px 12px; background:var(--card); color:var(--muted); font:inherit; font-size:.84rem; cursor:pointer}
+  .aba[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:var(--accent); font-weight:700}
+  .resultados{min-width:0}
+  .titulo-lista{margin:4px 0 12px; font-size:1.2rem}
   .meta{display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:.82rem; color:var(--muted)}
   .shuffle{
     background:none; border:1px solid var(--line); color:var(--muted); border-radius:999px;
@@ -76,6 +81,7 @@
   @keyframes aparecer{from{opacity:0} to{opacity:1}}
   @media (prefers-reduced-motion: reduce){ .foto-zoom{animation:none} }
   .name{font-weight:650; font-size:1.05rem; line-height:1.25; overflow-wrap:anywhere}
+  .name .referencia{font-weight:400; opacity:.82}
   .line{color:var(--muted); font-size:.88rem; margin-top:3px}
   .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
   .tag{
@@ -277,6 +283,10 @@
     font:italic 700 .64rem Georgia,serif; letter-spacing:0;
   }
   .selo[aria-expanded="true"]{background:#f5dc92}
+  .selo-verde{background:#dcf3df; color:#17652c; border-color:#77bf85}
+  .selo-amarelo{background:#fff1c9; color:#805c00; border-color:#e0bf55}
+  .selo-vermelho{background:#ffe1df; color:#8d2924; border-color:#df8b84}
+  .selo-enm{background:#e4e8ff; color:#33459b; border-color:#9ba7e9}
   .balao{
     position:absolute; z-index:20; background:var(--card); color:var(--text);
     border:1px solid #d6a62b; border-radius:12px; padding:12px 14px 13px;
@@ -292,6 +302,10 @@
   @media (prefers-color-scheme: dark){
     .selo{background:#3a2f10; color:#f0c860; border-color:#6b5420}
     .selo[aria-expanded="true"]{background:#4a3c14}
+    .selo-verde{background:#163922; color:#a8e2b2; border-color:#347347}
+    .selo-amarelo{background:#3a2f10; color:#f0c860; border-color:#6b5420}
+    .selo-vermelho{background:#451b19; color:#ffb4ad; border-color:#8d3932}
+    .selo-enm{background:#202749; color:#c2cbff; border-color:#4e5d9c}
     .avatar.colorido{background:hsl(var(--h) 28% 20%); color:hsl(var(--h) 60% 74%)}
     .balao{border-color:#6b5420}
     .balao-titulo{color:#f0c860}
@@ -327,12 +341,13 @@
     .chip-emoji{font-size:1rem}
     .chip-qtd{min-width:22px; height:20px; padding:0 6px; margin-right:-4px; font-size:.72rem}
     /* contatos em colunas: 2 em notebook, 3 em notebook grande, 4 em monitor Full HD, 5 em telas maiores */
-    #lista{grid-area:lista; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:12px; align-items:start}
+    .resultados{grid-area:lista}
+    #lista{grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:12px; align-items:start}
     /* com o script funcionando, os cartões se encaixam como tijolos: cada um tem a sua altura e entra na coluna mais curta
        (o script mede o cartão e grava em --linhas quantas linhas de 4px ele ocupa, já com o espaço entre cartões); o perfil aberto só empurra os cartões da própria coluna */
     #lista.encaixe{grid-auto-rows:4px; row-gap:0}
     #lista.encaixe > li.card{grid-row-end:span var(--linhas, 1)}
-    #vazio{grid-area:lista}
+    #vazio{grid-area:auto}
     footer{grid-area:rod}
     .cadastre{max-width:560px; margin-left:auto; margin-right:auto}
   }
@@ -383,8 +398,17 @@
 
   <div class="tools">
     <input id="busca" class="search" type="search" placeholder="Buscar por nome, cidade ou instrumento…" autocomplete="off">
+    <nav class="abas" aria-label="Categorias da lista">
+      <button id="abaMusicos" class="aba" type="button" aria-pressed="true">Músicos</button>
+      <button id="abaArtistas" class="aba" type="button" aria-pressed="false">Artistas / Bandas / Cantores</button>
+      <button id="abaEmpresas" class="aba" type="button" aria-pressed="false">Empresas</button>
+    </nav>
+    <nav id="subabasMusicos" class="subabas" aria-label="Músicos por área">
+      <button id="abaInstrumentos" class="aba" type="button" aria-pressed="true">Instrumentos</button>
+      <button id="abaServicos" class="aba" type="button" aria-pressed="false">Serviços</button>
+    </nav>
     <div id="filtros" class="filtros" hidden>
-      <div class="filtros-titulo" aria-hidden="true">Instrumentos</div>
+      <div id="filtrosTitulo" class="filtros-titulo" aria-hidden="true">Instrumentos</div>
       <div id="filtros-rail" class="filtros-rail" role="group" aria-label="Filtrar por instrumento"></div>
     </div>
     <div class="meta">
@@ -398,22 +422,25 @@
   </div>
   </div>
 
+  <div class="resultados">
+  <h2 id="tituloLista" class="titulo-lista">Músicos · Instrumentos</h2>
   <ul id="lista"></ul>
   <div id="vazio" class="empty" hidden>
     <p id="vazio-texto">Nenhum contato encontrado.</p>
     <button id="limpar" class="shuffle" type="button" hidden>Limpar filtros</button>
   </div>
+  </div>
 
   <footer>
     <div class="cadastre">
-      <strong>Toca e não está na lista?</strong>
-      <span>Músicos e técnicos podem se cadastrar. O cadastro é conferido antes de entrar na lista.</span>
+      <strong>Está ligado à música e ainda não está na lista?</strong>
+      <span>Músicos, artistas, bandas, cantores e empresas podem se cadastrar. O cadastro é conferido antes de entrar.</span>
       <a class="btn-cadastre" id="linkCadastro" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html" rel="noopener">Quero me cadastrar</a>
       <span class="editar">Já tem cadastro? <a id="linkEditar" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html#editar" rel="noopener">Editar meu cadastro</a></span>
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v13
+    Lista de Contatos de Músicos · v14
   </footer>
 </div>
 
@@ -503,7 +530,7 @@ const AJ = (() => {
     ["Tantã","🥁",93,1,1,[]],
     ["Repique","🥁",186,0,1,["repinique"]],
     ["Congas","🥁",222,1,1,["conga"]],
-    ["Vocal","🎤",318,0,1,["voz","canto","cantor","cantora","vocalista","vocais","lead vocal","vocal principal","voz principal"]],
+    ["Vocal","🎤",318,0,1,["voz","canto","vocalista","vocais","lead vocal","vocal principal","voz principal"]],
     ["Backing vocal","🎤",231,1,1,["backing","back vocal","backvocal","b vocal","bvocal","b vocals","backing vocals","back","backs","bv","vocal de apoio","voz de apoio","vocal apoio"]],
     ["Saxofone","🎷",336,1,1,["sax","saxofonista","saxophone","saxo"]],
     ["Trompete","🎺",294,0,1,["trompetista","trumpet"]],
@@ -516,7 +543,9 @@ const AJ = (() => {
     ["DJ","🎧",60,0,1,["disc jockey","deejay"]],
     ["T. Som","🎚️",192,1,1,["t audio","tsom","tecnico de som","tecnico som","tecnico de audio","tecnico audio"]],
     ["T. Luz","💡",201,1,1,["tluz","tecnico de luz","tecnico luz","tecnico de iluminacao","iluminador"]],
-    ["Roadie","🧰",237,2,1,["roadies"]]
+    ["Roadie","🧰",237,2,1,["roadies"]],
+    ["Produtor","🎛️",280,1,1,["produtora","produtores","produtor musical","produção musical"]],
+    ["Téc. palco","🎭",150,1,1,["tecnico de palco","tecnica de palco","tecnicos de palco"]]
   ];
   const MAPA = new Map();
   CATALOGO.forEach(([n, e, h, t, b, apelidos]) => {
@@ -751,12 +780,29 @@ function pedirLocalizacao(){
    Para dar um selo a um contato, coloque o código dele em "selos" no arquivo de contatos
    (ex.: "selos": ["IFC"]). Para criar um selo novo, acrescente uma entrada aqui. */
 const SELOS = {
-  IFC: {
-    sigla: "IFC",
-    nome: "Integrante Fixo de Conjunto",
-    texto: "Este músico é integrante fixo de um conjunto. Aceita free-lances, mas sua disponibilidade é limitada e depende da conciliação com a agenda do conjunto." 
-  }
+  IFC: {sigla: "IFC", nome: "Integrante Fixo de Conjunto"},
+  ABC: {sigla: "ABC", nome: "Artistas, Bandas e Cantores"},
+  ENM: {sigla: "ENM", nome: "Empresas e Negócios da Música"}
 };
+function dadosDoSelo(id, c){
+  const disponibilidade = id === "IFC" ? (c.ifcDisponibilidade || "raramente") : (c.abcDisponibilidade || "nao");
+  const situacao = disponibilidade === "sim" ? "verde" : disponibilidade === "nao" ? "vermelho" : "amarelo";
+  if(id === "IFC") return {...SELOS.IFC, classe: "selo-" + situacao,
+    texto: disponibilidade === "sim"
+      ? "Verde · Sim. Este músico é integrante fixo de um conjunto e aceita convites de free-lance. Combine a agenda com o conjunto antes de fechar."
+      : disponibilidade === "raramente"
+        ? "Amarelo · Raramente. Este músico é integrante fixo de um conjunto e aceita free-lances raramente. Consulte a disponibilidade e combine com antecedência."
+        : "Vermelho · Não. Este músico é integrante fixo de um conjunto e não aceita free-lances no momento."};
+  if(id === "ABC") return {...SELOS.ABC, classe: "selo-" + situacao,
+    texto: disponibilidade === "sim"
+      ? "Verde · Sim. Este artista, banda ou cantor aceita convites de free-lance para os instrumentos e serviços marcados no perfil."
+      : disponibilidade === "raramente"
+        ? "Amarelo · Raramente. Este artista, banda ou cantor aceita convites de free-lance raramente. Consulte a disponibilidade antes de convidar."
+        : "Vermelho · Não. Este perfil artístico não aceita free-lances; o vermelho também é o padrão quando a disponibilidade não foi marcada."};
+  if(id === "ENM") return {...SELOS.ENM, classe: "selo-enm",
+    texto: "Empresa ou negócio ligado à música. O que oferece ou vende fica descrito no recado ou no perfil completo."};
+  return null;
+}
 
 let balaoDe = null;   // botão do selo que está com o balão aberto
 
@@ -1068,9 +1114,15 @@ const emojiInstr = nome => AJ.infoInstrumento(nome).emoji;
 const matizInstr = nome => AJ.infoInstrumento(nome).matiz;
 const tomInstr = nome => AJ.infoInstrumento(nome).tom;
 
-const filtroInstr = new Set();   // chaves dos instrumentos marcados (vazio = todos)
-let nomesInstr = new Map();      // chave -> nome como aparece nos botões
-const passaInstr = c => !filtroInstr.size || c.instrumentos.some(i => filtroInstr.has(chaveInstr(i)));
+const filtroInstr = new Set();
+let nomesInstr = new Map();
+let categoriaAtiva = "musico";
+let areaMusicoAtiva = "instrumentos";
+const SERVICOS_LISTA = new Set(["dj","roadie","t som","t luz","produtor","tec palco"]);
+const ehServicoLista = nome => SERVICOS_LISTA.has(AJ.chave(nome));
+const tagsDaArea = c => (c.instrumentos || []).filter(i => ehServicoLista(i) === (areaMusicoAtiva === "servicos"));
+const contatosDaArea = () => CONTATOS.filter(c => c.categoria === categoriaAtiva);
+const passaInstr = c => !filtroInstr.size || tagsDaArea(c).some(i => filtroInstr.has(chaveInstr(i)));
 
 function criarChip(rotulo, qtd, matizCor, emoji, tom){
   const b = document.createElement("button");
@@ -1124,10 +1176,11 @@ function limparInstr(){ filtroInstr.clear(); aoMudarFiltro(); }
 function limparTudo(){ $("busca").value = ""; limparInstr(); }
 
 function montarFiltros(){
-  const mapa = new Map();   // chave -> {nome, qtd}
-  CONTATOS.forEach(c => {
+  const mapa = new Map();
+  contatosDaArea().forEach(c => {
     const vistos = new Set();
-    c.instrumentos.forEach(i => {
+    const tags = categoriaAtiva === "musico" ? tagsDaArea(c) : (c.instrumentos || []);
+    tags.forEach(i => {
       const nome = String(i == null ? "" : i).trim(), k = chaveInstr(nome);
       if(!k || vistos.has(k)) return;
       vistos.add(k);
@@ -1139,9 +1192,10 @@ function montarFiltros(){
   filtroInstr.clear();
   const rail = $("filtros-rail");
   rail.textContent = "";
-  if(mapa.size < 2){ $("filtros").hidden = true; return; }   // com um instrumento só, filtrar não ajuda
+  if(categoriaAtiva !== "musico" || mapa.size < 2){ $("filtros").hidden = true; return; }
+  $("filtros").hidden = false;
 
-  const todos = criarChip("Todos", CONTATOS.length, null, "", 1);
+  const todos = criarChip("Todos", contatosDaArea().filter(c => tagsDaArea(c).length).length, null, "", 1);
   todos.classList.add("chip-todos"); todos.dataset.k = "";
   todos.addEventListener("click", limparInstr);
   rail.appendChild(todos);
@@ -1254,11 +1308,28 @@ function render(){
   const lista = $("lista");
   fecharBalao();
   lista.textContent = "";
-  videoAtivo = null;   // o player (se havia) saiu junto com os cartões
-
-  const visiveis = ordem.filter(c => passaInstr(c) && (
-    !q || norm(c.nome+" "+(c.cidades||[]).join(" ")+" "+c.instrumentos.join(" ")+" "+(c.selos||[]).map(id => id+" "+(SELOS[id] ? SELOS[id].nome : "")).join(" ")+" "+c.hashtags.join(" ")+" "+c.servicos.join(" ")+" "+c.bio).includes(q)
-  ));
+  videoAtivo = null;
+  const nomeArea = categoriaAtiva === "musico"
+    ? "Músicos · " + (areaMusicoAtiva === "instrumentos" ? "Instrumentos" : "Serviços")
+    : categoriaAtiva === "artista" ? "Artistas / Bandas / Cantores" : "Empresas";
+  $("tituloLista").textContent = nomeArea;
+  $("filtrosTitulo").textContent = areaMusicoAtiva === "instrumentos" ? "Instrumentos" : "Serviços";
+  $("filtros-rail").setAttribute("aria-label", "Filtrar por " + (areaMusicoAtiva === "instrumentos" ? "instrumento" : "serviço"));
+  $("subabasMusicos").hidden = categoriaAtiva !== "musico";
+  $("abaMusicos").setAttribute("aria-pressed", String(categoriaAtiva === "musico"));
+  $("abaArtistas").setAttribute("aria-pressed", String(categoriaAtiva === "artista"));
+  $("abaEmpresas").setAttribute("aria-pressed", String(categoriaAtiva === "empresa"));
+  $("abaInstrumentos").setAttribute("aria-pressed", String(areaMusicoAtiva === "instrumentos"));
+  $("abaServicos").setAttribute("aria-pressed", String(areaMusicoAtiva === "servicos"));
+  $("busca").placeholder = categoriaAtiva === "empresa" ? "Buscar por empresa, cidade ou o que oferece…" : "Buscar por nome, referência, cidade ou função…";
+  const visiveis = ordem.filter(c => {
+    if(c.categoria !== categoriaAtiva) return false;
+    if(categoriaAtiva === "musico" && !tagsDaArea(c).length) return false;
+    if(categoriaAtiva === "musico" && !passaInstr(c)) return false;
+    const termos = [c.nome,c.referencia,c.tipoArtista,(c.cidades||[]).join(" "),(c.instrumentos||[]).join(" "),
+      (c.selos||[]).join(" "), (c.hashtags||[]).join(" "), (c.servicos||[]).join(" "), c.bio, c.observacoes].join(" ");
+    return !q || norm(termos).includes(q);
+  });
 
   visiveis.forEach(c => {
     const li = document.createElement("li");
@@ -1270,12 +1341,20 @@ function render(){
     const corpo = document.createElement("div");
 
     const nome = document.createElement("div");
-    nome.className = "name"; nome.textContent = c.nome;
+    nome.className = "name";
+    const nomeForte = document.createElement("strong");
+    nomeForte.textContent = c.nome;
+    nome.appendChild(nomeForte);
+    if(c.referencia){
+      const referencia = document.createElement("span");
+      referencia.className = "referencia"; referencia.textContent = " (" + c.referencia + ")";
+      nome.appendChild(referencia);
+    }
     (c.selos||[]).forEach(id => {
-      const selo = SELOS[id];
+      const selo = dadosDoSelo(id, c);
       if(!selo) return;
       const b = document.createElement("button");
-      b.type = "button"; b.className = "selo"; b.textContent = selo.sigla;
+      b.type = "button"; b.className = "selo " + selo.classe; b.textContent = selo.sigla;
       b.setAttribute("aria-expanded", "false");
       b.setAttribute("aria-label", selo.sigla + ": " + selo.nome + ". Toque para saber mais.");
       b.addEventListener("click", () => alternarBalao(b, selo));
@@ -1289,7 +1368,9 @@ function render(){
 
     const tags = document.createElement("div");
     tags.className = "tags";
-    c.instrumentos.forEach(inst => {
+    const tagsVisiveis = categoriaAtiva === "musico" ? tagsDaArea(c) : [...(c.instrumentos || [])];
+    if(categoriaAtiva === "artista" && c.tipoArtista) tagsVisiveis.unshift(c.tipoArtista);
+    tagsVisiveis.forEach(inst => {
       const info = AJ.infoInstrumento(inst);
       const t = document.createElement("span");
       t.className = "tag" + (info.tom ? " tom" + info.tom : "");
@@ -1407,6 +1488,14 @@ function render(){
   $("contador").textContent = visiveis.length + (visiveis.length===1 ? " contato" : " contatos") + (marcados.length ? " · " + marcados.join(", ") : "");
 }
 
+function mudarCategoria(categoria){
+  categoriaAtiva = categoria; filtroInstr.clear(); montarFiltros(); render(); if(TELA_GRANDE.matches) voltarAoInicio();
+}
+$("abaMusicos").addEventListener("click", () => mudarCategoria("musico"));
+$("abaArtistas").addEventListener("click", () => mudarCategoria("artista"));
+$("abaEmpresas").addEventListener("click", () => mudarCategoria("empresa"));
+$("abaInstrumentos").addEventListener("click", () => { areaMusicoAtiva = "instrumentos"; filtroInstr.clear(); montarFiltros(); render(); });
+$("abaServicos").addEventListener("click", () => { areaMusicoAtiva = "servicos"; filtroInstr.clear(); montarFiltros(); render(); });
 $("busca").addEventListener("input", () => { render(); if(TELA_GRANDE.matches) voltarAoInicio(); });
 $("limpar").addEventListener("click", limparTudo);
 $("embaralhar").addEventListener("click", () => { ordem = ordenar(); render(); if(TELA_GRANDE.matches) voltarAoInicio(); });
@@ -1451,17 +1540,28 @@ async function iniciar(){
     // nome da cidade -> [lat, lon]; ignora maiúsculas, acentos e espaços nas pontas
     const mapa = new Map(Object.entries(cidades).map(([n, v]) => [norm(n.trim()), [v.lat, v.lon]]));
     const chave = n => norm(String(n||"").trim());
-    CONTATOS = contatos.map(c => ({
+    CONTATOS = contatos.filter(c => c && c.oculto !== true).map(c => {
+      const bruto = String(c.nome || ""), partes = bruto.match(/^(.*?)\s+\(([^()]*)\)$/);
+      const categoria = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
+      const selos = [...new Set([...(Array.isArray(c.selos) ? c.selos : []).filter(s => !["ABC","ENM"].includes(s) && (s !== "IFC" || categoria === "musico")),
+        ...(categoria === "artista" ? ["ABC"] : []), ...(categoria === "empresa" ? ["ENM"] : [])])];
+      return {
       ...c,
-      nome: AJ.formatarNome(c.nome),                     // Saulo Henrique de Tarso, mesmo que tenham escrito tudo em minúscula ou maiúscula
+      nome: AJ.formatarNome(partes ? partes[1] : bruto),
+      referencia: String(c.referencia || (partes ? partes[2] : "")),
+      categoria, tipoArtista: String(c.tipoArtista || ""),
+      ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : "raramente",
+      abcDisponibilidade: ["sim","raramente","nao"].includes(c.abcDisponibilidade) ? c.abcDisponibilidade : "nao",
+      selos,
       cidades: Array.isArray(c.cidades) ? c.cidades : [],
-      instrumentos: AJ.instrumentos(c.instrumentos),     // B.Vocal e Backing Vocal viram um só; repetidos saem
+      instrumentos: AJ.instrumentos(c.instrumentos),
       hashtags: AJ.hashtags(c.hashtags),
       servicos: AJ.servicos(c.servicos),
       bio: AJ.bio(c.bio),
       videos: AJ.videos(c.videos),                       // só YouTube e Instagram; o resto é ignorado
       coords: (Array.isArray(c.cidades) ? c.cidades : []).map(n => mapa.get(chave(n))).filter(Boolean)
-    }));
+    };
+    });
     const faltam = [...new Set(contatos.flatMap(c => (c.cidades||[]).filter(n => !mapa.has(chave(n)))))];
     if(faltam.length) console.warn("Cidades sem coordenadas em Lista_Contatos_Musicos_cidades.json:", faltam);
     montarFiltros();     // botões de instrumento, em ordem alfabética
@@ -1484,12 +1584,33 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v13.html
+ Arquivo: Lista_Contatos_Musicos_v14.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
-          Lista_Contatos_Musicos_contatos.json (agora com os campos opcionais bio,
-          servicos, hashtags e videos) e Lista_Contatos_Musicos_cidades.json
+          Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
+          categoria, selos, disponibilidade, oculto, perfil e contatos) e
+          Lista_Contatos_Musicos_cidades.json
           (no GitHub, o conteúdo do HTML vai para o index.html)
 ================================================================
+
+v14 — 2026-11-19
+  - A lista mantém três seções independentes: Músicos,
+    Artistas/Bandas/Cantores (selo ABC) e Empresas (selo ENM).
+    Artistas e empresas não se misturam com os resultados de músicos.
+  - Músicos têm abas separadas de Instrumentos e Serviços, com busca
+    e filtros próprios. Artistas mostram o tipo do projeto e as
+    funções informadas; empresas aparecem na seção ENM.
+  - O nome pode ter uma referência opcional entre parênteses, em peso
+    normal. O nome principal continua em negrito.
+  - Ocultar pelo painel mantém o contato e o campo "oculto": true no
+    contatos.json; a lista pública o filtra sem excluir o registro.
+  - IFC aparece somente para músicos; ABC identifica artistas e ENM
+    empresas. Os selos de disponibilidade aparecem verdes, amarelos
+    ou vermelhos, com explicação ao abrir cada selo.
+  - Vocal permanece uma função musical; Cantor solo identifica um
+    projeto artístico próprio.
+  - Mantém busca por nome, referência, cidade, função, serviço e selo,
+    cartões com contatos e fotos, localização opcional e tema escuro.
+    Os arquivos de contatos e cidades continuam separados no GitHub.
 
 v1 — 2026-10-06
   - Primeira versão: página única com busca por nome, cidade ou
