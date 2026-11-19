@@ -355,5 +355,25 @@
     "instrumentos": ["Guitarra", "Violão"],
     "instagram": "luanzinho_henrique_ofc",
     "whatsapp": "16981538138"
+  },
+  {
+    "nome": "Gustavo Percussa",
+    "cidades": ["Franca/SP"],
+    "instrumentos": ["Percussão"],
+    "instagram": "",
+    "whatsapp": "16991393065"
+  },
+  {
+    "nome": "André Reis Cantor",
+    "foto": "andre-reis-cantor.jpg",
+    "cidades": ["Alfenas/MG"],
+    "instrumentos": ["Violão", "Cantor Solo"],
+    "instagram": "andrereiscantor",
+    "youtube": "https://youtube.com/@andrereiscantor?si=re1m5lL2vnZsYIU7",
+    "email": "andrereisof@gmail.com",
+    "whatsapp": "35998437884",
+    "bio": "Cantor na estrada a mais de 11 anos.\nSolicite já orçamento para eventos em geral. Trabalho com repertório eclético ou estilo específico de sua preferência, todos os formatos como voz e violão, até banda alto padrão completa. Forneço Som, Luz, Painel, Pista, Lustre, Palco, Estrutura box, Dj, etc. precisou é só chamar👊🏻",
+    "servicos": ["Show em diversos formatos", "Fornecimento de som, luz, painel, pista, dj"],
+    "videos": ["https://www.instagram.com/reel/DQKtY_KjWbV/"]
   }
 ]
