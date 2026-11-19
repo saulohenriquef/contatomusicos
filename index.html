@@ -785,7 +785,7 @@ const SELOS = {
   ENM: {sigla: "ENM", nome: "Empresas e Negócios da Música"}
 };
 function dadosDoSelo(id, c){
-  const disponibilidade = id === "IFC" ? (c.ifcDisponibilidade || "raramente") : (c.abcDisponibilidade || "nao");
+  const disponibilidade = id === "IFC" ? (c.ifcDisponibilidade || "sim") : (c.abcDisponibilidade || "nao");
   const situacao = disponibilidade === "sim" ? "verde" : disponibilidade === "nao" ? "vermelho" : "amarelo";
   if(id === "IFC") return {...SELOS.IFC, classe: "selo-" + situacao,
     texto: disponibilidade === "sim"
@@ -1550,7 +1550,7 @@ async function iniciar(){
       nome: AJ.formatarNome(partes ? partes[1] : bruto),
       referencia: String(c.referencia || (partes ? partes[2] : "")),
       categoria, tipoArtista: String(c.tipoArtista || ""),
-      ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : "raramente",
+      ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : (categoria === "musico" && selos.includes("IFC") ? "sim" : ""),
       abcDisponibilidade: ["sim","raramente","nao"].includes(c.abcDisponibilidade) ? c.abcDisponibilidade : "nao",
       selos,
       cidades: Array.isArray(c.cidades) ? c.cidades : [],
@@ -1606,6 +1606,7 @@ v14 — 2026-11-19
   - IFC aparece somente para músicos; ABC identifica artistas e ENM
     empresas. Os selos de disponibilidade aparecem verdes, amarelos
     ou vermelhos, com explicação ao abrir cada selo.
+    Contatos antigos com IFC sem ifcDisponibilidade ficam verdes.
   - Vocal permanece uma função musical; Cantor solo identifica um
     projeto artístico próprio.
   - Mantém busca por nome, referência, cidade, função, serviço e selo,
