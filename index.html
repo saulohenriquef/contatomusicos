@@ -461,7 +461,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.1
+    Lista de Contatos de Músicos · v14.2
   </footer>
 </div>
 
@@ -569,10 +569,18 @@ const AJ = (() => {
     ["Téc. palco","🎭",150,1,1,["tecnico de palco","tecnica de palco","tecnicos de palco"]]
   ];
   const MAPA = new Map();
-  CATALOGO.forEach(([n, e, h, t, b, apelidos]) => {
-    const reg = {n, e, h, t, b};
-    [n, ...apelidos].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
-  });
+  // grupo de cada linha: "i" = instrumento, "f" = função (DJ, técnicos, roadie...). As linhas da tabela acima não dizem; vale esta lista.
+  // (No Lista_Contatos_Musicos_atuacoes.json o grupo é a lista em que o item está: "instrumentos" ou "funcoes".)
+  const FUNCOES_PADRAO = new Set(["DJ", "T. Som", "T. Luz", "Roadie", "Produtor", "Téc. palco"].map(chave));
+  const grupoDe = l => (l[6] === "f" || l[6] === "i") ? l[6] : (FUNCOES_PADRAO.has(chave(l[0])) ? "f" : "i");
+  function montarMapa(){
+    MAPA.clear();
+    CATALOGO.forEach(l => {
+      const reg = {n: l[0], e: l[1], h: l[2], t: l[3], b: l[4], g: grupoDe(l)};
+      [l[0], ...(Array.isArray(l[5]) ? l[5] : [])].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
+    });
+  }
+  montarMapa();
   const achar = k => MAPA.get(k) || (k.length > 3 && k.endsWith("s") ? MAPA.get(k.slice(0, -1)) : undefined);
 
   // nome do instrumento como vai para a lista: "B.Vocal" e "backing" viram "Backing vocal"; nome desconhecido só ganha maiúscula no começo
@@ -600,8 +608,84 @@ const AJ = (() => {
     const h = hashNome(nome);
     return {nome: instrumento(nome), emoji: "🎵", matiz: h % 360, tom: Math.floor(h / 360) % 2, conhecido: false};
   }
-  // os balões que o cadastro oferece, em ordem alfabética
-  const oferecidos = () => CATALOGO.filter(x => x[4]).map(x => x[0]).sort((a, b) => a.localeCompare(b, PT, {sensitivity: "base"}));
+  // os balões que o cadastro oferece, em ordem alfabética ("i" = só instrumentos, "f" = só funções, sem nada = todos)
+  const oferecidos = grupo => CATALOGO.filter(x => x[4] && (!grupo || grupoDe(x) === grupo)).map(x => x[0]).sort((a, b) => a.localeCompare(b, PT, {sensitivity: "base"}));
+  const ehFuncao = nome => { const r = achar(chave(nome)); return !!r && r.g === "f"; };
+
+  /* ---------- tipos de artista (ABC): reserva; o atuacoes.json do site manda ---------- */
+  const TIPOS = [["Cantor solo", "🎤", 330], ["Dupla sertaneja", "🤠", 34], ["Dupla", "🎙️", 275], ["Banda", "🎸", 210], ["Grupo", "🎼", 150], ["Conjunto", "🎹", 185]]
+    .map(([nome, emoji, matiz]) => ({nome, emoji, matiz}));
+  const tiposArtista = () => TIPOS.map(x => ({...x}));
+  const tipoConhecido = nome => !!chave(nome) && TIPOS.some(x => chave(x.nome) === chave(nome));
+  function infoTipo(nome){
+    const x = TIPOS.find(t => chave(t.nome) === chave(nome));
+    if(x) return {nome: x.nome, emoji: x.emoji, matiz: x.matiz, tom: 0, conhecido: true};
+    return {nome: limpo(nome), emoji: "✨", matiz: hashNome(nome) % 360, tom: 0, conhecido: false};
+  }
+
+  /* ---------- catálogo do site: Lista_Contatos_Musicos_atuacoes.json ----------
+     Quando o site tem esse arquivo, ele manda: instrumentos, funções e tipos de artista saem dele (as tabelas acima ficam só de reserva).
+     O painel acrescenta nele, ao publicar, o que as pessoas escreveram em "Não achou?" (como faz com as cidades novas). */
+  const ARQ_ATUACOES = "Lista_Contatos_Musicos_atuacoes.json";
+  const AJUDA_ATUACOES = "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. " +
+    "Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); " +
+    "tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome.";
+  const txtJ = (v, max) => typeof v === "string" ? limpo(v).slice(0, max) : "";
+  const matizJ = (v, nome) => Number.isFinite(v) ? ((Math.round(v) % 360) + 360) % 360 : hashNome(nome) % 360;
+  function linhaDoJson(x, g){
+    if(!x || typeof x !== "object") return null;
+    const n = txtJ(x.nome, 40);
+    if(!n) return null;
+    const ap = Array.isArray(x.apelidos) ? x.apelidos.map(a => txtJ(a, 40)).filter(Boolean).slice(0, 40) : [];
+    return [n, txtJ(x.emoji, 8) || (g === "f" ? "🧰" : "🎵"), matizJ(x.matiz, n), [0, 1, 2].includes(x.tom) ? x.tom : 0, x.cadastro === false ? 0 : 1, ap, g];
+  }
+  function usarCatalogo(j){
+    if(!j || typeof j !== "object" || j.formato !== "atuacoes-musica") return false;
+    const linhas = [];
+    [["instrumentos", "i"], ["funcoes", "f"]].forEach(([campo, g]) =>
+      (Array.isArray(j[campo]) ? j[campo] : []).slice(0, 400).forEach(x => { const l = linhaDoJson(x, g); if(l) linhas.push(l); }));
+    if(!linhas.length) return false;
+    CATALOGO.splice(0, CATALOGO.length, ...linhas);
+    montarMapa();
+    const tipos = (Array.isArray(j.tiposArtista) ? j.tiposArtista : []).slice(0, 100)
+      .map(x => x && txtJ(x.nome, 50) ? {nome: txtJ(x.nome, 50), emoji: txtJ(x.emoji, 8) || "✨", matiz: matizJ(x.matiz, x.nome)} : null).filter(Boolean);
+    if(tipos.length) TIPOS.splice(0, TIPOS.length, ...tipos);
+    return true;
+  }
+  async function carregarCatalogo(url){
+    try{
+      const r = await fetch(url || ARQ_ATUACOES, {cache: "no-store"});
+      return r.ok ? usarCatalogo(await r.json()) : false;
+    }catch(e){ return false; }
+  }
+  // inclui um nome novo no catálogo desta página (grupo "i", "f" ou "t" = tipo de artista); devolve false se já existia
+  function adicionarAtuacao(nome, grupo){
+    if(grupo === "t"){
+      const n = txtJ(nome, 50);
+      if(!n || tipoConhecido(n)) return false;
+      TIPOS.push({nome: n, emoji: "✨", matiz: hashNome(n) % 360});
+      return true;
+    }
+    const n = instrumento(nome);
+    if(!n || achar(chave(n))) return false;
+    const h = hashNome(n);
+    CATALOGO.push([n, grupo === "f" ? "🧰" : "🎵", h % 360, Math.floor(h / 360) % 2, 1, [], grupo === "f" ? "f" : "i"]);
+    montarMapa();
+    return true;
+  }
+  // o catálogo atual no formato do Lista_Contatos_Musicos_atuacoes.json
+  function catalogoJson(){
+    const item = l => {
+      const o = {nome: l[0], emoji: l[1], matiz: l[2], tom: l[3]};
+      if(!l[4]) o.cadastro = false;
+      if(Array.isArray(l[5]) && l[5].length) o.apelidos = l[5].slice();
+      return o;
+    };
+    return {formato: "atuacoes-musica", versao: 1, ajuda: AJUDA_ATUACOES,
+      instrumentos: CATALOGO.filter(l => grupoDe(l) === "i").map(item),
+      funcoes: CATALOGO.filter(l => grupoDe(l) === "f").map(item),
+      tiposArtista: TIPOS.map(x => ({nome: x.nome, emoji: x.emoji, matiz: x.matiz}))};
+  }
 
   /* ---------- hashtags: #rock #sertanejo #pontualidade ---------- */
   function hashtags(entrada){
@@ -726,7 +810,8 @@ const AJ = (() => {
   }
 
   return {LIM, chave, formatarNome, instrumento, instrumentos, infoInstrumento, oferecidos, hashtags, servicos, bio, video, videos,
-          digitos, telefonesDe, acharPorTelefone, limparContato, CATALOGO};
+          digitos, telefonesDe, acharPorTelefone, limparContato, CATALOGO,
+          ehFuncao, tiposArtista, tipoConhecido, infoTipo, ARQ_ATUACOES, usarCatalogo, carregarCatalogo, adicionarAtuacao, catalogoJson};
 })();
 
 
@@ -1143,8 +1228,7 @@ let nomesInstr = new Map();
 let categoriaAtiva = "musico";
 const AREAS_MUSICO = ["instrumentos", "servicos"];
 const areasMusicoAtivas = new Set(AREAS_MUSICO);
-const SERVICOS_LISTA = new Set(["dj","roadie","t som","t luz","produtor","tec palco"]);
-const ehServicoLista = nome => SERVICOS_LISTA.has(AJ.chave(nome));
+const ehServicoLista = nome => AJ.ehFuncao(nome);   // instrumento ou função: vem do catálogo (Lista_Contatos_Musicos_atuacoes.json; sem ele, a tabela do AJ)
 const tagsDaArea = (c, area) => (c.instrumentos || []).filter(i => ehServicoLista(i) === (area === "servicos"));
 const contatosDaArea = () => CONTATOS.filter(c => c.categoria === categoriaAtiva);
 const passaInstr = c => !filtroInstr.size || (c.instrumentos || []).some(i => filtroInstr.has(chaveInstr(i)));
@@ -1439,7 +1523,7 @@ function render(){
     const tagsVisiveis = [...(c.instrumentos || [])];
     if(categoriaAtiva === "artista" && c.tipoArtista) tagsVisiveis.unshift(c.tipoArtista);
     tagsVisiveis.forEach(inst => {
-      const info = AJ.infoInstrumento(inst);
+      const info = (categoriaAtiva === "artista" && inst === c.tipoArtista) ? AJ.infoTipo(inst) : AJ.infoInstrumento(inst);
       const t = document.createElement("span");
       t.className = "tag" + (info.tom ? " tom" + info.tom : "");
       t.style.setProperty("--h", info.matiz);
@@ -1606,7 +1690,8 @@ async function iniciar(){
   try{
     const [contatos, cidades] = await Promise.all([
       carregarJSON("Lista_Contatos_Musicos_contatos.json"),
-      carregarJSON("Lista_Contatos_Musicos_cidades.json")
+      carregarJSON("Lista_Contatos_Musicos_cidades.json"),
+      AJ.carregarCatalogo()   // instrumentos, funções e tipos de artista (se o arquivo não existir, ficam os da tabela de reserva)
     ]);
     // nome da cidade -> [lat, lon]; ignora maiúsculas, acentos e espaços nas pontas
     const mapa = new Map(Object.entries(cidades).map(([n, v]) => [norm(n.trim()), [v.lat, v.lon]]));
@@ -1655,7 +1740,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.1.html
+ Arquivo: Lista_Contatos_Musicos_v14.2.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2025,6 +2110,14 @@ v14.1 — 2026-11-20
     altura, como os cartões. Celular sem mudança.
   - Changelog: a entrada v14 foi para o fim, na ordem de sempre (mais
     antiga primeiro).
+----------------------------------------------------------------
+v14.2 — 2026-11-20
+  - Instrumentos, funções e tipos de artista passam a vir do
+    Lista_Contatos_Musicos_atuacoes.json do site (cor, emoji, apelidos e
+    se é instrumento ou função). O que separa "Instrumentos" de "Apenas
+    funções" é esse arquivo; sem ele, vale a tabela de reserva.
+  - O tipo do artista (aba ABC) usa a cor do catálogo.
+  - Não mudou: abas, filtros, cartões, encaixe e dados.
 
 ================================================================
 -->
