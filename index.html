@@ -38,6 +38,8 @@
   .aba[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:var(--accent); font-weight:700}
   .resultados{min-width:0}
   .titulo-lista{margin:4px 0 12px; font-size:1.2rem}
+  .grupo-area{grid-column:1 / -1; margin:10px 0 0; padding:0 3px; color:var(--muted)}
+  .grupo-area h3{margin:0; font-size:.92rem; font-weight:750}
   .meta{display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:.82rem; color:var(--muted)}
   .shuffle{
     background:none; border:1px solid var(--line); color:var(--muted); border-radius:999px;
@@ -100,7 +102,7 @@
     .tom2{--bs:12%; --bl:20%; --ts:30%; --tl:76%}
   }
 
-  /* botões de instrumento (filtro) */
+  /* botões de atuação e filtros de instrumentos/funções profissionais */
   /* o contador pode ter o nome dos instrumentos marcados: usa até 2 linhas e os botões ao lado não quebram */
   #contador{flex:1 1 auto; min-width:0; overflow-wrap:anywhere; padding-right:8px; line-height:1.25;
     display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden}
@@ -298,6 +300,15 @@
     position:absolute; left:var(--seta,50%); top:-7px; width:12px; height:12px; background:var(--card);
     border:1px solid #d6a62b; border-right:0; border-bottom:0; transform:translateX(-50%) rotate(45deg);
   }
+  .balao-verde{border-color:#77bf85}
+  .balao-verde .balao-titulo{color:#17652c}
+  .balao-verde .balao-seta{border-color:#77bf85}
+  .balao-amarelo{border-color:#e0bf55}
+  .balao-amarelo .balao-titulo{color:#805c00}
+  .balao-amarelo .balao-seta{border-color:#e0bf55}
+  .balao-vermelho{border-color:#df8b84}
+  .balao-vermelho .balao-titulo{color:#8d2924}
+  .balao-vermelho .balao-seta{border-color:#df8b84}
   .balao.acima .balao-seta{top:auto; bottom:-7px; transform:translateX(-50%) rotate(225deg)}
   @media (prefers-color-scheme: dark){
     .selo{background:#3a2f10; color:#f0c860; border-color:#6b5420}
@@ -310,10 +321,20 @@
     .balao{border-color:#6b5420}
     .balao-titulo{color:#f0c860}
     .balao-seta{border-color:#6b5420}
+    .balao-verde{border-color:#347347}
+    .balao-verde .balao-titulo{color:#a8e2b2}
+    .balao-verde .balao-seta{border-color:#347347}
+    .balao-amarelo{border-color:#6b5420}
+    .balao-amarelo .balao-titulo{color:#f0c860}
+    .balao-amarelo .balao-seta{border-color:#6b5420}
+    .balao-vermelho{border-color:#8d3932}
+    .balao-vermelho .balao-titulo{color:#ffb4ad}
+    .balao-vermelho .balao-seta{border-color:#8d3932}
   }
   /* ---------- v13: computador (a partir de 900px): coluna fixa à esquerda (título, busca e instrumentos) e contatos em colunas ---------- */
   .lateral{display:contents}
   .filtros-titulo{display:none}
+  #atuacoes .filtros-titulo{display:block; margin:0 0 6px 2px; font-size:.74rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted)}
   @media (min-width:900px){
     html{scrollbar-gutter:stable}
     .wrap{
@@ -326,7 +347,7 @@
     header{flex:none; padding:2px 0 12px}
     h1{font-size:1.4rem}
     .tools{position:static; background:transparent; padding:0; display:flex; flex-direction:column; flex:1 1 auto; min-height:0}
-    .search{order:1; flex:none; text-overflow:ellipsis}   /* na coluna só os botões de instrumento encolhem e rolam */
+    .search{order:1; flex:none; text-overflow:ellipsis}   /* na coluna os filtros de atuação encolhem e rolam */
     .meta{order:2; flex:none; flex-direction:column; align-items:stretch; gap:8px; margin-top:10px}
     #contador{-webkit-line-clamp:3; padding-right:0}
     .botoes{flex-wrap:wrap; justify-content:flex-start}
@@ -403,10 +424,10 @@
       <button id="abaArtistas" class="aba" type="button" aria-pressed="false">Artistas / Bandas / Cantores</button>
       <button id="abaEmpresas" class="aba" type="button" aria-pressed="false">Empresas</button>
     </nav>
-    <nav id="subabasMusicos" class="subabas" aria-label="Músicos por área">
-      <button id="abaInstrumentos" class="aba" type="button" aria-pressed="true">Instrumentos</button>
-      <button id="abaServicos" class="aba" type="button" aria-pressed="false">Serviços</button>
-    </nav>
+    <div id="atuacoes" class="filtros" hidden>
+      <div class="filtros-titulo">Atuações</div>
+      <div id="areas-rail" class="filtros-rail" role="group" aria-label="Selecionar atuações"></div>
+    </div>
     <div id="filtros" class="filtros" hidden>
       <div id="filtrosTitulo" class="filtros-titulo" aria-hidden="true">Instrumentos</div>
       <div id="filtros-rail" class="filtros-rail" role="group" aria-label="Filtrar por instrumento"></div>
@@ -423,7 +444,7 @@
   </div>
 
   <div class="resultados">
-  <h2 id="tituloLista" class="titulo-lista">Músicos · Instrumentos</h2>
+  <h2 id="tituloLista" class="titulo-lista">Músicos · Atuações</h2>
   <ul id="lista"></ul>
   <div id="vazio" class="empty" hidden>
     <p id="vazio-texto">Nenhum contato encontrado.</p>
@@ -808,6 +829,7 @@ let balaoDe = null;   // botão do selo que está com o balão aberto
 
 function fecharBalao(){
   $("balao").hidden = true;
+  $("balao").classList.remove("balao-verde", "balao-amarelo", "balao-vermelho");
   if(balaoDe){ balaoDe.setAttribute("aria-expanded", "false"); balaoDe = null; }
 }
 
@@ -815,6 +837,8 @@ function alternarBalao(btn, selo){
   if(balaoDe === btn){ fecharBalao(); return; }
   fecharBalao();
   const bal = $("balao");
+  const tomSelo = String(selo.classe || "").replace("selo-", "");
+  if(["verde", "amarelo", "vermelho"].includes(tomSelo)) bal.classList.add("balao-" + tomSelo);
   $("balao-titulo").textContent = selo.sigla + " · " + selo.nome;
   $("balao-texto").textContent = selo.texto;
 
@@ -1117,12 +1141,14 @@ const tomInstr = nome => AJ.infoInstrumento(nome).tom;
 const filtroInstr = new Set();
 let nomesInstr = new Map();
 let categoriaAtiva = "musico";
-let areaMusicoAtiva = "instrumentos";
+const AREAS_MUSICO = ["instrumentos", "servicos"];
+const areasMusicoAtivas = new Set(AREAS_MUSICO);
 const SERVICOS_LISTA = new Set(["dj","roadie","t som","t luz","produtor","tec palco"]);
 const ehServicoLista = nome => SERVICOS_LISTA.has(AJ.chave(nome));
-const tagsDaArea = c => (c.instrumentos || []).filter(i => ehServicoLista(i) === (areaMusicoAtiva === "servicos"));
+const tagsDaArea = (c, area) => (c.instrumentos || []).filter(i => ehServicoLista(i) === (area === "servicos"));
 const contatosDaArea = () => CONTATOS.filter(c => c.categoria === categoriaAtiva);
-const passaInstr = c => !filtroInstr.size || tagsDaArea(c).some(i => filtroInstr.has(chaveInstr(i)));
+const passaInstr = c => !filtroInstr.size || (c.instrumentos || []).some(i => filtroInstr.has(chaveInstr(i)));
+const rotuloArea = area => area === "instrumentos" ? "Instrumentos" : "Funções profissionais";
 
 function criarChip(rotulo, qtd, matizCor, emoji, tom){
   const b = document.createElement("button");
@@ -1150,16 +1176,20 @@ function atualizarChips(){
     const k = b.dataset.k;
     b.setAttribute("aria-pressed", String(k ? filtroInstr.has(k) : filtroInstr.size === 0));
   });
+  $("areas-rail").querySelectorAll(".chip[data-area]").forEach(b => {
+    b.setAttribute("aria-pressed", String(areasMusicoAtivas.has(b.dataset.area)));
+  });
 }
 
-function atualizarFades(){   // sombra nas pontas da fileira quando ela rola para o lado (celular)
-  const r = $("filtros-rail"), f = $("filtros");
+function atualizarFades(rail = $("filtros-rail"), caixa = $("filtros")){   // sombra nas pontas da fileira quando ela rola para o lado (celular)
+  const r = rail, f = caixa;
   const sobra = r.scrollWidth - r.clientWidth;
   f.classList.toggle("mais-esq", r.scrollLeft > 4);
   f.classList.toggle("mais-dir", sobra > 4 && r.scrollLeft < sobra - 4);
 }
-$("filtros-rail").addEventListener("scroll", atualizarFades, {passive:true});
-window.addEventListener("resize", atualizarFades);
+$("filtros-rail").addEventListener("scroll", () => atualizarFades(), {passive:true});
+$("areas-rail").addEventListener("scroll", () => atualizarFades($("areas-rail"), $("atuacoes")), {passive:true});
+window.addEventListener("resize", () => { atualizarFades(); atualizarFades($("areas-rail"), $("atuacoes")); });
 
 const TELA_GRANDE = window.matchMedia("(min-width:900px)");   // computador: a barra de busca e filtros fica ao lado da lista, não em cima
 function voltarAoInicio(){   // se a pessoa estava lá embaixo na lista, volta para o começo do resultado
@@ -1173,13 +1203,36 @@ function aoMudarFiltro(){
 }
 function alternarInstr(k){ filtroInstr.has(k) ? filtroInstr.delete(k) : filtroInstr.add(k); aoMudarFiltro(); }
 function limparInstr(){ filtroInstr.clear(); aoMudarFiltro(); }
-function limparTudo(){ $("busca").value = ""; limparInstr(); }
+function limparTudo(){
+  $("busca").value = "";
+  filtroInstr.clear();
+  AREAS_MUSICO.forEach(area => areasMusicoAtivas.add(area));
+  atualizarChips(); render(); voltarAoInicio();
+}
 
 function montarFiltros(){
   const mapa = new Map();
-  contatosDaArea().forEach(c => {
+  const contatos = contatosDaArea();
+  const areaRail = $("areas-rail");
+  areaRail.textContent = "";
+  AREAS_MUSICO.forEach(area => {
+    const qtd = contatos.filter(c => tagsDaArea(c, area).length).length;
+    const b = criarChip(area === "instrumentos" ? "🎸 Instrumentos" : "🧰 Funções profissionais", qtd, area === "instrumentos" ? 210 : 35, "", 1);
+    b.dataset.area = area;
+    b.addEventListener("click", () => {
+      if(areasMusicoAtivas.has(area)) areasMusicoAtivas.delete(area);
+      else areasMusicoAtivas.add(area);
+      filtroInstr.clear();
+      montarFiltros(); render();
+    });
+    areaRail.appendChild(b);
+  });
+
+  contatos.forEach(c => {
     const vistos = new Set();
-    const tags = categoriaAtiva === "musico" ? tagsDaArea(c) : (c.instrumentos || []);
+    const tags = categoriaAtiva === "musico"
+      ? AREAS_MUSICO.filter(area => areasMusicoAtivas.has(area)).flatMap(area => tagsDaArea(c, area))
+      : (c.instrumentos || []);
     tags.forEach(i => {
       const nome = String(i == null ? "" : i).trim(), k = chaveInstr(nome);
       if(!k || vistos.has(k)) return;
@@ -1192,10 +1245,11 @@ function montarFiltros(){
   filtroInstr.clear();
   const rail = $("filtros-rail");
   rail.textContent = "";
-  if(categoriaAtiva !== "musico" || mapa.size < 2){ $("filtros").hidden = true; return; }
+  $("atuacoes").hidden = categoriaAtiva !== "musico";
+  if(categoriaAtiva !== "musico" || mapa.size < 2){ $("filtros").hidden = true; atualizarChips(); return; }
   $("filtros").hidden = false;
 
-  const todos = criarChip("Todos", contatosDaArea().filter(c => tagsDaArea(c).length).length, null, "", 1);
+  const todos = criarChip("Todos", contatos.filter(c => AREAS_MUSICO.some(area => areasMusicoAtivas.has(area) && tagsDaArea(c, area).length)).length, null, "", 1);
   todos.classList.add("chip-todos"); todos.dataset.k = "";
   todos.addEventListener("click", limparInstr);
   rail.appendChild(todos);
@@ -1207,7 +1261,7 @@ function montarFiltros(){
   });
   $("filtros").hidden = false;
   atualizarChips();
-  requestAnimationFrame(atualizarFades);
+  requestAnimationFrame(() => atualizarFades());
 }
 
 /* ---------- perfil completo: bio, serviços e vídeos ---------- */
@@ -1309,29 +1363,44 @@ function render(){
   fecharBalao();
   lista.textContent = "";
   videoAtivo = null;
-  const nomeArea = categoriaAtiva === "musico"
-    ? "Músicos · " + (areaMusicoAtiva === "instrumentos" ? "Instrumentos" : "Serviços")
+  const areasSelecionadas = AREAS_MUSICO.filter(area => areasMusicoAtivas.has(area));
+  const tituloAreas = areasSelecionadas.length === 2 ? "Atuações"
+    : areasSelecionadas.length === 1 ? rotuloArea(areasSelecionadas[0]) : "Atuações";
+  const nomeLista = categoriaAtiva === "musico"
+    ? "Músicos · " + tituloAreas
     : categoriaAtiva === "artista" ? "Artistas / Bandas / Cantores" : "Empresas";
-  $("tituloLista").textContent = nomeArea;
-  $("filtrosTitulo").textContent = areaMusicoAtiva === "instrumentos" ? "Instrumentos" : "Serviços";
-  $("filtros-rail").setAttribute("aria-label", "Filtrar por " + (areaMusicoAtiva === "instrumentos" ? "instrumento" : "serviço"));
-  $("subabasMusicos").hidden = categoriaAtiva !== "musico";
+  $("tituloLista").textContent = nomeLista;
+  $("filtrosTitulo").textContent = areasSelecionadas.length === 2 ? "Instrumentos e funções profissionais"
+    : areasSelecionadas.length === 1 ? rotuloArea(areasSelecionadas[0]) : "Instrumentos e funções profissionais";
+  $("filtros-rail").setAttribute("aria-label", "Filtrar por instrumento ou função profissional");
+  $("atuacoes").hidden = categoriaAtiva !== "musico";
   $("abaMusicos").setAttribute("aria-pressed", String(categoriaAtiva === "musico"));
   $("abaArtistas").setAttribute("aria-pressed", String(categoriaAtiva === "artista"));
   $("abaEmpresas").setAttribute("aria-pressed", String(categoriaAtiva === "empresa"));
-  $("abaInstrumentos").setAttribute("aria-pressed", String(areaMusicoAtiva === "instrumentos"));
-  $("abaServicos").setAttribute("aria-pressed", String(areaMusicoAtiva === "servicos"));
   $("busca").placeholder = categoriaAtiva === "empresa" ? "Buscar por empresa, cidade ou o que oferece…" : "Buscar por nome, referência, cidade ou função…";
-  const visiveis = ordem.filter(c => {
+  const contatosVisiveis = ordem.filter(c => {
     if(c.categoria !== categoriaAtiva) return false;
-    if(categoriaAtiva === "musico" && !tagsDaArea(c).length) return false;
+    if(categoriaAtiva === "musico" && !areasSelecionadas.some(area => tagsDaArea(c, area).length)) return false;
     if(categoriaAtiva === "musico" && !passaInstr(c)) return false;
     const termos = [c.nome,c.referencia,c.tipoArtista,(c.cidades||[]).join(" "),(c.instrumentos||[]).join(" "),
       (c.selos||[]).join(" "), (c.hashtags||[]).join(" "), (c.servicos||[]).join(" "), c.bio, c.observacoes].join(" ");
     return !q || norm(termos).includes(q);
   });
+  const visiveis = categoriaAtiva === "musico"
+    ? areasSelecionadas.flatMap(area => contatosVisiveis.filter(c => tagsDaArea(c, area).length).map(c => ({c, area})))
+    : contatosVisiveis.map(c => ({c, area: ""}));
 
-  visiveis.forEach(c => {
+  let areaAnterior = "";
+  visiveis.forEach(({c, area}) => {
+    if(area && area !== areaAnterior){
+      const grupo = document.createElement("li");
+      grupo.className = "grupo-area";
+      const titulo = document.createElement("h3");
+      titulo.textContent = (area === "instrumentos" ? "🎸 " : "🧰 ") + rotuloArea(area);
+      grupo.appendChild(titulo);
+      lista.appendChild(grupo);
+      areaAnterior = area;
+    }
     const li = document.createElement("li");
     li.className = "card";
     const idCard = ++proximoId;
@@ -1368,7 +1437,7 @@ function render(){
 
     const tags = document.createElement("div");
     tags.className = "tags";
-    const tagsVisiveis = categoriaAtiva === "musico" ? tagsDaArea(c) : [...(c.instrumentos || [])];
+    const tagsVisiveis = [...(c.instrumentos || [])];
     if(categoriaAtiva === "artista" && c.tipoArtista) tagsVisiveis.unshift(c.tipoArtista);
     tagsVisiveis.forEach(inst => {
       const info = AJ.infoInstrumento(inst);
@@ -1483,9 +1552,14 @@ function render(){
   });
 
   $("vazio").hidden = visiveis.length > 0;
-  $("limpar").hidden = !(filtroInstr.size || q);
+  const areasFiltradas = categoriaAtiva === "musico" && areasMusicoAtivas.size !== AREAS_MUSICO.length;
+  $("limpar").hidden = !(filtroInstr.size || q || areasFiltradas);
   const marcados = [...filtroInstr].map(k => nomesInstr.get(k) || k).sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}));
-  $("contador").textContent = visiveis.length + (visiveis.length===1 ? " contato" : " contatos") + (marcados.length ? " · " + marcados.join(", ") : "");
+  const contatosUnicos = new Set(visiveis.map(item => item.c)).size;
+  const contagem = categoriaAtiva === "musico" && visiveis.length !== contatosUnicos
+    ? contatosUnicos + (contatosUnicos === 1 ? " contato" : " contatos") + " · " + visiveis.length + " cartões"
+    : visiveis.length + (visiveis.length === 1 ? " contato" : " contatos");
+  $("contador").textContent = contagem + (marcados.length ? " · " + marcados.join(", ") : "");
 }
 
 function mudarCategoria(categoria){
@@ -1494,8 +1568,6 @@ function mudarCategoria(categoria){
 $("abaMusicos").addEventListener("click", () => mudarCategoria("musico"));
 $("abaArtistas").addEventListener("click", () => mudarCategoria("artista"));
 $("abaEmpresas").addEventListener("click", () => mudarCategoria("empresa"));
-$("abaInstrumentos").addEventListener("click", () => { areaMusicoAtiva = "instrumentos"; filtroInstr.clear(); montarFiltros(); render(); });
-$("abaServicos").addEventListener("click", () => { areaMusicoAtiva = "servicos"; filtroInstr.clear(); montarFiltros(); render(); });
 $("busca").addEventListener("input", () => { render(); if(TELA_GRANDE.matches) voltarAoInicio(); });
 $("limpar").addEventListener("click", limparTudo);
 $("embaralhar").addEventListener("click", () => { ordem = ordenar(); render(); if(TELA_GRANDE.matches) voltarAoInicio(); });
@@ -1596,16 +1668,19 @@ v14 — 2026-11-19
   - A lista mantém três seções independentes: Músicos,
     Artistas/Bandas/Cantores (selo ABC) e Empresas (selo ENM).
     Artistas e empresas não se misturam com os resultados de músicos.
-  - Músicos têm abas separadas de Instrumentos e Serviços, com busca
-    e filtros próprios. Artistas mostram o tipo do projeto e as
-    funções informadas; empresas aparecem na seção ENM.
+  - Músicos têm o seletor multiescolha “Atuações”: Instrumentos e
+    Funções profissionais, ambas selecionadas ao abrir. A pessoa que
+    atua nas duas áreas aparece em cada grupo com o cartão completo e
+    todas as suas funções; filtros por instrumento ou função continuam
+    disponíveis. Artistas mostram o tipo do projeto; empresas aparecem
+    na seção ENM.
   - O nome pode ter uma referência opcional entre parênteses, em peso
     normal. O nome principal continua em negrito.
   - Ocultar pelo painel mantém o contato e o campo "oculto": true no
     contatos.json; a lista pública o filtra sem excluir o registro.
   - IFC aparece somente para músicos; ABC identifica artistas e ENM
-    empresas. Os selos de disponibilidade aparecem verdes, amarelos
-    ou vermelhos, com explicação ao abrir cada selo.
+    empresas. Selos e balões explicativos usam a cor correspondente à
+    disponibilidade verde, amarela ou vermelha, inclusive no tema escuro.
     Contatos antigos com IFC sem ifcDisponibilidade ficam verdes.
   - Vocal permanece uma função musical; Cantor solo identifica um
     projeto artístico próprio.
