@@ -1,0 +1,512 @@
+{
+  "formato": "atuacoes-musica",
+  "versao": 1,
+  "ajuda": "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome.",
+  "instrumentos": [
+    {
+      "nome": "Acordeon",
+      "emoji": "🪗",
+      "matiz": 24,
+      "tom": 0,
+      "apelidos": [
+        "acordeom",
+        "acordeao",
+        "acordeonista",
+        "accordion"
+      ]
+    },
+    {
+      "nome": "Sanfona",
+      "emoji": "🪗",
+      "matiz": 44,
+      "tom": 0,
+      "cadastro": false,
+      "apelidos": [
+        "sanfoneiro",
+        "sanfoneira"
+      ]
+    },
+    {
+      "nome": "Gaita",
+      "emoji": "🪗",
+      "matiz": 24,
+      "tom": 2,
+      "cadastro": false
+    },
+    {
+      "nome": "Teclado",
+      "emoji": "🎹",
+      "matiz": 215,
+      "tom": 0,
+      "apelidos": [
+        "teclados",
+        "tecladista",
+        "keyboard",
+        "keyboards",
+        "keys"
+      ]
+    },
+    {
+      "nome": "Sintetizador",
+      "emoji": "🎹",
+      "matiz": 215,
+      "tom": 2,
+      "cadastro": false,
+      "apelidos": [
+        "synth",
+        "sinth"
+      ]
+    },
+    {
+      "nome": "Piano",
+      "emoji": "🎹",
+      "matiz": 285,
+      "tom": 2,
+      "apelidos": [
+        "pianista"
+      ]
+    },
+    {
+      "nome": "Órgão",
+      "emoji": "🎹",
+      "matiz": 342,
+      "tom": 2,
+      "apelidos": [
+        "organista"
+      ]
+    },
+    {
+      "nome": "Violão",
+      "emoji": "🎸",
+      "matiz": 108,
+      "tom": 0,
+      "apelidos": [
+        "violoes",
+        "violonista"
+      ]
+    },
+    {
+      "nome": "Guitarra",
+      "emoji": "🎸",
+      "matiz": 72,
+      "tom": 1,
+      "apelidos": [
+        "guitarrista",
+        "guitar"
+      ]
+    },
+    {
+      "nome": "Baixo",
+      "emoji": "🎸",
+      "matiz": 262,
+      "tom": 0,
+      "apelidos": [
+        "baixista",
+        "baixo eletrico",
+        "bass"
+      ]
+    },
+    {
+      "nome": "Cavaquinho",
+      "emoji": "🎸",
+      "matiz": 147,
+      "tom": 1,
+      "apelidos": [
+        "cavaco",
+        "cavaquinista"
+      ]
+    },
+    {
+      "nome": "Viola caipira",
+      "emoji": "🎸",
+      "matiz": 9,
+      "tom": 1,
+      "apelidos": [
+        "violeiro",
+        "viola de dez cordas",
+        "viola 10 cordas"
+      ]
+    },
+    {
+      "nome": "Viola",
+      "emoji": "🎸",
+      "matiz": 9,
+      "tom": 0,
+      "cadastro": false
+    },
+    {
+      "nome": "Bandolim",
+      "emoji": "🎸",
+      "matiz": 231,
+      "tom": 0,
+      "apelidos": [
+        "bandolinista"
+      ]
+    },
+    {
+      "nome": "Banjo",
+      "emoji": "🪕",
+      "matiz": 57,
+      "tom": 2
+    },
+    {
+      "nome": "Ukulele",
+      "emoji": "🎸",
+      "matiz": 264,
+      "tom": 1,
+      "apelidos": [
+        "ukelele",
+        "ukulele"
+      ]
+    },
+    {
+      "nome": "Violino",
+      "emoji": "🎻",
+      "matiz": 120,
+      "tom": 1,
+      "apelidos": [
+        "violinista",
+        "violin"
+      ]
+    },
+    {
+      "nome": "Rabeca",
+      "emoji": "🎻",
+      "matiz": 120,
+      "tom": 2,
+      "cadastro": false,
+      "apelidos": [
+        "rabequeiro"
+      ]
+    },
+    {
+      "nome": "Violoncelo",
+      "emoji": "🎻",
+      "matiz": 159,
+      "tom": 0,
+      "apelidos": [
+        "violoncelista",
+        "cello",
+        "violoncello",
+        "violocelo"
+      ]
+    },
+    {
+      "nome": "Contrabaixo acústico",
+      "emoji": "🎻",
+      "matiz": 81,
+      "tom": 0,
+      "apelidos": [
+        "baixo acustico",
+        "contra baixo acustico",
+        "double bass"
+      ]
+    },
+    {
+      "nome": "Harpa",
+      "emoji": "🎼",
+      "matiz": 165,
+      "tom": 1,
+      "apelidos": [
+        "harpista"
+      ]
+    },
+    {
+      "nome": "Bateria",
+      "emoji": "🥁",
+      "matiz": 354,
+      "tom": 0,
+      "apelidos": [
+        "baterista",
+        "batera",
+        "drums"
+      ]
+    },
+    {
+      "nome": "Cajon",
+      "emoji": "🥁",
+      "matiz": 175,
+      "tom": 0,
+      "apelidos": [
+        "cajonista"
+      ]
+    },
+    {
+      "nome": "Percussão",
+      "emoji": "🥁",
+      "matiz": 294,
+      "tom": 1,
+      "apelidos": [
+        "percussionista",
+        "percussion"
+      ]
+    },
+    {
+      "nome": "Pandeiro",
+      "emoji": "🥁",
+      "matiz": 141,
+      "tom": 0,
+      "apelidos": [
+        "pandeirista"
+      ]
+    },
+    {
+      "nome": "Zabumba",
+      "emoji": "🥁",
+      "matiz": 30,
+      "tom": 1,
+      "apelidos": [
+        "zabumbeiro"
+      ]
+    },
+    {
+      "nome": "Triângulo",
+      "emoji": "🥁",
+      "matiz": 48,
+      "tom": 1,
+      "apelidos": [
+        "trianguleiro"
+      ]
+    },
+    {
+      "nome": "Surdo",
+      "emoji": "🥁",
+      "matiz": 213,
+      "tom": 1
+    },
+    {
+      "nome": "Tantã",
+      "emoji": "🥁",
+      "matiz": 93,
+      "tom": 1
+    },
+    {
+      "nome": "Repique",
+      "emoji": "🥁",
+      "matiz": 186,
+      "tom": 0,
+      "apelidos": [
+        "repinique"
+      ]
+    },
+    {
+      "nome": "Congas",
+      "emoji": "🥁",
+      "matiz": 222,
+      "tom": 1,
+      "apelidos": [
+        "conga"
+      ]
+    },
+    {
+      "nome": "Vocal",
+      "emoji": "🎤",
+      "matiz": 318,
+      "tom": 0,
+      "apelidos": [
+        "voz",
+        "canto",
+        "vocalista",
+        "vocais",
+        "lead vocal",
+        "vocal principal",
+        "voz principal"
+      ]
+    },
+    {
+      "nome": "Backing vocal",
+      "emoji": "🎤",
+      "matiz": 231,
+      "tom": 1,
+      "apelidos": [
+        "backing",
+        "back vocal",
+        "backvocal",
+        "b vocal",
+        "bvocal",
+        "b vocals",
+        "backing vocals",
+        "back",
+        "backs",
+        "bv",
+        "vocal de apoio",
+        "voz de apoio",
+        "vocal apoio"
+      ]
+    },
+    {
+      "nome": "Saxofone",
+      "emoji": "🎷",
+      "matiz": 336,
+      "tom": 1,
+      "apelidos": [
+        "sax",
+        "saxofonista",
+        "saxophone",
+        "saxo"
+      ]
+    },
+    {
+      "nome": "Trompete",
+      "emoji": "🎺",
+      "matiz": 294,
+      "tom": 0,
+      "apelidos": [
+        "trompetista",
+        "trumpet"
+      ]
+    },
+    {
+      "nome": "Trombone",
+      "emoji": "🎺",
+      "matiz": 162,
+      "tom": 2,
+      "apelidos": [
+        "trombonista"
+      ]
+    },
+    {
+      "nome": "Tuba",
+      "emoji": "🎺",
+      "matiz": 351,
+      "tom": 1
+    },
+    {
+      "nome": "Trompa",
+      "emoji": "🎺",
+      "matiz": 198,
+      "tom": 0
+    },
+    {
+      "nome": "Clarinete",
+      "emoji": "🎶",
+      "matiz": 336,
+      "tom": 0,
+      "apelidos": [
+        "clarinetista"
+      ]
+    },
+    {
+      "nome": "Flauta",
+      "emoji": "🎶",
+      "matiz": 318,
+      "tom": 1,
+      "apelidos": [
+        "flautista"
+      ]
+    },
+    {
+      "nome": "Gaita de boca",
+      "emoji": "🎶",
+      "matiz": 180,
+      "tom": 1,
+      "apelidos": [
+        "harmonica",
+        "gaita boca"
+      ]
+    }
+  ],
+  "funcoes": [
+    {
+      "nome": "DJ",
+      "emoji": "🎧",
+      "matiz": 60,
+      "tom": 0,
+      "apelidos": [
+        "disc jockey",
+        "deejay"
+      ]
+    },
+    {
+      "nome": "T. Som",
+      "emoji": "🎚️",
+      "matiz": 192,
+      "tom": 1,
+      "apelidos": [
+        "t audio",
+        "tsom",
+        "tecnico de som",
+        "tecnico som",
+        "tecnico de audio",
+        "tecnico audio"
+      ]
+    },
+    {
+      "nome": "T. Luz",
+      "emoji": "💡",
+      "matiz": 201,
+      "tom": 1,
+      "apelidos": [
+        "tluz",
+        "tecnico de luz",
+        "tecnico luz",
+        "tecnico de iluminacao",
+        "iluminador"
+      ]
+    },
+    {
+      "nome": "Roadie",
+      "emoji": "🧰",
+      "matiz": 237,
+      "tom": 2,
+      "apelidos": [
+        "roadies"
+      ]
+    },
+    {
+      "nome": "Produtor",
+      "emoji": "🎛️",
+      "matiz": 280,
+      "tom": 1,
+      "apelidos": [
+        "produtora",
+        "produtores",
+        "produtor musical",
+        "produção musical"
+      ]
+    },
+    {
+      "nome": "Téc. palco",
+      "emoji": "🎭",
+      "matiz": 150,
+      "tom": 1,
+      "apelidos": [
+        "tecnico de palco",
+        "tecnica de palco",
+        "tecnicos de palco"
+      ]
+    }
+  ],
+  "tiposArtista": [
+    {
+      "nome": "Cantor solo",
+      "emoji": "🎤",
+      "matiz": 330
+    },
+    {
+      "nome": "Dupla sertaneja",
+      "emoji": "🤠",
+      "matiz": 34
+    },
+    {
+      "nome": "Dupla",
+      "emoji": "🎙️",
+      "matiz": 275
+    },
+    {
+      "nome": "Banda",
+      "emoji": "🎸",
+      "matiz": 210
+    },
+    {
+      "nome": "Grupo",
+      "emoji": "🎼",
+      "matiz": 150
+    },
+    {
+      "nome": "Conjunto",
+      "emoji": "🎹",
+      "matiz": 185
+    }
+  ]
+}
