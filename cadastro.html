@@ -474,17 +474,21 @@
       <div class="campo" id="rotInstr">Instrumentos e funções <b id="obrigatorioInstr" aria-hidden="true">*</b></div>
       <p id="dicaInstr" class="dica">Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.</p>
       <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr" aria-describedby="dicaInstr"></div>
-      <label class="campo" for="fOutroInstr">Não achou o seu instrumento? Escreva aqui</label>
+      <div id="boxOutroInstr" hidden>
+      <label class="campo" for="fOutroInstr">Qual instrumento? Escreva aqui</label>
       <div class="linha">
         <input id="fOutroInstr" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Gaita de foles" aria-describedby="msgInstr">
         <button id="addInstr" class="btn" type="button">Adicionar</button>
       </div>
+      </div>
 
       <div id="chipsFuncoes" class="chips" role="group" aria-label="Funções" aria-describedby="dicaInstr"></div>
-      <label class="campo" for="fOutraFuncao">Não achou a sua função? Escreva aqui</label>
+      <div id="boxOutraFuncao" hidden>
+      <label class="campo" for="fOutraFuncao">Qual função? Escreva aqui</label>
       <div class="linha">
         <input id="fOutraFuncao" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Urso Panda de Palco" aria-describedby="msgInstr">
         <button id="addFuncao" class="btn" type="button">Adicionar</button>
+      </div>
       </div>
       <p id="msgInstr" class="dica" aria-live="polite"></p>
 
@@ -696,7 +700,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.3
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.4
   </footer>
 </div>
 
@@ -1041,7 +1045,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.3";
+const VERSAO = "v6.4";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
@@ -1367,6 +1371,26 @@ function selecionarTipoArtista(valor){
   campo.dispatchEvent(new Event("change", {bubbles: true}));
 }
 
+// "Outros" no fim de cada bloco: abre o campo para escrever o instrumento ou a função que não está nos balões
+function chipOutros(idBox, idCampo){
+  const caixa = $(idBox);
+  if($(idCampo).value.trim()) caixa.hidden = false;          // texto ainda não adicionado: o campo fica à vista
+  const b = criar("button", "chip");
+  b.type = "button";
+  b.style.setProperty("--h", "48");
+  b.setAttribute("aria-pressed", String(!caixa.hidden));
+  b.setAttribute("aria-controls", idBox);
+  const em = criar("span", "chip-emoji", "✏️");
+  em.setAttribute("aria-hidden", "true");
+  b.append(em, criar("span", "", "Outros"));
+  b.addEventListener("click", () => {
+    caixa.hidden = !caixa.hidden;
+    b.setAttribute("aria-pressed", String(!caixa.hidden));
+    if(!caixa.hidden) $(idCampo).focus();
+  });
+  return b;
+}
+
 function desenharInstrumentos(foco){
   const box = $("chipsInstr");
   box.textContent = "";
@@ -1384,6 +1408,7 @@ function desenharInstrumentos(foco){
     const alvo = g === 0 ? box : boxF;
     alvo.appendChild(criar("div", "grupo-titulo", titulo));
     itens.forEach(nome => alvo.appendChild(chipInstrumento(nome)));
+    alvo.appendChild(chipOutros(g === 0 ? "boxOutroInstr" : "boxOutraFuncao", g === 0 ? "fOutroInstr" : "fOutraFuncao"));
   });
   desenharOrdem();
   if(foco){
@@ -3264,7 +3289,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.3.html
+ Arquivo: Cadastro_Musicos_v6.4.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3277,6 +3302,13 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.4 — 2026-11-20
+  - Instrumentos e funções: o campo para escrever ficou escondido atrás
+    de um balão "Outros" no fim de cada bloco (como no tipo de artista).
+    A página fica mais curta; ao tocar em "Outros" o campo abre.
+  - Não mudou: catálogo, envio, regras v4 e o resto.
+
+----------------------------------------------------------------
 v6.3 — 2026-11-20
   - Instrumentos e funções em dois blocos: os balões de instrumentos e,
     logo abaixo, "Não achou o seu instrumento?" (ex.: Gaita de foles);
