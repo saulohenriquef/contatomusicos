@@ -408,16 +408,6 @@
   ],
   "funcoes": [
     {
-      "nome": "DJ",
-      "emoji": "🎧",
-      "matiz": 60,
-      "tom": 0,
-      "apelidos": [
-        "disc jockey",
-        "deejay"
-      ]
-    },
-    {
       "nome": "T. Som",
       "emoji": "🎚️",
       "matiz": 192,
@@ -591,6 +581,11 @@
       "nome": "Conjunto",
       "emoji": "🎹",
       "matiz": 185
+    },
+    {
+      "nome": "DJ",
+      "emoji": "🎧",
+      "matiz": 60
     }
   ]
 }
