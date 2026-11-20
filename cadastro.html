@@ -146,9 +146,9 @@
   }
   @media (prefers-reduced-motion: reduce){ .chip{transition:none} .chip:active{transform:none} }
 
-  /* instrumentos: títulos dos grupos, número da ordem no balão e a lista "Sua ordem" */
+  /* separação instrumentos/funções, número da ordem no balão e a lista "Sua ordem" */
   #chipsInstr{row-gap:12px}
-  .grupo-titulo{flex:0 0 100%; margin:8px 0 -4px; color:var(--muted); font-size:.76rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase}
+  .grupo-titulo{flex:0 0 100%; margin:8px 0 -4px; padding-top:7px; border-top:1px solid var(--line); color:var(--muted); font-size:.76rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase}
   .grupo-titulo:first-child{margin-top:0}
   #chipsInstr .chip{position:relative}
   #chipsInstr .chip[data-ordem]::after{
@@ -467,7 +467,7 @@
 
       <div id="boxAtuacoes">
       <div class="campo" id="rotInstr">Instrumentos e funções <b id="obrigatorioInstr" aria-hidden="true">*</b></div>
-      <p id="dicaInstr" class="dica">Toque nos instrumentos na ordem em que quer que apareçam. O número no balão mostra a posição.</p>
+      <p id="dicaInstr" class="dica">Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.</p>
       <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr" aria-describedby="dicaInstr"></div>
 
       <label class="campo" for="fOutroInstr">Não achou o seu? Escreva aqui</label>
@@ -685,7 +685,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.0
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.1
   </footer>
 </div>
 
@@ -945,7 +945,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.0";
+const VERSAO = "v6.1";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v3.rules: publique-as ANTES desta página).
@@ -984,6 +984,7 @@ const ARQ_CIDADES = "Lista_Contatos_Musicos_cidades.json";   // se a página est
 // Eles vêm da tabela CATALOGO (bloco AJUDANTES, no começo do script), a mesma da lista e do painel: lá também ficam o emoji, a cor e os apelidos de cada um.
 const COLACAO = (a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"});
 const INSTRUMENTOS = AJ.oferecidos();
+const FUNCOES_MUSICA = new Set(["DJ", "T. Som", "T. Luz", "Roadie", "Produtor", "Téc. palco"].map(chave => AJ.chave(chave)));
 const TIPOS_PROJETO_ARTISTA = [
   ["Cantor solo", "🎤", 330],
   ["Dupla sertaneja", "🤠", 34],
@@ -1259,7 +1260,16 @@ function desenharInstrumentos(foco){
   box.textContent = "";
   const base = new Set(INSTRUMENTOS.map(chaveInstr));
   const extras = instr.filter(i => !base.has(chaveInstr(i)));   // os que a pessoa escreveu
-  [...INSTRUMENTOS, ...extras].sort(COLACAO).forEach(nome => box.appendChild(chipInstrumento(nome)));      // tudo junto, em ordem alfabética
+  const nomes = [...new Set([...INSTRUMENTOS, ...extras])].sort(COLACAO);
+  const grupos = [
+    ["Instrumentos", nomes.filter(nome => !FUNCOES_MUSICA.has(AJ.chave(nome)))],
+    ["Funções", nomes.filter(nome => FUNCOES_MUSICA.has(AJ.chave(nome)))]
+  ];
+  grupos.forEach(([titulo, itens]) => {
+    const cabecalho = criar("div", "grupo-titulo", titulo);
+    box.appendChild(cabecalho);
+    itens.forEach(nome => box.appendChild(chipInstrumento(nome)));
+  });
   desenharOrdem();
   if(foco){
     const alvo = [...box.querySelectorAll("button")].find(x => x.dataset.k === foco);
@@ -3099,7 +3109,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.0.html
+ Arquivo: Cadastro_Musicos_v6.1.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3112,10 +3122,21 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.1 — 2026-11-20
+  - A seleção de instrumentos e funções tem grupos visuais separados
+    por uma linha fina, com os títulos “Instrumentos” e “Funções”.
+  - A orientação explica que devem ser marcados os instrumentos e
+    funções em que a pessoa quer prestar serviços; a ordem escolhida
+    define como eles aparecem no perfil.
+
 v6.0 — 2026-11-19
   - Mantém as seções independentes de Músicos, Artistas/Bandas/
     Cantores (ABC) e Empresas (ENM); Empresas não recebem instrumentos
     nem a pergunta ou o selo IFC.
+  - A seleção de instrumentos e funções agora tem grupos separados
+    por uma linha fina, com os títulos “Instrumentos” e “Funções”.
+  - A orientação explica que se marcam os instrumentos e funções em
+    que a pessoa quer prestar serviços, e que a ordem define a exibição.
   - Mantém a referência opcional depois do nome, entre parênteses e
     sem negrito; a prévia mostra como o perfil aparecerá na lista.
   - Mantém os selos IFC e ABC nas cores verde, amarelo e vermelho,
