@@ -98,6 +98,14 @@
   .marcar{display:flex; gap:10px; align-items:flex-start; margin-top:12px; font-size:.9rem; line-height:1.4; cursor:pointer; padding:8px; border-radius:10px; border:1px solid transparent}
   .marcar input{margin-top:3px; width:20px; height:20px; flex:none; accent-color:var(--accent)}
   .marcar small{display:block; color:var(--muted); font-size:.8rem; margin-top:3px}
+  .marcar-ifc{align-items:center; gap:10px}
+  .ifc-copy{flex:1; min-width:0}
+  .ifc-logo{display:inline-flex; flex:none; align-items:center; gap:7px; margin-left:auto; padding:5px 8px; border:1px solid #d7e0e8; border-radius:12px; background:var(--card)}
+  .ifc-logo svg{display:block; width:38px; height:38px; flex:none}
+  .ifc-logo-text{display:grid; gap:3px; line-height:1.05}
+  .ifc-logo-text strong{color:#17324b; font-size:.82rem; letter-spacing:.12em}
+  .ifc-logo-text small{max-width:74px; color:var(--muted); font-size:.58rem; line-height:1.15}
+  @media (prefers-color-scheme:dark){.ifc-logo{border-color:#394554}.ifc-logo-text strong{color:#dbeafe}}
   .grupo-erro{outline:2px solid var(--erro); outline-offset:3px; border-radius:10px}
   .marcar.grupo-erro{outline-offset:-2px}
   details{margin-top:14px}
@@ -214,12 +222,21 @@
   .avatar canvas{position:absolute; inset:0; width:100%; height:100%}
   .name{font-weight:650; font-size:1.05rem; line-height:1.25; overflow-wrap:anywhere}
   .name.vazio, .line.vazio{opacity:.55}
+  .name .referencia{font-weight:400; opacity:.82}
+  .opcoes-status{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:8px 0 12px; padding:10px; border:1px solid var(--line); border-radius:12px}
+  .opcoes-status p{width:100%; margin:0}
+  .opcoes-status label{display:inline-flex; align-items:center; gap:5px; font-size:.9rem}
+  .opcoes-status small{width:100%; color:var(--muted)}
   .line{color:var(--muted); font-size:.88rem; margin-top:3px; overflow-wrap:anywhere}
   .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
   .tag{
     display:inline-block; max-width:100%; overflow-wrap:anywhere; font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:999px;
     background:hsl(var(--h,24) var(--bs) var(--bl)); color:hsl(var(--h,24) var(--ts) var(--tl));
   }
+  .selo-verde{background:#dcf3df!important; color:#17652c!important; border-color:#77bf85!important}
+  .selo-amarelo{background:#fff1c9!important; color:#805c00!important; border-color:#e0bf55!important}
+  .selo-vermelho{background:#ffe1df!important; color:#8d2924!important; border-color:#df8b84!important}
+  .selo-enm{background:#e4e8ff!important; color:#33459b!important; border-color:#9ba7e9!important}
   .selo{
     display:inline-flex; align-items:center; vertical-align:middle; margin-left:6px; min-height:24px;
     background:#fdf0c8; color:#7a5500; border:1px solid #e3c36b; border-radius:999px;
@@ -391,8 +408,8 @@
 
 <div class="wrap">
   <header>
-    <h1>🪗 Cadastro de músicos</h1>
-    <p class="sub">Entre na lista de contatos dos músicos. Leva uns 2 minutos, e o seu cadastro é conferido antes de aparecer na lista.</p>
+    <h1>🪗 Cadastro para a lista de música</h1>
+    <p class="sub">Cadastre músicos, artistas, bandas, cantores e empresas ligadas à música. O cadastro é conferido antes de aparecer na lista.</p>
     <p id="avisoDemo" class="demo" hidden>🧪 <strong>Modo demonstração.</strong> Nada do que você preencher é enviado a lugar nenhum: pode testar à vontade.</p>
     <noscript><p class="demo">Para preencher o cadastro, ative o JavaScript do navegador.</p></noscript>
   </header>
@@ -430,11 +447,26 @@
     <section class="passo" aria-labelledby="t1">
       <h2 id="t1">Seus dados</h2>
 
-      <label class="campo" for="fNome">Seu nome (ou nome artístico) <b aria-hidden="true">*</b></label>
+      <label class="campo" for="fNome">Seu nome, nome artístico ou nome da empresa <b aria-hidden="true">*</b></label>
       <input id="fNome" class="entrada" type="text" maxlength="80" autocomplete="name" placeholder="Ex.: Fulano de Tal" aria-describedby="dicaNome">
       <p id="dicaNome" class="dica" aria-live="polite"></p>
+      <label class="campo" for="fReferencia">Referência ao lado do nome <span>(opcional)</span></label>
+      <input id="fReferencia" class="entrada" type="text" maxlength="60" autocomplete="off" placeholder="Ex.: Banda Tequila ou Estruturas para Iluminação">
+      <label class="campo" for="fCategoria">Onde quer aparecer na lista?</label>
+      <select id="fCategoria" class="entrada">
+        <option value="musico">Músicos e profissionais de música</option>
+        <option value="artista">Artistas / Bandas / Cantores (ABC)</option>
+        <option value="empresa">Empresas (ENM)</option>
+      </select>
+      <div id="blocoTipoArtista" hidden>
+        <input id="fTipoArtista" type="hidden" value="">
+        <div class="campo" id="rotTipoArtista">Tipo de artista ou projeto <span>(opcional)</span></div>
+        <p id="dicaTipoArtista" class="dica">Toque para escolher o formato do seu projeto. “Cantor solo” indica projeto próprio; “Vocal” continua sendo uma função musical.</p>
+        <div id="chipsTiposArtista" class="chips" role="group" aria-labelledby="rotTipoArtista" aria-describedby="dicaTipoArtista"></div>
+      </div>
 
-      <div class="campo" id="rotInstr">Instrumentos e funções <b aria-hidden="true">*</b></div>
+      <div id="boxAtuacoes">
+      <div class="campo" id="rotInstr">Instrumentos e funções <b id="obrigatorioInstr" aria-hidden="true">*</b></div>
       <p id="dicaInstr" class="dica">Toque nos instrumentos na ordem em que quer que apareçam. O número no balão mostra a posição.</p>
       <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr" aria-describedby="dicaInstr"></div>
 
@@ -452,12 +484,38 @@
         <ol id="listaOrdem" class="ordem-lista" aria-labelledby="ordemTit"></ol>
       </div>
 
-      <label class="marcar" for="fIfc">
-        <input id="fIfc" type="checkbox">
-        <span>Sou integrante fixo de um conjunto (banda, grupo ou dupla)
-          <small>Aparece o selo IFC ao lado do seu nome, avisando que a sua agenda é a do conjunto. Deixe desmarcado se toca avulso.</small>
-        </span>
-      </label>
+      </div>
+      <div id="boxDisponibilidadeABC" class="opcoes-status" hidden>
+        <p class="campo">Você aceita convites de free-lance para os instrumentos ou serviços marcados?</p>
+        <label><input type="radio" name="abcDisponibilidade" value="sim"> Sim · selo verde</label>
+        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente · selo amarelo</label>
+        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não · selo vermelho</label>
+        <small>Se escolher “Não”, os instrumentos e serviços serão desmarcados depois da sua confirmação.</small>
+      </div>
+      <div id="boxIfc">
+        <label class="marcar marcar-ifc" for="fIfc">
+          <input id="fIfc" type="checkbox">
+          <span class="ifc-copy">Sou integrante fixo de um conjunto (banda, grupo ou dupla)
+            <small>O selo IFC explica se você aceita convites de free-lance apesar da agenda do conjunto.</small>
+          </span>
+          <span class="ifc-logo" role="img" aria-label="Logo do selo IFC, Integrante Fixo de Conjunto">
+            <svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+              <circle cx="22" cy="22" r="21" fill="#17324b"/>
+              <text x="22" y="26" text-anchor="middle" font-family="Georgia,serif" font-size="21" font-weight="700" fill="#fff">♫</text>
+              <circle cx="12" cy="35" r="2.5" fill="#27a45b"/>
+              <circle cx="22" cy="35" r="2.5" fill="#e8b72d"/>
+              <circle cx="32" cy="35" r="2.5" fill="#d9534f"/>
+            </svg>
+            <span class="ifc-logo-text"><strong>IFC</strong><small>Integrante Fixo<br>de Conjunto</small></span>
+          </span>
+        </label>
+        <div id="opcoesIfc" class="opcoes-status" hidden>
+          <p class="campo">Sendo Integrante Fixo de conjunto, você aceita free-lances?</p>
+          <label><input type="radio" name="ifcDisponibilidade" value="sim"> Sim <span class="selo selo-verde" title="IFC verde: aceita convites de free-lance">IFC</span></label>
+          <label><input type="radio" name="ifcDisponibilidade" value="raramente"> Raramente <span class="selo selo-amarelo" title="IFC amarelo: aceita convites raramente">IFC</span></label>
+          <label><input type="radio" name="ifcDisponibilidade" value="nao"> Não <span class="selo selo-vermelho" title="IFC vermelho: não aceita convites de free-lance">IFC</span></label>
+        </div>
+      </div>
     </section>
 
     <section class="passo" aria-labelledby="t2">
@@ -627,7 +685,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v5.1
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.0
   </footer>
 </div>
 
@@ -702,7 +760,7 @@ const AJ = (() => {
     ["Tantã","🥁",93,1,1,[]],
     ["Repique","🥁",186,0,1,["repinique"]],
     ["Congas","🥁",222,1,1,["conga"]],
-    ["Vocal","🎤",318,0,1,["voz","canto","cantor","cantora","vocalista","vocais","lead vocal","vocal principal","voz principal"]],
+    ["Vocal","🎤",318,0,1,["voz","canto","vocalista","vocais","lead vocal","vocal principal","voz principal"]],
     ["Backing vocal","🎤",231,1,1,["backing","back vocal","backvocal","b vocal","bvocal","b vocals","backing vocals","back","backs","bv","vocal de apoio","voz de apoio","vocal apoio"]],
     ["Saxofone","🎷",336,1,1,["sax","saxofonista","saxophone","saxo"]],
     ["Trompete","🎺",294,0,1,["trompetista","trumpet"]],
@@ -715,7 +773,9 @@ const AJ = (() => {
     ["DJ","🎧",60,0,1,["disc jockey","deejay"]],
     ["T. Som","🎚️",192,1,1,["t audio","tsom","tecnico de som","tecnico som","tecnico de audio","tecnico audio"]],
     ["T. Luz","💡",201,1,1,["tluz","tecnico de luz","tecnico luz","tecnico de iluminacao","iluminador"]],
-    ["Roadie","🧰",237,2,1,["roadies"]]
+    ["Roadie","🧰",237,2,1,["roadies"]],
+    ["Produtor","🎛️",280,1,1,["produtora","produtores","produtor musical","produção musical"]],
+    ["Téc. palco","🎭",150,1,1,["tecnico de palco","tecnica de palco","tecnicos de palco"]]
   ];
   const MAPA = new Map();
   CATALOGO.forEach(([n, e, h, t, b, apelidos]) => {
@@ -885,10 +945,10 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v5.1";
+const VERSAO = "v6.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
-// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v2.rules: publique-as ANTES desta página).
+// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v3.rules: publique-as ANTES desta página).
 // Onde achar: Firebase > engrenagem > Configurações do projeto > Seus aplicativos > firebaseConfig (projectId e apiKey).
 // Enquanto estiverem vazios — ou com ?demo=1 no endereço da página — ela fica em MODO DEMONSTRAÇÃO e não envia nada a lugar nenhum.
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
@@ -924,13 +984,23 @@ const ARQ_CIDADES = "Lista_Contatos_Musicos_cidades.json";   // se a página est
 // Eles vêm da tabela CATALOGO (bloco AJUDANTES, no começo do script), a mesma da lista e do painel: lá também ficam o emoji, a cor e os apelidos de cada um.
 const COLACAO = (a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"});
 const INSTRUMENTOS = AJ.oferecidos();
+const TIPOS_PROJETO_ARTISTA = [
+  ["Cantor solo", "🎤", 330],
+  ["Dupla sertaneja", "🤠", 34],
+  ["Dupla", "🎙️", 275],
+  ["Banda", "🎸", 210],
+  ["Grupo", "🎼", 150],
+  ["Conjunto", "🎹", 185],
+  ["Outro projeto artístico", "✨", 48]
+];
 const CIDADES_SUGERIDAS = ["Alpinópolis/MG", "Araxá/MG", "Brodowski/SP", "Conceição da Aparecida/MG", "Formiga/MG", "Franca/SP", "Guará/SP", "Itaú de Minas/MG", "Passos/MG", "Pedregulho/SP", "Pratápolis/MG", "Ribeirão Preto/SP", "Rifaina/SP", "São Paulo/SP"];
 const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
-const TEXTO_AUTORIZACAO = "Autorizo que meu nome, minha foto, minhas cidades, meus instrumentos, meus contatos (como WhatsApp e Instagram) e o que eu escrever no meu perfil (como bio, serviços, hashtags e vídeos) apareçam na lista pública de músicos, que qualquer pessoa pode abrir. Sei que posso corrigir meu cadastro quando quiser e pedir para tirá-lo da lista.";
+const TEXTO_AUTORIZACAO = "Autorizo que meu nome, referência, categoria, foto, cidades, instrumentos ou funções, contatos e perfil apareçam na lista pública de músicos, artistas ou empresas, que qualquer pessoa pode abrir. Sei que posso corrigir meu cadastro quando quiser e pedir para tirá-lo da lista.";
 const ICONE_WPP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.5 15.07L2 22l5.07-1.5A9.93 9.93 0 1 0 12.04 2Zm5.8 14.1c-.25.7-1.45 1.33-2 1.4-.52.07-1.17.1-1.9-.12a17 17 0 0 1-1.72-.64c-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.6-.38.8-.38l.58.01c.19.01.43-.07.67.5.25.6.85 2.07.92 2.22.08.15.13.33.03.52-.1.2-.15.32-.3.5-.15.17-.32.38-.45.51-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1 2.09 1.32 2.39 1.47.3.15.47.12.65-.07.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.12.08.72-.17 1.42Z"/></svg>';
 
 /* ---------- estado ---------- */
-let instr = [];                  // instrumentos marcados, na ordem em que foram marcados
+let instr = [];                  // instrumentos e funções marcados, na ordem em que foram marcados
+let abcDisponibilidade = "nao", ifcDisponibilidade = "";
 let cidades = [];                // ["Franca/SP"]
 let telefones = [];              // [{rotulo, numero}]
 let links = [];                  // [{rotulo, url}]
@@ -1149,6 +1219,39 @@ function chipInstrumento(nome){
   b.append(em, criar("span", "", nome));
   b.addEventListener("click", () => alternarInstrumento(nome));
   return b;
+}
+
+function chipTipoArtista(valor, emoji, matiz){
+  const selecionado = $("fTipoArtista").value === valor;
+  const b = criar("button", "chip");
+  b.type = "button";
+  b.dataset.valor = valor;
+  b.setAttribute("aria-pressed", String(selecionado));
+  b.setAttribute("aria-label", valor + (selecionado ? ", selecionado" : ""));
+  b.style.setProperty("--h", String(matiz));
+  const em = criar("span", "chip-emoji", emoji);
+  em.setAttribute("aria-hidden", "true");
+  b.append(em, criar("span", "", valor));
+  b.addEventListener("click", () => selecionarTipoArtista(valor));
+  return b;
+}
+
+function desenharTiposArtista(foco){
+  const box = $("chipsTiposArtista");
+  if(!box) return;
+  box.textContent = "";
+  TIPOS_PROJETO_ARTISTA.forEach(([valor, emoji, matiz]) => box.appendChild(chipTipoArtista(valor, emoji, matiz)));
+  if(foco){
+    const alvo = [...box.querySelectorAll("button")].find(x => x.dataset.valor === foco);
+    if(alvo) alvo.focus({preventScroll: true});
+  }
+}
+
+function selecionarTipoArtista(valor){
+  const campo = $("fTipoArtista");
+  campo.value = campo.value === valor ? "" : valor;
+  desenharTiposArtista(valor);
+  campo.dispatchEvent(new Event("change", {bubbles: true}));
 }
 
 function desenharInstrumentos(foco){
@@ -1692,7 +1795,6 @@ function coletar(){
   if(!nome) falha("fNome", "Escreva o seu nome (ou nome artístico).");
   else if(nome.length < 2) falha("fNome", "O nome está curto demais.");
 
-  if(!instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento ou função.");
   if(!cidades.length) falha("fCidade", "Adicione pelo menos uma cidade onde você mora.");
 
   const whats = nacional($("fWhats").value);
@@ -1746,11 +1848,25 @@ function coletar(){
 
   if(!WHATSAPP_OBRIGATORIO && !whats && !ig.valor && !email && !yt.valor && !tels.length && !lks.length) falha("fWhats", "Informe pelo menos uma forma de contato.");
 
+  const categoria = $("fCategoria").value || "musico";
+  const referencia = semControle($("fReferencia").value).replace(/\s+/g, " ").trim().slice(0, 60);
+  if(categoria === "musico" && !instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento ou serviço.");
+  if(categoria === "musico" && $("fIfc").checked && !["sim","raramente","nao"].includes(ifcDisponibilidade)) falha("opcoesIfc", "Marque se aceita free-lances como integrante fixo.");
+  if(categoria === "artista" && instr.length && !["sim","raramente","nao"].includes(abcDisponibilidade)) falha("boxDisponibilidadeABC", "Marque se aceita convites para as funções selecionadas.");
   const c = {};
   c.nome = nome;
+  definir(c, "referencia", referencia);
+  c.categoria = categoria;
+  if(categoria === "artista") definir(c, "tipoArtista", $("fTipoArtista").value);
   c.cidades = [...cidades];
-  c.instrumentos = AJ.instrumentos(instr);
-  definir(c, "selos", $("fIfc").checked ? ["IFC"] : null);
+  c.instrumentos = categoria === "empresa" ? [] : AJ.instrumentos(instr);
+  const selos = [];
+  if(categoria === "musico" && $("fIfc").checked) selos.push("IFC");
+  if(categoria === "artista") selos.push("ABC");
+  if(categoria === "empresa") selos.push("ENM");
+  definir(c, "selos", selos.length ? selos : null);
+  if(categoria === "musico" && $("fIfc").checked) c.ifcDisponibilidade = ifcDisponibilidade;
+  if(categoria === "artista") c.abcDisponibilidade = instr.length ? abcDisponibilidade : "nao";
   definir(c, "instagram", ig.valor || "");
   definir(c, "youtube", yt.valor || "");
   definir(c, "email", email);
@@ -1862,10 +1978,15 @@ function montarCartao(c, fotoModo){
   }
 
   const corpo = criar("div");
-  const nome = criar("div", "name" + (c.nome ? "" : " vazio"), c.nome || "Seu nome");
-  if((c.selos || []).includes("IFC")) nome.appendChild(criar("span", "selo", "IFC"));
+  const nome = criar("div", "name" + (c.nome ? "" : " vazio"));
+  nome.appendChild(criar("strong", "", c.nome || "Seu nome"));
+  if(c.referencia) nome.appendChild(criar("span", "referencia", " (" + c.referencia + ")"));
+  if((c.selos || []).includes("IFC")) nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.ifcDisponibilidade || "sim"), "IFC"));
+  if((c.selos || []).includes("ABC")) nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.abcDisponibilidade), "ABC"));
+  if((c.selos || []).includes("ENM")) nome.appendChild(criar("span", "selo selo-enm", "ENM"));
   const local = criar("div", "line" + (c.cidades.length ? "" : " vazio"), "📍 " + (c.cidades.length ? c.cidades.join(" e ") : "Suas cidades"));
   corpo.append(nome, local);
+  if(c.tipoArtista){ const tipo = criar("div", "tags"); tipo.appendChild(criar("span", "tag", c.tipoArtista)); corpo.appendChild(tipo); }
   if(c.instrumentos.length){
     const tags = criar("div", "tags");
     c.instrumentos.forEach(i => { const t = criar("span", "tag" + tomInstr(i), i); t.style.setProperty("--h", matizInstr(i)); tags.appendChild(t); });
@@ -1953,6 +2074,7 @@ function atualizarPrevia(){
 
 let previaAgendada = false;
 function mudou(){
+  atualizarCamposCategoria();
   if(!previaAgendada){
     previaAgendada = true;
     requestAnimationFrame(() => { previaAgendada = false; atualizarPrevia(); });
@@ -1970,7 +2092,8 @@ function agendarRascunho(){
   temporizadorRascunho = setTimeout(salvarRascunho, 400);
 }
 function estadoVazio(e){
-  return !String(e.nome || "").trim() && !(e.instr || []).length && !(e.cidades || []).length && !String(e.whats || "").trim() &&
+  return !String(e.nome || "").trim() && !String(e.referencia || "").trim() && (e.categoria || "musico") === "musico" &&
+    !(e.instr || []).length && !(e.cidades || []).length && !String(e.whats || "").trim() &&
     !String(e.insta || "").trim() && !String(e.email || "").trim() && !String(e.youtube || "").trim() && !(e.tels || []).length &&
     !(e.links || []).length && !String(e.obs || "").trim() && !e.ifc && !e.foto &&
     !String(e.hash || "").trim() && !String(e.bio || "").trim() && !String(e.servicos || "").trim() &&
@@ -1979,7 +2102,9 @@ function estadoVazio(e){
 function estadoAtual(){
   return {
     v: 2, salvoEm: Date.now(),
-    nome: $("fNome").value, instr, cidades, ifc: $("fIfc").checked,
+    nome: $("fNome").value, referencia: $("fReferencia").value, categoria: $("fCategoria").value,
+    tipoArtista: $("fTipoArtista").value, instr, cidades, ifc: $("fIfc").checked,
+    ifcDisponibilidade, abcDisponibilidade,
     whats: $("fWhats").value, insta: $("fInsta").value, email: $("fEmail").value, youtube: $("fYoutube").value,
     tels: telefones, links, obs: $("fObs").value,
     hash: $("fHashtags").value, bio: $("fBio").value, servicos: $("fServicos").value, videos: videos.map(v => v.url),
@@ -2025,6 +2150,15 @@ function restaurarRascunho(){
       if(m && UFS.includes(m[2]) && cidades.length < MAX_CIDADES && !cidades.some(y => norm(y) === norm(x))) cidades.push(x);
     });
     $("fIfc").checked = !!e.ifc;
+    $("fReferencia").value = cortar(e.referencia, 60);
+    $("fCategoria").value = ["musico","artista","empresa"].includes(e.categoria) ? e.categoria : "musico";
+    $("fTipoArtista").value = cortar(e.tipoArtista, 50);
+    desenharTiposArtista();
+    ifcDisponibilidade = ["sim","raramente","nao"].includes(e.ifcDisponibilidade) ? e.ifcDisponibilidade : (e.ifc ? "sim" : "");
+    abcDisponibilidade = ["sim","raramente","nao"].includes(e.abcDisponibilidade) ? e.abcDisponibilidade : "nao";
+    document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = x.value === ifcDisponibilidade);
+    document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === abcDisponibilidade);
+    atualizarCamposCategoria();
     $("fWhats").value = cortar(e.whats, 30);
     $("fInsta").value = cortar(e.insta, MAX_URL);
     $("fEmail").value = cortar(e.email, MAX_EMAIL);
@@ -2229,7 +2363,14 @@ function contatoDeFora(b){
   const texto = v => typeof v === "string" ? v : "";
   const lista = v => Array.isArray(v) ? v : [];
   const c = {};
-  c.nome = AJ.formatarNome(limparNome(texto(b.nome)));
+  const nomeBruto = limparNome(texto(b.nome)), nomePartes = nomeBruto.match(/^(.*?)\s+\(([^()]*)\)$/);
+  c.nome = AJ.formatarNome(nomePartes ? nomePartes[1] : nomeBruto);
+  c.referencia = semControle(texto(b.referencia) || (nomePartes ? nomePartes[2] : "")).replace(/\s+/g, " ").trim().slice(0, 60);
+  c.categoria = ["musico","artista","empresa"].includes(b.categoria) ? b.categoria : (lista(b.selos).includes("ABC") ? "artista" : lista(b.selos).includes("ENM") ? "empresa" : "musico");
+  c.tipoArtista = texto(b.tipoArtista);
+  c.ifcDisponibilidade = ["sim","raramente","nao"].includes(b.ifcDisponibilidade) ? b.ifcDisponibilidade
+    : (c.categoria === "musico" && lista(b.selos).includes("IFC") ? "sim" : "");
+  c.abcDisponibilidade = ["sim","raramente","nao"].includes(b.abcDisponibilidade) ? b.abcDisponibilidade : "nao";
   c.cidades = [];
   lista(b.cidades).forEach(x => {
     const m = texto(x).match(CIDADE_UF);
@@ -2240,7 +2381,11 @@ function contatoDeFora(b){
     const r = instrumentoCanonico(texto(x));
     if(!r.erro && c.instrumentos.length < MAX_INSTR && !c.instrumentos.some(y => mesmoInstr(y, r.nome))) c.instrumentos.push(r.nome);
   });
-  if(lista(b.selos).includes("IFC")) c.selos = ["IFC"];
+  const selos = [...new Set(lista(b.selos).filter(x => typeof x === "string" && !["IFC","ABC","ENM"].includes(x)))];
+  if(c.categoria === "musico" && lista(b.selos).includes("IFC")) selos.push("IFC");
+  if(c.categoria === "artista") selos.push("ABC");
+  if(c.categoria === "empresa") selos.push("ENM");
+  if(selos.length) c.selos = [...new Set(selos)];
   const ig = instaDoCampo(texto(b.instagram)); if(ig.valor) c.instagram = ig.valor;
   const yt = youtubeDoCampo(texto(b.youtube)); if(yt.valor) c.youtube = yt.valor;
   const em = semControle(texto(b.email)).trim(); if(em && em.length <= MAX_EMAIL && emailValido(em)) c.email = em;
@@ -2275,7 +2420,18 @@ function preencherContato(c){
   $("fNome").value = c.nome || "";
   instr = [...(c.instrumentos || [])];
   cidades = [...(c.cidades || [])];
+  const nomeBruto = String(c.nome || "");
+  const separado = nomeBruto.match(/^(.*?)\s+\(([^()]*)\)$/);
+  if(separado && !c.referencia){ c.nome = AJ.formatarNome(separado[1]); c.referencia = separado[2]; $("fNome").value = c.nome; }
+  $("fReferencia").value = c.referencia || "";
+  $("fCategoria").value = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
+  $("fTipoArtista").value = c.tipoArtista || "";
+  desenharTiposArtista();
+  abcDisponibilidade = c.abcDisponibilidade || "nao"; ifcDisponibilidade = c.ifcDisponibilidade || ((c.selos || []).includes("IFC") ? "sim" : "");
+  document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === abcDisponibilidade);
+  document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = x.value === ifcDisponibilidade);
   $("fIfc").checked = (c.selos || []).includes("IFC");
+  atualizarCamposCategoria();
   $("fWhats").value = c.whatsapp ? formatarTel(c.whatsapp) : "";
   $("fInsta").value = c.instagram ? "@" + c.instagram : "";
   $("fEmail").value = c.email || "";
@@ -2294,8 +2450,8 @@ function preencherContato(c){
 }
 
 function formularioVazio(){
-  return !String($("fNome").value).trim() && !instr.length && !cidades.length && !String($("fWhats").value).trim() &&
-    !String($("fInsta").value).trim() && !String($("fEmail").value).trim() && !String($("fYoutube").value).trim() &&
+  return !String($("fNome").value).trim() && !String($("fReferencia").value).trim() && $("fCategoria").value === "musico" &&
+    !instr.length && !cidades.length && !String($("fWhats").value).trim() && !String($("fInsta").value).trim() && !String($("fEmail").value).trim() && !String($("fYoutube").value).trim() &&
     !telefones.some(t => String(t.numero || "").trim() || String(t.rotulo || "").trim()) &&
     !links.some(l => String(l.url || "").trim() || String(l.rotulo || "").trim()) && !String($("fObs").value).trim() &&
     !$("fIfc").checked && !fonte && !String($("fHashtags").value).trim() && !String($("fBio").value).trim() &&
@@ -2500,7 +2656,7 @@ function telefoneAnteriorPara(novo){
 function montarPayload(c, fotoUrl, segundos){
   const p = {
     formato: "cadastro-musico",
-    versao: 2,
+    versao: 3,
     status: "pendente",
     id: c.whatsapp || novoId(),
     enviadoEm: new Date().toISOString(),
@@ -2722,6 +2878,11 @@ function zerarTudo(){
   ["fNome", "fCidade", "fOutroInstr", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
   $("fUf").value = "";
   $("fIfc").checked = false;
+  $("fReferencia").value = ""; $("fCategoria").value = "musico"; $("fTipoArtista").value = ""; desenharTiposArtista();
+  abcDisponibilidade = "nao"; ifcDisponibilidade = "";
+  document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === "nao");
+  document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = false);
+  atualizarCamposCategoria();
   $("fAutoriza").checked = false;
   $("maisContatos").open = false;
   $("maisPerfil").open = false;
@@ -2776,6 +2937,49 @@ $("formulario").addEventListener("input", e => limparErro(e.target.id));
 $("formulario").addEventListener("change", e => limparErro(e.target.id));
 
 $("fNome").addEventListener("input", () => { dicaNome(); mudou(); });
+$("fReferencia").addEventListener("input", mudou);
+function atualizarCamposCategoria(){
+  const categoria = $("fCategoria").value || "musico";
+  const empresa = categoria === "empresa", artista = categoria === "artista";
+  const ifcPermitido = categoria === "musico";
+  if(!ifcPermitido){
+    $("fIfc").checked = false;
+    ifcDisponibilidade = "";
+    document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = false);
+  }
+  $("blocoTipoArtista").hidden = !artista;
+  $("boxAtuacoes").hidden = empresa;
+  $("boxIfc").hidden = !ifcPermitido;
+  $("obrigatorioInstr").hidden = artista || empresa;
+  $("boxDisponibilidadeABC").hidden = !(artista && instr.length);
+  $("opcoesIfc").hidden = !ifcPermitido || !$("fIfc").checked;
+  if(artista && instr.length && abcDisponibilidade === "nao"){
+    abcDisponibilidade = "";
+    document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = false);
+  }
+}
+function classeDisponibilidade(valor){ return valor === "sim" ? "selo-verde" : valor === "nao" ? "selo-vermelho" : "selo-amarelo"; }
+$("fCategoria").addEventListener("change", () => {
+  if($("fCategoria").value === "empresa"){
+    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; avisar("msgInstr", "");
+  }
+  atualizarCamposCategoria(); mudou();
+});
+$("fTipoArtista").addEventListener("change", mudou);
+$("fIfc").addEventListener("change", () => {
+  ifcDisponibilidade = document.querySelector('input[name="ifcDisponibilidade"]:checked')?.value || "";
+  atualizarCamposCategoria(); mudou();
+});
+document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.addEventListener("change", () => { ifcDisponibilidade = x.value; mudou(); }));
+document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.addEventListener("change", () => {
+  if(x.value === "nao" && instr.length){
+    if(!confirm("Ao escolher “Não”, seus instrumentos e serviços serão desmarcados e você ficará somente na categoria ABC. Continuar?")){
+      document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(r => r.checked = r.value === abcDisponibilidade); return;
+    }
+    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; avisar("msgInstr", "");
+  }
+  abcDisponibilidade = x.value; atualizarCamposCategoria(); mudou();
+}));
 $("fNome").addEventListener("blur", () => {                  // ao sair do campo, o nome fica arrumado: Saulo Henrique de Tarso
   const bonito = AJ.formatarNome(limparNome($("fNome").value));
   if(bonito) $("fNome").value = bonito;
@@ -2877,6 +3081,7 @@ function iniciar(){
   $("textoAutoriza").textContent = TEXTO_AUTORIZACAO;
   UFS.forEach(uf => { const o = document.createElement("option"); o.value = uf; o.textContent = uf; $("fUf").appendChild(o); });
   desenharSugestoes();
+  desenharTiposArtista();
   desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks(); desenharVideos();
   dicaObs(); dicaBio(); dicaServicos();
   if(restaurarRascunho()) $("avisoRascunho").hidden = false;
@@ -2894,7 +3099,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v5.1.html
+ Arquivo: Cadastro_Musicos_v6.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -2902,10 +3107,39 @@ iniciar();
           Lista_Contatos_Musicos_contatos.json (sem o campo "foto")
           e a foto à parte, em base64. Só o dono do projeto (com
           senha, pelo painel) lê, aprova ou apaga: as regras estão
-          em Firestore_Regras_Cadastros_v2.rules. Com o bloco
+          em Firestore_Regras_Cadastros_v3.rules. Com o bloco
           FIREBASE vazio (ou ?demo=1 no endereço) a página não envia
           nada: fica em modo demonstração, como na v1.
 ================================================================
+
+v6.0 — 2026-11-19
+  - Mantém as seções independentes de Músicos, Artistas/Bandas/
+    Cantores (ABC) e Empresas (ENM); Empresas não recebem instrumentos
+    nem a pergunta ou o selo IFC.
+  - Mantém a referência opcional depois do nome, entre parênteses e
+    sem negrito; a prévia mostra como o perfil aparecerá na lista.
+  - Mantém os selos IFC e ABC nas cores verde, amarelo e vermelho,
+    com a pergunta de disponibilidade e as explicações de cada cor.
+    O IFC aparece somente para músicos; cada resposta mostra o selo IFC
+    real na cor correspondente. Artistas usam apenas o selo ABC.
+    Cadastros antigos com IFC sem disponibilidade passam a usar o verde.
+    Artista sem instrumento/função fica no selo ABC vermelho; se
+    marcar funções, informa se aceita convites e pode confirmar que
+    prefere ficar só na categoria ABC.
+  - Cantor solo é um tipo de projeto próprio; Vocal continua como
+    função musical para quem pode participar de outros projetos.
+    O tipo de projeto é escolhido em botões com emoji.
+  - A seleção IFC exibe sua marca visual própria, com ícone musical
+    e as três cores de disponibilidade.
+  - Cadastro continua enviando o formato v3 do Firestore, compatível
+    com as regras v3; as regras também aceitam cadastros v1 e v2.
+
+v5.2 — 2026-11-19
+  - O selo IFC ganhou marca visual própria com ícone musical e as
+    três cores de disponibilidade: verde, amarelo e vermelho.
+  - O tipo de projeto artístico passou a usar botões no estilo dos
+    instrumentos, com emojis para cantor solo, duplas, bandas, grupos,
+    conjuntos e outros projetos.
 
 v5.1 — 2026-11-17
   - "Onde você toca" virou "Onde você mora": o campo é para as
