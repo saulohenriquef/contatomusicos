@@ -463,6 +463,10 @@
         <div class="campo" id="rotTipoArtista">Tipo de artista ou projeto <span>(opcional)</span></div>
         <p id="dicaTipoArtista" class="dica">Toque para escolher o formato do seu projeto. “Cantor solo” indica projeto próprio; “Vocal” continua sendo uma função musical.</p>
         <div id="chipsTiposArtista" class="chips" role="group" aria-labelledby="rotTipoArtista" aria-describedby="dicaTipoArtista"></div>
+        <div id="boxTipoOutro" hidden>
+          <label class="campo" for="fTipoOutro">Qual? Escreva o tipo do seu projeto</label>
+          <input id="fTipoOutro" class="entrada" type="text" maxlength="40" autocomplete="off" placeholder="Ex.: Orquestra, Trio, Coral">
+        </div>
       </div>
 
       <div id="boxAtuacoes">
@@ -470,10 +474,15 @@
       <p id="dicaInstr" class="dica">Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.</p>
       <div id="chipsInstr" class="chips" role="group" aria-labelledby="rotInstr" aria-describedby="dicaInstr"></div>
 
-      <label class="campo" for="fOutroInstr">Não achou o seu? Escreva aqui</label>
+      <label class="campo" for="fOutroInstr">Não achou o seu instrumento? Escreva aqui</label>
       <div class="linha">
-        <input id="fOutroInstr" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Berimbau, Urso Panda de Palco" aria-describedby="msgInstr">
+        <input id="fOutroInstr" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Berimbau" aria-describedby="msgInstr">
         <button id="addInstr" class="btn" type="button">Adicionar</button>
+      </div>
+      <label class="campo" for="fOutraFuncao">Não achou a sua função? Escreva aqui</label>
+      <div class="linha">
+        <input id="fOutraFuncao" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Ex.: Iluminador" aria-describedby="msgInstr">
+        <button id="addFuncao" class="btn" type="button">Adicionar</button>
       </div>
       <p id="msgInstr" class="dica" aria-live="polite"></p>
 
@@ -685,7 +694,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.1
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.2
   </footer>
 </div>
 
@@ -778,10 +787,18 @@ const AJ = (() => {
     ["Téc. palco","🎭",150,1,1,["tecnico de palco","tecnica de palco","tecnicos de palco"]]
   ];
   const MAPA = new Map();
-  CATALOGO.forEach(([n, e, h, t, b, apelidos]) => {
-    const reg = {n, e, h, t, b};
-    [n, ...apelidos].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
-  });
+  // grupo de cada linha: "i" = instrumento, "f" = função (DJ, técnicos, roadie...). As linhas da tabela acima não dizem; vale esta lista.
+  // (No Lista_Contatos_Musicos_atuacoes.json o grupo é a lista em que o item está: "instrumentos" ou "funcoes".)
+  const FUNCOES_PADRAO = new Set(["DJ", "T. Som", "T. Luz", "Roadie", "Produtor", "Téc. palco"].map(chave));
+  const grupoDe = l => (l[6] === "f" || l[6] === "i") ? l[6] : (FUNCOES_PADRAO.has(chave(l[0])) ? "f" : "i");
+  function montarMapa(){
+    MAPA.clear();
+    CATALOGO.forEach(l => {
+      const reg = {n: l[0], e: l[1], h: l[2], t: l[3], b: l[4], g: grupoDe(l)};
+      [l[0], ...(Array.isArray(l[5]) ? l[5] : [])].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
+    });
+  }
+  montarMapa();
   const achar = k => MAPA.get(k) || (k.length > 3 && k.endsWith("s") ? MAPA.get(k.slice(0, -1)) : undefined);
 
   // nome do instrumento como vai para a lista: "B.Vocal" e "backing" viram "Backing vocal"; nome desconhecido só ganha maiúscula no começo
@@ -809,8 +826,84 @@ const AJ = (() => {
     const h = hashNome(nome);
     return {nome: instrumento(nome), emoji: "🎵", matiz: h % 360, tom: Math.floor(h / 360) % 2, conhecido: false};
   }
-  // os balões que o cadastro oferece, em ordem alfabética
-  const oferecidos = () => CATALOGO.filter(x => x[4]).map(x => x[0]).sort((a, b) => a.localeCompare(b, PT, {sensitivity: "base"}));
+  // os balões que o cadastro oferece, em ordem alfabética ("i" = só instrumentos, "f" = só funções, sem nada = todos)
+  const oferecidos = grupo => CATALOGO.filter(x => x[4] && (!grupo || grupoDe(x) === grupo)).map(x => x[0]).sort((a, b) => a.localeCompare(b, PT, {sensitivity: "base"}));
+  const ehFuncao = nome => { const r = achar(chave(nome)); return !!r && r.g === "f"; };
+
+  /* ---------- tipos de artista (ABC): reserva; o atuacoes.json do site manda ---------- */
+  const TIPOS = [["Cantor solo", "🎤", 330], ["Dupla sertaneja", "🤠", 34], ["Dupla", "🎙️", 275], ["Banda", "🎸", 210], ["Grupo", "🎼", 150], ["Conjunto", "🎹", 185]]
+    .map(([nome, emoji, matiz]) => ({nome, emoji, matiz}));
+  const tiposArtista = () => TIPOS.map(x => ({...x}));
+  const tipoConhecido = nome => !!chave(nome) && TIPOS.some(x => chave(x.nome) === chave(nome));
+  function infoTipo(nome){
+    const x = TIPOS.find(t => chave(t.nome) === chave(nome));
+    if(x) return {nome: x.nome, emoji: x.emoji, matiz: x.matiz, tom: 0, conhecido: true};
+    return {nome: limpo(nome), emoji: "✨", matiz: hashNome(nome) % 360, tom: 0, conhecido: false};
+  }
+
+  /* ---------- catálogo do site: Lista_Contatos_Musicos_atuacoes.json ----------
+     Quando o site tem esse arquivo, ele manda: instrumentos, funções e tipos de artista saem dele (as tabelas acima ficam só de reserva).
+     O painel acrescenta nele, ao publicar, o que as pessoas escreveram em "Não achou?" (como faz com as cidades novas). */
+  const ARQ_ATUACOES = "Lista_Contatos_Musicos_atuacoes.json";
+  const AJUDA_ATUACOES = "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. " +
+    "Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); " +
+    "tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome.";
+  const txtJ = (v, max) => typeof v === "string" ? limpo(v).slice(0, max) : "";
+  const matizJ = (v, nome) => Number.isFinite(v) ? ((Math.round(v) % 360) + 360) % 360 : hashNome(nome) % 360;
+  function linhaDoJson(x, g){
+    if(!x || typeof x !== "object") return null;
+    const n = txtJ(x.nome, 40);
+    if(!n) return null;
+    const ap = Array.isArray(x.apelidos) ? x.apelidos.map(a => txtJ(a, 40)).filter(Boolean).slice(0, 40) : [];
+    return [n, txtJ(x.emoji, 8) || (g === "f" ? "🧰" : "🎵"), matizJ(x.matiz, n), [0, 1, 2].includes(x.tom) ? x.tom : 0, x.cadastro === false ? 0 : 1, ap, g];
+  }
+  function usarCatalogo(j){
+    if(!j || typeof j !== "object" || j.formato !== "atuacoes-musica") return false;
+    const linhas = [];
+    [["instrumentos", "i"], ["funcoes", "f"]].forEach(([campo, g]) =>
+      (Array.isArray(j[campo]) ? j[campo] : []).slice(0, 400).forEach(x => { const l = linhaDoJson(x, g); if(l) linhas.push(l); }));
+    if(!linhas.length) return false;
+    CATALOGO.splice(0, CATALOGO.length, ...linhas);
+    montarMapa();
+    const tipos = (Array.isArray(j.tiposArtista) ? j.tiposArtista : []).slice(0, 100)
+      .map(x => x && txtJ(x.nome, 50) ? {nome: txtJ(x.nome, 50), emoji: txtJ(x.emoji, 8) || "✨", matiz: matizJ(x.matiz, x.nome)} : null).filter(Boolean);
+    if(tipos.length) TIPOS.splice(0, TIPOS.length, ...tipos);
+    return true;
+  }
+  async function carregarCatalogo(url){
+    try{
+      const r = await fetch(url || ARQ_ATUACOES, {cache: "no-store"});
+      return r.ok ? usarCatalogo(await r.json()) : false;
+    }catch(e){ return false; }
+  }
+  // inclui um nome novo no catálogo desta página (grupo "i", "f" ou "t" = tipo de artista); devolve false se já existia
+  function adicionarAtuacao(nome, grupo){
+    if(grupo === "t"){
+      const n = txtJ(nome, 50);
+      if(!n || tipoConhecido(n)) return false;
+      TIPOS.push({nome: n, emoji: "✨", matiz: hashNome(n) % 360});
+      return true;
+    }
+    const n = instrumento(nome);
+    if(!n || achar(chave(n))) return false;
+    const h = hashNome(n);
+    CATALOGO.push([n, grupo === "f" ? "🧰" : "🎵", h % 360, Math.floor(h / 360) % 2, 1, [], grupo === "f" ? "f" : "i"]);
+    montarMapa();
+    return true;
+  }
+  // o catálogo atual no formato do Lista_Contatos_Musicos_atuacoes.json
+  function catalogoJson(){
+    const item = l => {
+      const o = {nome: l[0], emoji: l[1], matiz: l[2], tom: l[3]};
+      if(!l[4]) o.cadastro = false;
+      if(Array.isArray(l[5]) && l[5].length) o.apelidos = l[5].slice();
+      return o;
+    };
+    return {formato: "atuacoes-musica", versao: 1, ajuda: AJUDA_ATUACOES,
+      instrumentos: CATALOGO.filter(l => grupoDe(l) === "i").map(item),
+      funcoes: CATALOGO.filter(l => grupoDe(l) === "f").map(item),
+      tiposArtista: TIPOS.map(x => ({nome: x.nome, emoji: x.emoji, matiz: x.matiz}))};
+  }
 
   /* ---------- hashtags: #rock #sertanejo #pontualidade ---------- */
   function hashtags(entrada){
@@ -935,7 +1028,8 @@ const AJ = (() => {
   }
 
   return {LIM, chave, formatarNome, instrumento, instrumentos, infoInstrumento, oferecidos, hashtags, servicos, bio, video, videos,
-          digitos, telefonesDe, acharPorTelefone, limparContato, CATALOGO};
+          digitos, telefonesDe, acharPorTelefone, limparContato, CATALOGO,
+          ehFuncao, tiposArtista, tipoConhecido, infoTipo, ARQ_ATUACOES, usarCatalogo, carregarCatalogo, adicionarAtuacao, catalogoJson};
 })();
 
 const criar = (tag, classe, texto) => { const e = document.createElement(tag); if(classe) e.className = classe; if(texto != null) e.textContent = texto; return e; };
@@ -945,10 +1039,10 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.1";
+const VERSAO = "v6.2";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
-// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v3.rules: publique-as ANTES desta página).
+// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
 // Onde achar: Firebase > engrenagem > Configurações do projeto > Seus aplicativos > firebaseConfig (projectId e apiKey).
 // Enquanto estiverem vazios — ou com ?demo=1 no endereço da página — ela fica em MODO DEMONSTRAÇÃO e não envia nada a lugar nenhum.
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
@@ -984,16 +1078,11 @@ const ARQ_CIDADES = "Lista_Contatos_Musicos_cidades.json";   // se a página est
 // Eles vêm da tabela CATALOGO (bloco AJUDANTES, no começo do script), a mesma da lista e do painel: lá também ficam o emoji, a cor e os apelidos de cada um.
 const COLACAO = (a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"});
 const INSTRUMENTOS = AJ.oferecidos();
-const FUNCOES_MUSICA = new Set(["DJ", "T. Som", "T. Luz", "Roadie", "Produtor", "Téc. palco"].map(chave => AJ.chave(chave)));
-const TIPOS_PROJETO_ARTISTA = [
-  ["Cantor solo", "🎤", 330],
-  ["Dupla sertaneja", "🤠", 34],
-  ["Dupla", "🎙️", 275],
-  ["Banda", "🎸", 210],
-  ["Grupo", "🎼", 150],
-  ["Conjunto", "🎹", 185],
-  ["Outro projeto artístico", "✨", 48]
-];
+let funcoesDigitadas = new Set();   // chaves dos nomes escritos em "Não achou a sua função?" (o que não está no catálogo vai para o painel como função)
+const ehFuncaoAqui = nome => AJ.ehFuncao(nome) || funcoesDigitadas.has(AJ.chave(nome));
+const ARQ_ATUACOES = AJ.ARQ_ATUACOES;   // catálogo de instrumentos, funções e tipos de artista do site (se não houver, valem as tabelas do AJ)
+let tipoOutroAberto = false;            // "Outros" marcado nos tipos de artista
+const TIPOS_PROJETO_ARTISTA = AJ.tiposArtista().map(x => [x.nome, x.emoji, x.matiz]);   // vêm do catálogo (atuacoes.json); "Outros" é à parte
 const CIDADES_SUGERIDAS = ["Alpinópolis/MG", "Araxá/MG", "Brodowski/SP", "Conceição da Aparecida/MG", "Formiga/MG", "Franca/SP", "Guará/SP", "Itaú de Minas/MG", "Passos/MG", "Pedregulho/SP", "Pratápolis/MG", "Ribeirão Preto/SP", "Rifaina/SP", "São Paulo/SP"];
 const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
 const TEXTO_AUTORIZACAO = "Autorizo que meu nome, referência, categoria, foto, cidades, instrumentos ou funções, contatos e perfil apareçam na lista pública de músicos, artistas ou empresas, que qualquer pessoa pode abrir. Sei que posso corrigir meu cadastro quando quiser e pedir para tirá-lo da lista.";
@@ -1237,19 +1326,40 @@ function chipTipoArtista(valor, emoji, matiz){
   return b;
 }
 
+const tipoDoCatalogo = v => TIPOS_PROJETO_ARTISTA.some(([n]) => n === v);
+const limparTipo = s => { const t = semControle(String(s || "")).replace(/\s+/g, " ").trim().slice(0, 40); return t ? t.charAt(0).toLocaleUpperCase("pt-BR") + t.slice(1) : ""; };
 function desenharTiposArtista(foco){
   const box = $("chipsTiposArtista");
   if(!box) return;
   box.textContent = "";
+  const atual = $("fTipoArtista").value;
+  if(atual && !tipoDoCatalogo(atual)){ tipoOutroAberto = true; if(limparTipo($("fTipoOutro").value) !== atual) $("fTipoOutro").value = atual; }
+  else if(atual) tipoOutroAberto = false;
   TIPOS_PROJETO_ARTISTA.forEach(([valor, emoji, matiz]) => box.appendChild(chipTipoArtista(valor, emoji, matiz)));
+  const outros = chipTipoArtista("Outros", "✏️", 48);
+  outros.setAttribute("aria-pressed", String(tipoOutroAberto));
+  outros.setAttribute("aria-label", "Outros" + (tipoOutroAberto ? ", selecionado" : ""));
+  const outrosBtn = outros.cloneNode(true);   // a cópia não leva o clique de escolher; o "Outros" abre o campo para escrever
+  outrosBtn.addEventListener("click", alternarTipoOutro);
+  box.appendChild(outrosBtn);
+  $("boxTipoOutro").hidden = !tipoOutroAberto;
   if(foco){
     const alvo = [...box.querySelectorAll("button")].find(x => x.dataset.valor === foco);
     if(alvo) alvo.focus({preventScroll: true});
   }
 }
 
+function alternarTipoOutro(){
+  tipoOutroAberto = !tipoOutroAberto;
+  $("fTipoArtista").value = tipoOutroAberto ? limparTipo($("fTipoOutro").value) : "";
+  desenharTiposArtista("Outros");
+  if(tipoOutroAberto) $("fTipoOutro").focus();
+  $("fTipoArtista").dispatchEvent(new Event("change", {bubbles: true}));
+}
+
 function selecionarTipoArtista(valor){
   const campo = $("fTipoArtista");
+  tipoOutroAberto = false;
   campo.value = campo.value === valor ? "" : valor;
   desenharTiposArtista(valor);
   campo.dispatchEvent(new Event("change", {bubbles: true}));
@@ -1262,8 +1372,8 @@ function desenharInstrumentos(foco){
   const extras = instr.filter(i => !base.has(chaveInstr(i)));   // os que a pessoa escreveu
   const nomes = [...new Set([...INSTRUMENTOS, ...extras])].sort(COLACAO);
   const grupos = [
-    ["Instrumentos", nomes.filter(nome => !FUNCOES_MUSICA.has(AJ.chave(nome)))],
-    ["Funções", nomes.filter(nome => FUNCOES_MUSICA.has(AJ.chave(nome)))]
+    ["Instrumentos", nomes.filter(nome => !ehFuncaoAqui(nome))],
+    ["Funções", nomes.filter(nome => ehFuncaoAqui(nome))]
   ];
   grupos.forEach(([titulo, itens]) => {
     const cabecalho = criar("div", "grupo-titulo", titulo);
@@ -1343,9 +1453,10 @@ function alternarInstrumento(nome){
   mudou();
 }
 
-function adicionarInstrumentoDigitado(){
-  const campo = $("fOutroInstr");
-  if(!campo.value.trim()){ avisar("msgInstr", "Escreva o nome do instrumento.", "erro"); return false; }
+function adicionarInstrumentoDigitado(idCampo){
+  const funcao = idCampo === "fOutraFuncao";
+  const campo = $(funcao ? "fOutraFuncao" : "fOutroInstr");
+  if(!campo.value.trim()){ avisar("msgInstr", funcao ? "Escreva o nome da função." : "Escreva o nome do instrumento.", "erro"); return false; }
   const r = instrumentoCanonico(campo.value);
   if(r.erro){ avisar("msgInstr", r.erro, "erro"); return false; }
   if(instr.some(x => mesmoInstr(x, r.nome))){
@@ -1355,8 +1466,10 @@ function adicionarInstrumentoDigitado(){
   }
   if(instr.length >= MAX_INSTR){ avisar("msgInstr", "Dá para marcar até " + MAX_INSTR + " instrumentos.", "erro"); return false; }
   instr.push(r.nome);
+  // nome que não está no catálogo: guarda se a pessoa disse que é função (o painel coloca no grupo certo do atuacoes.json)
+  if(!AJ.infoInstrumento(r.nome).conhecido){ if(funcao) funcoesDigitadas.add(AJ.chave(r.nome)); else funcoesDigitadas.delete(AJ.chave(r.nome)); }
   campo.value = "";
-  avisar("msgInstr", r.nome + " adicionado.");
+  avisar("msgInstr", r.nome + (funcao ? " adicionada." : " adicionado."));
   limparErro("chipsInstr");
   desenharInstrumentos();
   mudou();
@@ -1383,6 +1496,15 @@ async function carregarCidadesDoSite(){
     cidadesConhecidas = [...new Set([...nomes, ...CIDADES_SUGERIDAS])].sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}));
     desenharSugestoes();
   }catch(e){ /* fica a lista que já vem na página */ }
+}
+
+// se o site tiver o Lista_Contatos_Musicos_atuacoes.json, os balões de instrumentos, funções e tipos de artista saem dele
+async function carregarAtuacoesDoSite(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  if(!(await AJ.carregarCatalogo(ARQ_ATUACOES))) return;
+  INSTRUMENTOS.splice(0, INSTRUMENTOS.length, ...AJ.oferecidos());
+  TIPOS_PROJETO_ARTISTA.splice(0, TIPOS_PROJETO_ARTISTA.length, ...AJ.tiposArtista().map(x => [x.nome, x.emoji, x.matiz]));
+  desenharInstrumentos(); desenharTiposArtista(); atualizarPrevia();
 }
 
 // lê o que está nos campos de cidade: {cidade: "Franca/SP"} ou {erro}
@@ -2114,7 +2236,7 @@ function estadoAtual(){
     v: 2, salvoEm: Date.now(),
     nome: $("fNome").value, referencia: $("fReferencia").value, categoria: $("fCategoria").value,
     tipoArtista: $("fTipoArtista").value, instr, cidades, ifc: $("fIfc").checked,
-    ifcDisponibilidade, abcDisponibilidade,
+    ifcDisponibilidade, abcDisponibilidade, funcoes: [...funcoesDigitadas],
     whats: $("fWhats").value, insta: $("fInsta").value, email: $("fEmail").value, youtube: $("fYoutube").value,
     tels: telefones, links, obs: $("fObs").value,
     hash: $("fHashtags").value, bio: $("fBio").value, servicos: $("fServicos").value, videos: videos.map(v => v.url),
@@ -2160,6 +2282,7 @@ function restaurarRascunho(){
       if(m && UFS.includes(m[2]) && cidades.length < MAX_CIDADES && !cidades.some(y => norm(y) === norm(x))) cidades.push(x);
     });
     $("fIfc").checked = !!e.ifc;
+    funcoesDigitadas = new Set((Array.isArray(e.funcoes) ? e.funcoes : []).filter(x => typeof x === "string").slice(0, 8));
     $("fReferencia").value = cortar(e.referencia, 60);
     $("fCategoria").value = ["musico","artista","empresa"].includes(e.categoria) ? e.categoria : "musico";
     $("fTipoArtista").value = cortar(e.tipoArtista, 50);
@@ -2357,7 +2480,8 @@ function escolherOrigem(res){
   const doBanco = (d, pub, fotoL) => ({
     fonte: "cadastro", contato: d.dados.contato, docId: d.id, anterior: dig(d.dados.telefoneAnterior),
     publicado: pub || dig(d.dados.telefoneAnterior), fotoLista: fotoL,
-    foto: typeof d.dados.fotoJpegBase64 === "string" ? d.dados.fotoJpegBase64 : "", removerFoto: d.dados.removerFoto === true
+    foto: typeof d.dados.fotoJpegBase64 === "string" ? d.dados.fotoJpegBase64 : "", removerFoto: d.dados.removerFoto === true,
+    novas: d.dados.novasAtuacoes
   });
   if(pendente) return doBanco(pendente, publicado, fotoDaLista);
   // o banco não respondeu (ou recusou): vale o da lista, mas a pessoa é avisada de que pode haver mudanças dela que não deu para ver
@@ -2483,6 +2607,7 @@ function entrarEdicao(o){
   $("sucesso").hidden = true;
   $("formulario").hidden = false;
   zerarTudo();
+  if(o && o.novas && Array.isArray(o.novas.funcoes)) o.novas.funcoes.forEach(x => { if(typeof x === "string") funcoesDigitadas.add(AJ.chave(x)); });
   restaurando = true;
   try{
     const c = contatoDeFora(o.contato);
@@ -2663,6 +2788,17 @@ function telefoneAnteriorPara(novo){
 //   tipo "novo" = cadastro que ainda não está na lista (inclui quem só corrigiu um cadastro que ainda espera conferência);
 //   "edicao" = a pessoa abriu um cadastro que já está na lista e mudou o que precisava.
 //   Foto: sem "fotoJpegBase64" e sem "removerFoto" = a foto fica como está; com "fotoJpegBase64" = foto nova; "removerFoto: true" = tirar a foto.
+// instrumentos, funções e tipo de artista que a pessoa escreveu e não estão no catálogo: o painel inclui no atuacoes.json ao publicar
+function novasAtuacoesDe(c){
+  const r = {};
+  const fora = (c.instrumentos || []).filter(n => !AJ.infoInstrumento(n).conhecido);
+  const funcoes = fora.filter(n => funcoesDigitadas.has(AJ.chave(n))), instrumentos = fora.filter(n => !funcoesDigitadas.has(AJ.chave(n)));
+  if(instrumentos.length) r.instrumentos = instrumentos;
+  if(funcoes.length) r.funcoes = funcoes;
+  if(c.tipoArtista && !AJ.tipoConhecido(c.tipoArtista)) r.tiposArtista = [c.tipoArtista];
+  return Object.keys(r).length ? r : null;
+}
+
 function montarPayload(c, fotoUrl, segundos){
   const p = {
     formato: "cadastro-musico",
@@ -2677,6 +2813,8 @@ function montarPayload(c, fotoUrl, segundos){
   };
   const anterior = telefoneAnteriorPara(c.whatsapp || "");
   if(anterior) p.telefoneAnterior = anterior;
+  const novas = novasAtuacoesDe(c);
+  if(novas) p.novasAtuacoes = novas;
   if(fotoUrl) p.fotoJpegBase64 = fotoUrl.slice(fotoUrl.indexOf(",") + 1);
   else if(edit && fotoRemovida) p.removerFoto = true;
   return p;
@@ -2794,8 +2932,10 @@ async function enviar(){
 
   // o que foi escrito e ainda não foi adicionado (instrumento e cidade)
   const pend = [];
-  if($("fOutroInstr").value.trim() && !adicionarInstrumentoDigitado())
+  if($("fOutroInstr").value.trim() && !adicionarInstrumentoDigitado("fOutroInstr"))
     pend.push({campo: "fOutroInstr", texto: "O instrumento que você escreveu ainda não foi adicionado. " + $("msgInstr").textContent});
+  if($("fOutraFuncao").value.trim() && !adicionarInstrumentoDigitado("fOutraFuncao"))
+    pend.push({campo: "fOutraFuncao", texto: "A função que você escreveu ainda não foi adicionada. " + $("msgInstr").textContent});
   if($("fCidade").value.trim() && !adicionarCidade())
     pend.push({campo: "fCidade", texto: "A cidade que você escreveu ainda não foi adicionada. " + $("msgCidade").textContent});
 
@@ -2885,7 +3025,8 @@ function zerarTudo(){
   instr = []; cidades = []; telefones = []; links = []; videos = [];
   edit = null; fotoLista = ""; fotoRemovida = false;
   previaFoneAberto = false; previaPerfilAberto = false;
-  ["fNome", "fCidade", "fOutroInstr", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
+  funcoesDigitadas = new Set(); tipoOutroAberto = false;
+  ["fNome", "fCidade", "fOutroInstr", "fOutraFuncao", "fTipoOutro", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
   $("fUf").value = "";
   $("fIfc").checked = false;
   $("fReferencia").value = ""; $("fCategoria").value = "musico"; $("fTipoArtista").value = ""; desenharTiposArtista();
@@ -2941,7 +3082,8 @@ $("formulario").addEventListener("keydown", e => {
   if(e.target.type === "checkbox" || e.target.type === "file" || e.target.type === "range") return;
   e.preventDefault();
   if(e.target.id === "fCidade") adicionarCidade();
-  else if(e.target.id === "fOutroInstr") adicionarInstrumentoDigitado();
+  else if(e.target.id === "fOutroInstr") adicionarInstrumentoDigitado("fOutroInstr");
+  else if(e.target.id === "fOutraFuncao") adicionarInstrumentoDigitado("fOutraFuncao");
 });
 $("formulario").addEventListener("input", e => limparErro(e.target.id));
 $("formulario").addEventListener("change", e => limparErro(e.target.id));
@@ -2971,7 +3113,7 @@ function atualizarCamposCategoria(){
 function classeDisponibilidade(valor){ return valor === "sim" ? "selo-verde" : valor === "nao" ? "selo-vermelho" : "selo-amarelo"; }
 $("fCategoria").addEventListener("change", () => {
   if($("fCategoria").value === "empresa"){
-    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; avisar("msgInstr", "");
+    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; $("fOutraFuncao").value = ""; avisar("msgInstr", "");
   }
   atualizarCamposCategoria(); mudou();
 });
@@ -2986,7 +3128,7 @@ document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.add
     if(!confirm("Ao escolher “Não”, seus instrumentos e serviços serão desmarcados e você ficará somente na categoria ABC. Continuar?")){
       document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(r => r.checked = r.value === abcDisponibilidade); return;
     }
-    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; avisar("msgInstr", "");
+    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; $("fOutraFuncao").value = ""; avisar("msgInstr", "");
   }
   abcDisponibilidade = x.value; atualizarCamposCategoria(); mudou();
 }));
@@ -3031,7 +3173,14 @@ $("addVideo").addEventListener("click", () => {
 });
 $("fCidade").addEventListener("input", () => avisar("msgCidade", ""));
 $("fOutroInstr").addEventListener("input", () => avisar("msgInstr", ""));
-$("addInstr").addEventListener("click", adicionarInstrumentoDigitado);
+$("fOutraFuncao").addEventListener("input", () => avisar("msgInstr", ""));
+$("addInstr").addEventListener("click", () => adicionarInstrumentoDigitado("fOutroInstr"));
+$("addFuncao").addEventListener("click", () => adicionarInstrumentoDigitado("fOutraFuncao"));
+$("fTipoOutro").addEventListener("input", () => {
+  if(!tipoOutroAberto) return;
+  $("fTipoArtista").value = limparTipo($("fTipoOutro").value);
+  $("fTipoArtista").dispatchEvent(new Event("change", {bubbles: true}));
+});
 $("addCidade").addEventListener("click", adicionarCidade);
 $("addTel").addEventListener("click", () => {
   if(telefones.length >= MAX_TELEFONES) return;
@@ -3100,6 +3249,7 @@ function iniciar(){
   desenhar();
   atualizarPrevia();
   carregarCidadesDoSite();
+  carregarAtuacoesDoSite();
   if(location.hash === "#editar") irParaBusca();            // o link "Editar meu cadastro" da lista abre direto no cartão "Já tem cadastro?"
 }
 iniciar();
@@ -3109,7 +3259,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.1.html
+ Arquivo: Cadastro_Musicos_v6.2.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3122,6 +3272,22 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.2 — 2026-11-20
+  - Dois campos "Não achou?": um para instrumento e outro para função.
+    O que a pessoa escreve e não está no catálogo vai no cadastro em
+    "novasAtuacoes" (instrumentos, funcoes, tiposArtista), para o painel
+    saber em qual grupo colocar.
+  - Tipos de artista (ABC): entrou "Outros", que abre um campo para
+    escrever o tipo (ex.: Orquestra). Tipo que já está no contato e não
+    está no catálogo aparece em "Outros", já escrito.
+  - Instrumentos, funções e tipos de artista agora podem vir do
+    Lista_Contatos_Musicos_atuacoes.json do site (como o cidades.json).
+    Sem esse arquivo, valem as tabelas de reserva dentro da página.
+  - Precisa das regras Firestore_Regras_Cadastros_v4.rules (aceitam o
+    campo novo). Publique as regras ANTES desta página.
+  - Não mudou: resto do formulário, envio, edição pelo telefone e prévia.
+
+----------------------------------------------------------------
 v6.1 — 2026-11-20
   - A seleção de instrumentos e funções tem grupos visuais separados
     por uma linha fina, com os títulos “Instrumentos” e “Funções”.
