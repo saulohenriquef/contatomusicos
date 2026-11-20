@@ -404,36 +404,6 @@
         "harmonica",
         "gaita boca"
       ]
-    },
-    {
-      "nome": "Produtor de palco e banda",
-      "emoji": "🎵",
-      "matiz": 200,
-      "tom": 1
-    },
-    {
-      "nome": "Produtor artístico",
-      "emoji": "🎵",
-      "matiz": 103,
-      "tom": 0
-    },
-    {
-      "nome": "Produtor geral",
-      "emoji": "🎵",
-      "matiz": 192,
-      "tom": 1
-    },
-    {
-      "nome": "Fogueteiro",
-      "emoji": "🎵",
-      "matiz": 7,
-      "tom": 0
-    },
-    {
-      "nome": "Artistas/Bandas/Cantores",
-      "emoji": "🎵",
-      "matiz": 23,
-      "tom": 0
     }
   ],
   "funcoes": [
@@ -490,9 +460,7 @@
       "tom": 1,
       "apelidos": [
         "produtora",
-        "produtores",
-        "produtor musical",
-        "produção musical"
+        "produtores"
       ]
     },
     {
@@ -504,6 +472,92 @@
         "tecnico de palco",
         "tecnica de palco",
         "tecnicos de palco"
+      ]
+    },
+    {
+      "nome": "Produtor musical",
+      "emoji": "🎛️",
+      "matiz": 285,
+      "tom": 0,
+      "apelidos": [
+        "produtora musical",
+        "produtores musicais",
+        "produção musical",
+        "producao musical"
+      ]
+    },
+    {
+      "nome": "Produtor de palco",
+      "emoji": "📋",
+      "matiz": 25,
+      "tom": 1,
+      "apelidos": [
+        "produtora de palco",
+        "produção de palco",
+        "producao de palco"
+      ]
+    },
+    {
+      "nome": "Produtor de palco e banda",
+      "emoji": "📋",
+      "matiz": 25,
+      "tom": 2
+    },
+    {
+      "nome": "Produtor artístico",
+      "emoji": "🎭",
+      "matiz": 330,
+      "tom": 1,
+      "apelidos": [
+        "produtora artística",
+        "produção artística"
+      ]
+    },
+    {
+      "nome": "Produtor geral",
+      "emoji": "🗂️",
+      "matiz": 210,
+      "tom": 1,
+      "apelidos": [
+        "produtora geral",
+        "produção geral"
+      ]
+    },
+    {
+      "nome": "Maestro",
+      "emoji": "🎼",
+      "matiz": 45,
+      "tom": 0,
+      "apelidos": [
+        "maestrina",
+        "regente",
+        "regência",
+        "regencia"
+      ]
+    },
+    {
+      "nome": "Diretor musical",
+      "emoji": "🎬",
+      "matiz": 260,
+      "tom": 1,
+      "apelidos": [
+        "diretora musical",
+        "direção musical",
+        "direcao musical"
+      ]
+    },
+    {
+      "nome": "Fogueteiro",
+      "emoji": "🎆",
+      "matiz": 15,
+      "tom": 0,
+      "apelidos": [
+        "fogueteira",
+        "fogos",
+        "fogos de artifício",
+        "pirotecnia",
+        "pirotécnico",
+        "pirotecnico"
       ]
     }
   ],
