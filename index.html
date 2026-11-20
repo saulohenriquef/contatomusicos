@@ -367,7 +367,7 @@
     /* com o script funcionando, os cartões se encaixam como tijolos: cada um tem a sua altura e entra na coluna mais curta
        (o script mede o cartão e grava em --linhas quantas linhas de 4px ele ocupa, já com o espaço entre cartões); o perfil aberto só empurra os cartões da própria coluna */
     #lista.encaixe{grid-auto-rows:4px; row-gap:0}
-    #lista.encaixe > li.card{grid-row-end:span var(--linhas, 1)}
+    #lista.encaixe > li{grid-row-end:span var(--linhas, 1)}   /* cartões e títulos de grupo (Instrumentos / Apenas funções) */
     #vazio{grid-area:auto}
     footer{grid-area:rod}
     .cadastre{max-width:560px; margin-left:auto; margin-right:auto}
@@ -461,7 +461,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14
+    Lista de Contatos de Músicos · v14.1
   </footer>
 </div>
 
@@ -1655,37 +1655,13 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.html
+ Arquivo: Lista_Contatos_Musicos_v14.1.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
           Lista_Contatos_Musicos_cidades.json
           (no GitHub, o conteúdo do HTML vai para o index.html)
 ================================================================
-
-v14 — 2026-11-19
-  - A lista mantém três seções independentes: Instrumentos e Funções,
-    Artistas/Bandas/Cantores (selo ABC) e Empresas (selo ENM).
-    Artistas e empresas não se misturam com os resultados de músicos.
-  - Instrumentos e Funções têm o seletor multiescolha “Atuações”:
-    Instrumentos e Apenas funções, ambas selecionadas ao abrir. A pessoa que
-    atua nas duas áreas aparece em cada grupo com o cartão completo e
-    todas as suas funções; filtros por instrumento ou função continuam
-    disponíveis. Artistas mostram o tipo do projeto; empresas aparecem
-    na seção ENM.
-  - O nome pode ter uma referência opcional entre parênteses, em peso
-    normal. O nome principal continua em negrito.
-  - Ocultar pelo painel mantém o contato e o campo "oculto": true no
-    contatos.json; a lista pública o filtra sem excluir o registro.
-  - IFC aparece somente para músicos; ABC identifica artistas e ENM
-    empresas. Selos e balões explicativos usam a cor correspondente à
-    disponibilidade verde, amarela ou vermelha, inclusive no tema escuro.
-    Contatos antigos com IFC sem ifcDisponibilidade ficam verdes.
-  - Vocal permanece uma função musical; Cantor solo identifica um
-    projeto artístico próprio.
-  - Mantém busca por nome, referência, cidade, função, serviço e selo,
-    cartões com contatos e fotos, localização opcional e tema escuro.
-    Os arquivos de contatos e cidades continuam separados no GitHub.
 
 v1 — 2026-10-06
   - Primeira versão: página única com busca por nome, cidade ou
@@ -2017,6 +1993,38 @@ v13 — 2026-11-16
     vídeos, fotos, localização e selos. Se o navegador for antigo
     demais para encaixar os cartões, eles ficam numa grade simples (a
     linha tem a altura do maior cartão).
+----------------------------------------------------------------
+v14 — 2026-11-19
+  - A lista mantém três seções independentes: Instrumentos e Funções,
+    Artistas/Bandas/Cantores (selo ABC) e Empresas (selo ENM).
+    Artistas e empresas não se misturam com os resultados de músicos.
+  - Instrumentos e Funções têm o seletor multiescolha “Atuações”:
+    Instrumentos e Apenas funções, ambas selecionadas ao abrir. A pessoa que
+    atua nas duas áreas aparece em cada grupo com o cartão completo e
+    todas as suas funções; filtros por instrumento ou função continuam
+    disponíveis. Artistas mostram o tipo do projeto; empresas aparecem
+    na seção ENM.
+  - O nome pode ter uma referência opcional entre parênteses, em peso
+    normal. O nome principal continua em negrito.
+  - Ocultar pelo painel mantém o contato e o campo "oculto": true no
+    contatos.json; a lista pública o filtra sem excluir o registro.
+  - IFC aparece somente para músicos; ABC identifica artistas e ENM
+    empresas. Selos e balões explicativos usam a cor correspondente à
+    disponibilidade verde, amarela ou vermelha, inclusive no tema escuro.
+    Contatos antigos com IFC sem ifcDisponibilidade ficam verdes.
+  - Vocal permanece uma função musical; Cantor solo identifica um
+    projeto artístico próprio.
+  - Mantém busca por nome, referência, cidade, função, serviço e selo,
+    cartões com contatos e fotos, localização opcional e tema escuro.
+    Os arquivos de contatos e cidades continuam separados no GitHub.
+----------------------------------------------------------------
+v14.1 — 2026-11-20
+  - Computador: o título de grupo ("🎸 Instrumentos" / "🧰 Apenas
+    funções") ficava por baixo dos cartões, porque ocupava só uma
+    linha de 4 px da grade. Agora ele também é medido e ocupa a sua
+    altura, como os cartões. Celular sem mudança.
+  - Changelog: a entrada v14 foi para o fim, na ordem de sempre (mais
+    antiga primeiro).
 
 ================================================================
 -->
