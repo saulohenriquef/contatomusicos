@@ -420,7 +420,7 @@
   <div class="tools">
     <input id="busca" class="search" type="search" placeholder="Buscar por nome, cidade ou instrumento…" autocomplete="off">
     <nav class="abas" aria-label="Categorias da lista">
-      <button id="abaMusicos" class="aba" type="button" aria-pressed="true">Músicos</button>
+      <button id="abaMusicos" class="aba" type="button" aria-pressed="true">Instrumentos e Funções</button>
       <button id="abaArtistas" class="aba" type="button" aria-pressed="false">Artistas / Bandas / Cantores</button>
       <button id="abaEmpresas" class="aba" type="button" aria-pressed="false">Empresas</button>
     </nav>
@@ -444,7 +444,7 @@
   </div>
 
   <div class="resultados">
-  <h2 id="tituloLista" class="titulo-lista">Músicos · Atuações</h2>
+  <h2 id="tituloLista" class="titulo-lista">Instrumentos e Funções · Atuações</h2>
   <ul id="lista"></ul>
   <div id="vazio" class="empty" hidden>
     <p id="vazio-texto">Nenhum contato encontrado.</p>
@@ -1148,7 +1148,7 @@ const ehServicoLista = nome => SERVICOS_LISTA.has(AJ.chave(nome));
 const tagsDaArea = (c, area) => (c.instrumentos || []).filter(i => ehServicoLista(i) === (area === "servicos"));
 const contatosDaArea = () => CONTATOS.filter(c => c.categoria === categoriaAtiva);
 const passaInstr = c => !filtroInstr.size || (c.instrumentos || []).some(i => filtroInstr.has(chaveInstr(i)));
-const rotuloArea = area => area === "instrumentos" ? "Instrumentos" : "Funções profissionais";
+const rotuloArea = area => area === "instrumentos" ? "Instrumentos" : "Apenas funções";
 
 function criarChip(rotulo, qtd, matizCor, emoji, tom){
   const b = document.createElement("button");
@@ -1217,7 +1217,7 @@ function montarFiltros(){
   areaRail.textContent = "";
   AREAS_MUSICO.forEach(area => {
     const qtd = contatos.filter(c => tagsDaArea(c, area).length).length;
-    const b = criarChip(area === "instrumentos" ? "🎸 Instrumentos" : "🧰 Funções profissionais", qtd, area === "instrumentos" ? 210 : 35, "", 1);
+    const b = criarChip(area === "instrumentos" ? "🎸 Instrumentos" : "🧰 Apenas funções", qtd, area === "instrumentos" ? 210 : 35, "", 1);
     b.dataset.area = area;
     b.addEventListener("click", () => {
       if(areasMusicoAtivas.has(area)) areasMusicoAtivas.delete(area);
@@ -1367,11 +1367,10 @@ function render(){
   const tituloAreas = areasSelecionadas.length === 2 ? "Atuações"
     : areasSelecionadas.length === 1 ? rotuloArea(areasSelecionadas[0]) : "Atuações";
   const nomeLista = categoriaAtiva === "musico"
-    ? "Músicos · " + tituloAreas
+    ? "Instrumentos e Funções · " + tituloAreas
     : categoriaAtiva === "artista" ? "Artistas / Bandas / Cantores" : "Empresas";
   $("tituloLista").textContent = nomeLista;
-  $("filtrosTitulo").textContent = areasSelecionadas.length === 2 ? "Instrumentos e funções profissionais"
-    : areasSelecionadas.length === 1 ? rotuloArea(areasSelecionadas[0]) : "Instrumentos e funções profissionais";
+  $("filtrosTitulo").textContent = areasSelecionadas.length === 1 ? rotuloArea(areasSelecionadas[0]) : "Atuações";
   $("filtros-rail").setAttribute("aria-label", "Filtrar por instrumento ou função profissional");
   $("atuacoes").hidden = categoriaAtiva !== "musico";
   $("abaMusicos").setAttribute("aria-pressed", String(categoriaAtiva === "musico"));
@@ -1665,11 +1664,11 @@ iniciar();
 ================================================================
 
 v14 — 2026-11-19
-  - A lista mantém três seções independentes: Músicos,
+  - A lista mantém três seções independentes: Instrumentos e Funções,
     Artistas/Bandas/Cantores (selo ABC) e Empresas (selo ENM).
     Artistas e empresas não se misturam com os resultados de músicos.
-  - Músicos têm o seletor multiescolha “Atuações”: Instrumentos e
-    Funções profissionais, ambas selecionadas ao abrir. A pessoa que
+  - Instrumentos e Funções têm o seletor multiescolha “Atuações”:
+    Instrumentos e Apenas funções, ambas selecionadas ao abrir. A pessoa que
     atua nas duas áreas aparece em cada grupo com o cartão completo e
     todas as suas funções; filtros por instrumento ou função continuam
     disponíveis. Artistas mostram o tipo do projeto; empresas aparecem
