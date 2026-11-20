@@ -375,5 +375,16 @@
     "bio": "Cantor na estrada a mais de 11 anos.\nSolicite já orçamento para eventos em geral. Trabalho com repertório eclético ou estilo específico de sua preferência, todos os formatos como voz e violão, até banda alto padrão completa. Forneço Som, Luz, Painel, Pista, Lustre, Palco, Estrutura box, Dj, etc. precisou é só chamar👊🏻",
     "servicos": ["Show em diversos formatos", "Fornecimento de som, luz, painel, pista, dj"],
     "videos": ["https://www.instagram.com/reel/DQKtY_KjWbV/"]
+  },
+  {
+    "nome": "Leandelirio",
+    "categoria": "musico",
+    "foto": "leandelirio.jpg",
+    "cidades": ["Alfenas/MG"],
+    "instrumentos": ["Baixo", "Viola caipira", "Violão"],
+    "instagram": "leandelirio",
+    "youtube": "@leandelirio",
+    "email": "fessorlele@gmail.com",
+    "whatsapp": "35991498104"
   }
 ]

@@ -404,6 +404,36 @@
         "harmonica",
         "gaita boca"
       ]
+    },
+    {
+      "nome": "Produtor de palco e banda",
+      "emoji": "🎵",
+      "matiz": 200,
+      "tom": 1
+    },
+    {
+      "nome": "Produtor artístico",
+      "emoji": "🎵",
+      "matiz": 103,
+      "tom": 0
+    },
+    {
+      "nome": "Produtor geral",
+      "emoji": "🎵",
+      "matiz": 192,
+      "tom": 1
+    },
+    {
+      "nome": "Fogueteiro",
+      "emoji": "🎵",
+      "matiz": 7,
+      "tom": 0
+    },
+    {
+      "nome": "Artistas/Bandas/Cantores",
+      "emoji": "🎵",
+      "matiz": 23,
+      "tom": 0
     }
   ],
   "funcoes": [
