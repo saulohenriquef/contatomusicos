@@ -504,10 +504,10 @@
       </div>
       <div id="boxDisponibilidadeABC" class="opcoes-status" hidden>
         <p class="campo">Você aceita free-lance nos instrumentos e funções que marcou?</p>
-        <label><input type="radio" name="abcDisponibilidade" value="sim"> Sim <span class="selo selo-verde" title="IFC verde: aceita free-lance">IFC</span></label>
-        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente <span class="selo selo-amarelo" title="IFC amarelo: aceita free-lance raramente">IFC</span></label>
-        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não <span class="selo selo-vermelho" title="Não aceita free-lance: fica só como artista (ABC)">IFC</span></label>
-        <small>Com Sim ou Raramente, você aparece também na lista de músicos, nesses instrumentos e funções, com o selo IFC nessa cor. Se escolher “Não”, os instrumentos e funções são desmarcados e você fica só como artista (ABC).</small>
+        <label><input type="radio" name="abcDisponibilidade" value="sim"> Sim <span class="selo selo-verde" title="ABC verde: aceita free-lance">ABC</span></label>
+        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente <span class="selo selo-amarelo" title="ABC amarelo: aceita free-lance raramente">ABC</span></label>
+        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não, fico só como artista <span class="selo selo-abc" title="ABC roxo: artista, banda ou cantor com projeto próprio">ABC</span></label>
+        <small>Com Sim ou Raramente, você aparece também na lista de músicos, nesses instrumentos e funções, com o selo ABC nessa cor. Se escolher “Não”, os instrumentos e funções são desmarcados e o seu selo ABC fica roxo.</small>
       </div>
       <div id="boxIfc">
         <label class="marcar marcar-ifc" for="fIfc">
@@ -702,7 +702,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.5
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.6
   </footer>
 </div>
 
@@ -1047,7 +1047,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.5";
+const VERSAO = "v6.6";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
@@ -2147,10 +2147,9 @@ function montarCartao(c, fotoModo){
   if(c.referencia) nome.appendChild(criar("span", "referencia", " (" + c.referencia + ")"));
   if((c.selos || []).includes("IFC")) nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.ifcDisponibilidade || "sim"), "IFC"));
   if((c.selos || []).includes("ABC")){
-    nome.appendChild(criar("span", "selo selo-abc", "ABC"));
-    // artista com instrumento ou função para free-lance: selo IFC na cor escolhida (é assim que aparece também na lista de músicos)
-    if((c.instrumentos || []).length && ["sim", "raramente"].includes(c.abcDisponibilidade))
-      nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.abcDisponibilidade), "IFC"));
+    // artista com instrumento ou função para free-lance: ABC verde ou amarelo (assim aparece também na lista de músicos); sem: ABC roxo
+    const freelance = (c.instrumentos || []).length && ["sim", "raramente"].includes(c.abcDisponibilidade);
+    nome.appendChild(criar("span", "selo " + (freelance ? classeDisponibilidade(c.abcDisponibilidade) : "selo-abc"), "ABC"));
   }
   if((c.selos || []).includes("ENM")) nome.appendChild(criar("span", "selo selo-enm", "ENM"));
   const local = criar("div", "line" + (c.cidades.length ? "" : " vazio"), "📍 " + (c.cidades.length ? c.cidades.join(" e ") : "Suas cidades"));
@@ -3142,7 +3141,7 @@ function atualizarCamposCategoria(){
   $("obrigatorioInstr").hidden = artista || empresa;
   // artista: instrumentos e funções só para quem quer oferecer free-lance neles
   $("dicaInstr").textContent = artista
-    ? "Opcional: marque um instrumento ou função só se quiser oferecer free-lance nele. Quem marca aparece também na lista de músicos, com o selo IFC."
+    ? "Opcional: marque um instrumento ou função só se quiser oferecer free-lance nele. Quem marca aparece também na lista de músicos, com o selo ABC verde ou amarelo."
     : "Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.";
   $("boxDisponibilidadeABC").hidden = !(artista && instr.length);
   $("opcoesIfc").hidden = !ifcPermitido || !$("fIfc").checked;
@@ -3300,7 +3299,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.5.html
+ Arquivo: Cadastro_Musicos_v6.6.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3313,6 +3312,15 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.6 — 2026-11-21
+  - Artista com free-lance não usa mais o selo IFC: o próprio selo ABC
+    fica verde (Sim) ou amarelo (Raramente). Sem instrumento ou função
+    marcado, o ABC fica roxo. Não existe ABC vermelho: "Não" desmarca os
+    instrumentos e funções (com o aviso de sempre) e deixa o ABC roxo.
+  - A pergunta de free-lance e a prévia mostram o ABC nessas cores.
+  - Dados e regras iguais (v4).
+
+----------------------------------------------------------------
 v6.5 — 2026-11-20
   - Artista (ABC) que oferece free-lance: os instrumentos e funções são
     opcionais e servem só para isso (a dica avisa). Sem nenhum marcado,
