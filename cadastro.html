@@ -238,6 +238,8 @@
   .selo-amarelo{background:#fff1c9!important; color:#805c00!important; border-color:#e0bf55!important}
   .selo-vermelho{background:#ffe1df!important; color:#8d2924!important; border-color:#df8b84!important}
   .selo-enm{background:#e4e8ff!important; color:#33459b!important; border-color:#9ba7e9!important}
+  .selo-abc{background:#f1e6fb!important; color:#5b2a86!important; border-color:#c9a5e8!important}
+  @media (prefers-color-scheme:dark){.selo-abc{background:#2c1d3f!important; color:#dcc2f5!important; border-color:#6a4b8c!important}}
   .selo{
     display:inline-flex; align-items:center; vertical-align:middle; margin-left:6px; min-height:24px;
     background:#fdf0c8; color:#7a5500; border:1px solid #e3c36b; border-radius:999px;
@@ -501,11 +503,11 @@
 
       </div>
       <div id="boxDisponibilidadeABC" class="opcoes-status" hidden>
-        <p class="campo">Você aceita convites de free-lance para os instrumentos ou serviços marcados?</p>
-        <label><input type="radio" name="abcDisponibilidade" value="sim"> Sim · selo verde</label>
-        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente · selo amarelo</label>
-        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não · selo vermelho</label>
-        <small>Se escolher “Não”, os instrumentos e serviços serão desmarcados depois da sua confirmação.</small>
+        <p class="campo">Você aceita free-lance nos instrumentos e funções que marcou?</p>
+        <label><input type="radio" name="abcDisponibilidade" value="sim"> Sim <span class="selo selo-verde" title="IFC verde: aceita free-lance">IFC</span></label>
+        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente <span class="selo selo-amarelo" title="IFC amarelo: aceita free-lance raramente">IFC</span></label>
+        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não <span class="selo selo-vermelho" title="Não aceita free-lance: fica só como artista (ABC)">IFC</span></label>
+        <small>Com Sim ou Raramente, você aparece também na lista de músicos, nesses instrumentos e funções, com o selo IFC nessa cor. Se escolher “Não”, os instrumentos e funções são desmarcados e você fica só como artista (ABC).</small>
       </div>
       <div id="boxIfc">
         <label class="marcar marcar-ifc" for="fIfc">
@@ -700,7 +702,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.4
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.5
   </footer>
 </div>
 
@@ -1045,7 +1047,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.4";
+const VERSAO = "v6.5";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
@@ -2014,7 +2016,7 @@ function coletar(){
   const referencia = semControle($("fReferencia").value).replace(/\s+/g, " ").trim().slice(0, 60);
   if(categoria === "musico" && !instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento ou serviço.");
   if(categoria === "musico" && $("fIfc").checked && !["sim","raramente","nao"].includes(ifcDisponibilidade)) falha("opcoesIfc", "Marque se aceita free-lances como integrante fixo.");
-  if(categoria === "artista" && instr.length && !["sim","raramente","nao"].includes(abcDisponibilidade)) falha("boxDisponibilidadeABC", "Marque se aceita convites para as funções selecionadas.");
+  if(categoria === "artista" && instr.length && !["sim","raramente","nao"].includes(abcDisponibilidade)) falha("boxDisponibilidadeABC", "Marque se aceita free-lance nos instrumentos e funções que marcou.");
   const c = {};
   c.nome = nome;
   definir(c, "referencia", referencia);
@@ -2144,7 +2146,12 @@ function montarCartao(c, fotoModo){
   nome.appendChild(criar("strong", "", c.nome || "Seu nome"));
   if(c.referencia) nome.appendChild(criar("span", "referencia", " (" + c.referencia + ")"));
   if((c.selos || []).includes("IFC")) nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.ifcDisponibilidade || "sim"), "IFC"));
-  if((c.selos || []).includes("ABC")) nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.abcDisponibilidade), "ABC"));
+  if((c.selos || []).includes("ABC")){
+    nome.appendChild(criar("span", "selo selo-abc", "ABC"));
+    // artista com instrumento ou função para free-lance: selo IFC na cor escolhida (é assim que aparece também na lista de músicos)
+    if((c.instrumentos || []).length && ["sim", "raramente"].includes(c.abcDisponibilidade))
+      nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.abcDisponibilidade), "IFC"));
+  }
   if((c.selos || []).includes("ENM")) nome.appendChild(criar("span", "selo selo-enm", "ENM"));
   const local = criar("div", "line" + (c.cidades.length ? "" : " vazio"), "📍 " + (c.cidades.length ? c.cidades.join(" e ") : "Suas cidades"));
   corpo.append(nome, local);
@@ -3133,6 +3140,10 @@ function atualizarCamposCategoria(){
   $("boxAtuacoes").hidden = empresa;
   $("boxIfc").hidden = !ifcPermitido;
   $("obrigatorioInstr").hidden = artista || empresa;
+  // artista: instrumentos e funções só para quem quer oferecer free-lance neles
+  $("dicaInstr").textContent = artista
+    ? "Opcional: marque um instrumento ou função só se quiser oferecer free-lance nele. Quem marca aparece também na lista de músicos, com o selo IFC."
+    : "Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.";
   $("boxDisponibilidadeABC").hidden = !(artista && instr.length);
   $("opcoesIfc").hidden = !ifcPermitido || !$("fIfc").checked;
   if(artista && instr.length && abcDisponibilidade === "nao"){
@@ -3289,7 +3300,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.4.html
+ Arquivo: Cadastro_Musicos_v6.5.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3302,6 +3313,21 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.5 — 2026-11-20
+  - Artista (ABC) que oferece free-lance: os instrumentos e funções são
+    opcionais e servem só para isso (a dica avisa). Sem nenhum marcado,
+    não aparece a pergunta de free-lance nem selo de cor.
+  - Com instrumento ou função marcado, a pergunta usa o selo IFC: Sim
+    (verde) ou Raramente (amarelo). Com essa resposta o artista aparece
+    também na lista de músicos, com o selo IFC na cor escolhida. "Não"
+    continua avisando que ele fica só como artista (ABC) e desmarca os
+    instrumentos e funções.
+  - Selo ABC agora tem uma cor só (lilás), como o ENM; a cor da
+    disponibilidade fica no selo IFC. A prévia mostra os dois.
+  - Dados e regras iguais (v4): a resposta continua indo em
+    abcDisponibilidade.
+
+----------------------------------------------------------------
 v6.4 — 2026-11-20
   - Instrumentos e funções: o campo para escrever ficou escondido atrás
     de um balão "Outros" no fim de cada bloco (como no tipo de artista).
