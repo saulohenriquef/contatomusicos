@@ -493,7 +493,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.8
+    Lista de Contatos de Músicos · v14.9
   </footer>
 </div>
 
@@ -1516,9 +1516,8 @@ function render(){
       (c.selos||[]).join(" "), (c.hashtags||[]).join(" "), (c.servicos||[]).join(" "), c.bio, c.observacoes].join(" ");
     return !q || norm(termos).includes(q);
   });
-  const visiveis = categoriaAtiva === "musico"
-    ? areasSelecionadas.flatMap(area => contatosVisiveis.filter(c => tagsDaArea(c, area).length).map(c => ({c, area})))
-    : contatosVisiveis.map(c => ({c, area: ""}));
+  // músicos: instrumentos e funções juntos e misturados, um cartão por contato; a escolha "Instrumentos / Funções" só filtra
+  const visiveis = contatosVisiveis.map(c => ({c, area: ""}));
 
   let areaAnterior = "";
   visiveis.forEach(({c, area}) => {
@@ -1789,7 +1788,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.8.html
+ Arquivo: Lista_Contatos_Musicos_v14.9.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2219,6 +2218,12 @@ v14.8 — 2026-11-21
     um pouco maior. A referência deixa de ser parênteses e aparece entre
     colchetes: Moacyr (China) [Banda Tequila]. Nomes com parênteses não
     viram mais referência ao abrir o contato.
+----------------------------------------------------------------
+v14.9 — 2026-11-21
+  - Aba de músicos: instrumentos e funções voltam a ficar juntos e
+    misturados, um cartão por contato (sem os blocos "Instrumentos" e
+    "Apenas funções" e sem cartão repetido). A escolha de Instrumentos
+    ou Funções só filtra; o padrão continua sendo os dois.
 
 ================================================================
 -->
