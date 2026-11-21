@@ -710,7 +710,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.7
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.8
   </footer>
 </div>
 
@@ -1055,7 +1055,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.7";
+const VERSAO = "v6.8";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
@@ -2157,8 +2157,10 @@ function montarCartao(c, fotoModo){
 
   const corpo = criar("div");
   const nome = criar("div", "name" + (c.nome ? "" : " vazio"));
-  nome.appendChild(criar("strong", "", c.nome || "Seu nome"));
-  if(c.referencia) nome.appendChild(criar("span", "referencia", " (" + c.referencia + ")"));
+  const [nomeSo, apelido] = apelidoDe(c.nome || "Seu nome");
+  nome.appendChild(criar("strong", "", nomeSo));
+  if(apelido){ const ap = criar("span", "referencia", apelido); ap.style.fontSize = "1.08em"; nome.appendChild(ap); }   // apelido: sem negrito, um pouco maior
+  if(c.referencia) nome.appendChild(criar("span", "referencia", " [" + c.referencia + "]"));
   if((c.selos || []).includes("IFC")) nome.appendChild(criar("span", "selo " + classeDisponibilidade(c.ifcDisponibilidade || "sim"), "IFC"));
   if((c.selos || []).includes("ABC")){
     // artista com instrumento ou função para free-lance: ABC verde ou amarelo (assim aparece também na lista de músicos); sem: ABC roxo
@@ -2548,9 +2550,9 @@ function contatoDeFora(b){
   const texto = v => typeof v === "string" ? v : "";
   const lista = v => Array.isArray(v) ? v : [];
   const c = {};
-  const nomeBruto = limparNome(texto(b.nome)), nomePartes = nomeBruto.match(/^(.*?)\s+\(([^()]*)\)$/);
-  c.nome = AJ.formatarNome(nomePartes ? nomePartes[1] : nomeBruto);
-  c.referencia = semControle(texto(b.referencia) || (nomePartes ? nomePartes[2] : "")).replace(/\s+/g, " ").trim().slice(0, 60);
+  const nomeBruto = limparNome(texto(b.nome));   // parênteses no nome = apelido (fica no nome)
+  c.nome = AJ.formatarNome(nomeBruto);
+  c.referencia = semControle(texto(b.referencia)).replace(/\s+/g, " ").trim().slice(0, 60);
   c.categoria = ["musico","artista","empresa"].includes(b.categoria) ? b.categoria : (lista(b.selos).includes("ABC") ? "artista" : lista(b.selos).includes("ENM") ? "empresa" : "musico");
   c.tipoArtista = texto(b.tipoArtista);
   c.ifcDisponibilidade = ["sim","raramente","nao"].includes(b.ifcDisponibilidade) ? b.ifcDisponibilidade
@@ -2607,7 +2609,6 @@ function preencherContato(c){
   cidades = [...(c.cidades || [])];
   const nomeBruto = String(c.nome || "");
   const separado = nomeBruto.match(/^(.*?)\s+\(([^()]*)\)$/);
-  if(separado && !c.referencia){ c.nome = AJ.formatarNome(separado[1]); c.referencia = separado[2]; $("fNome").value = c.nome; }
   $("fReferencia").value = c.referencia || "";
   $("fCategoria").value = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
   $("fTipoArtista").value = c.tipoArtista || "";
@@ -3168,6 +3169,7 @@ function atualizarCamposCategoria(){
     document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = false);
   }
 }
+const apelidoDe = n => { const m = String(n || "").match(/^(.*?)\s*(\([^()]*\))$/); return m ? [m[1], " " + m[2]] : [String(n || ""), ""]; };
 function classeDisponibilidade(valor){ return valor === "sim" ? "selo-verde" : valor === "nao" ? "selo-vermelho" : "selo-amarelo"; }
 $("fCategoria").addEventListener("change", () => {
   if($("fCategoria").value === "artista" && instr.length) freelanceABC = "sim";   // já tinha marcado instrumentos: continuam, como free-lance
@@ -3337,7 +3339,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.7.html
+ Arquivo: Cadastro_Musicos_v6.8.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3350,6 +3352,14 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.8 — 2026-11-21
+  - Apelido x referência: o que vem entre parênteses no nome é apelido,
+    ex.: Moacyr (China). Ele fica no nome, sem negrito e com a letra
+    um pouco maior. A referência deixa de ser parênteses e aparece entre
+    colchetes: Moacyr (China) [Banda Tequila]. Nomes com parênteses não
+    viram mais referência ao abrir o contato.
+
+----------------------------------------------------------------
 v6.7 — 2026-11-21
   - Artista (ABC): primeiro vem a pergunta "Você também aceita
     free-lances?", com 🚫 Não (já marcado) e ✅ Sim. Só o Sim abre os
