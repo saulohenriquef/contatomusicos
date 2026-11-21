@@ -84,6 +84,7 @@
   @media (prefers-reduced-motion: reduce){ .foto-zoom{animation:none} }
   .name{font-weight:650; font-size:1.05rem; line-height:1.25; overflow-wrap:anywhere}
   .name .referencia{font-weight:400; opacity:.82}
+  .name .apelido{font-weight:400; font-size:1.08em}   /* Moacyr (China): o apelido sem negrito e um pouco maior */
   .line{color:var(--muted); font-size:.88rem; margin-top:3px}
   .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
   .tag{
@@ -492,7 +493,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.7
+    Lista de Contatos de Músicos · v14.8
   </footer>
 </div>
 
@@ -923,6 +924,7 @@ const SELOS = {
   ENM: {sigla: "ENM", nome: "Empresas e Negócios da Música"}
 };
 // tom = cor do balão e do selo clicado; cor = a linha "Selo VERDE" do balão (só nos selos em que a cor quer dizer algo: IFC e ABC)
+const apelidoDe = n => { const m = String(n || "").match(/^(.*?)\s*(\([^()]*\))$/); return m ? [m[1], " " + m[2]] : [String(n || ""), ""]; };
 function dadosDoSelo(id, c){
   if(id === "IFC"){
     const disponibilidade = c.ifcDisponibilidade || "sim";
@@ -1540,11 +1542,13 @@ function render(){
     const nome = document.createElement("div");
     nome.className = "name";
     const nomeForte = document.createElement("strong");
-    nomeForte.textContent = c.nome;
+    const [nomeSo, apelido] = apelidoDe(c.nome);
+    nomeForte.textContent = nomeSo;
     nome.appendChild(nomeForte);
+    if(apelido){ const ap = document.createElement("span"); ap.className = "apelido"; ap.textContent = apelido; nome.appendChild(ap); }
     if(c.referencia){
       const referencia = document.createElement("span");
-      referencia.className = "referencia"; referencia.textContent = " (" + c.referencia + ")";
+      referencia.className = "referencia"; referencia.textContent = " [" + c.referencia + "]";
       nome.appendChild(referencia);
     }
     (c.selos||[]).forEach(id => {
@@ -1742,14 +1746,14 @@ async function iniciar(){
     const mapa = new Map(Object.entries(cidades).map(([n, v]) => [norm(n.trim()), [v.lat, v.lon]]));
     const chave = n => norm(String(n||"").trim());
     CONTATOS = contatos.filter(c => c && c.oculto !== true).map(c => {
-      const bruto = String(c.nome || ""), partes = bruto.match(/^(.*?)\s+\(([^()]*)\)$/);
+      const bruto = String(c.nome || "");   // parênteses no nome = apelido (fica no nome)
       const categoria = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
       const selos = [...new Set([...(Array.isArray(c.selos) ? c.selos : []).filter(s => !["ABC","ENM"].includes(s) && (s !== "IFC" || categoria === "musico")),
         ...(categoria === "artista" ? ["ABC"] : []), ...(categoria === "empresa" ? ["ENM"] : [])])];
       return {
       ...c,
-      nome: AJ.formatarNome(partes ? partes[1] : bruto),
-      referencia: String(c.referencia || (partes ? partes[2] : "")),
+      nome: AJ.formatarNome(bruto),
+      referencia: String(c.referencia || ""),
       categoria, tipoArtista: String(c.tipoArtista || ""),
       ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : (categoria === "musico" && selos.includes("IFC") ? "sim" : ""),
       abcDisponibilidade: ["sim","raramente","nao"].includes(c.abcDisponibilidade) ? c.abcDisponibilidade : "nao",
@@ -1785,7 +1789,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.7.html
+ Arquivo: Lista_Contatos_Musicos_v14.8.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2208,6 +2212,13 @@ v14.7 — 2026-11-21
     selo: "Aceita free-lances." (verde), "Raramente aceita free-lances."
     (amarelo) e "Não aceita free-lances." (vermelho).
   - Não mudou: o resto.
+----------------------------------------------------------------
+v14.8 — 2026-11-21
+  - Apelido x referência: o que vem entre parênteses no nome é apelido,
+    ex.: Moacyr (China). Ele fica no nome, sem negrito e com a letra
+    um pouco maior. A referência deixa de ser parênteses e aparece entre
+    colchetes: Moacyr (China) [Banda Tequila]. Nomes com parênteses não
+    viram mais referência ao abrir o contato.
 
 ================================================================
 -->
