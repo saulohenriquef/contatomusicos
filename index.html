@@ -374,6 +374,35 @@
     footer{grid-area:rod}
     .cadastre{max-width:560px; margin-left:auto; margin-right:auto}
   }
+  /* ---------- v14.6: selo clicado fica na própria cor, viva; balão com a linha "Selo VERDE" ---------- */
+  .selo-verde[aria-expanded="true"]{background:#22c55e; color:#fff; border-color:#16a34a}
+  .selo-amarelo[aria-expanded="true"]{background:#facc15; color:#3f2a00; border-color:#eab308}
+  .selo-vermelho[aria-expanded="true"]{background:#ef4444; color:#fff; border-color:#dc2626}
+  .selo-abc[aria-expanded="true"]{background:#a855f7; color:#fff; border-color:#9333ea}
+  .selo-enm[aria-expanded="true"]{background:#4f63e8; color:#fff; border-color:#3b4fd4}
+  .balao-cor{margin:-1px 0 6px; font-size:.86rem}
+  .balao-cor[hidden]{display:none}
+  .balao-cor strong{font-weight:800; letter-spacing:.03em}
+  .balao-verde .balao-cor strong{color:#15803d}
+  .balao-amarelo .balao-cor strong{color:#a16207}
+  .balao-vermelho .balao-cor strong{color:#b91c1c}
+  .balao-roxo{border-color:#c9a5e8}
+  .balao-roxo .balao-titulo, .balao-roxo .balao-cor strong{color:#7e22ce}
+  .balao-roxo .balao-seta{border-color:#c9a5e8}
+  .balao-azul{border-color:#9ba7e9}
+  .balao-azul .balao-titulo{color:#33459b}
+  .balao-azul .balao-seta{border-color:#9ba7e9}
+  @media (prefers-color-scheme:dark){
+    .balao-verde .balao-cor strong{color:#86efac}
+    .balao-amarelo .balao-cor strong{color:#fde047}
+    .balao-vermelho .balao-cor strong{color:#fca5a5}
+    .balao-roxo{border-color:#6a4b8c}
+    .balao-roxo .balao-titulo, .balao-roxo .balao-cor strong{color:#dcc2f5}
+    .balao-roxo .balao-seta{border-color:#6a4b8c}
+    .balao-azul{border-color:#4e5d9c}
+    .balao-azul .balao-titulo{color:#c2cbff}
+    .balao-azul .balao-seta{border-color:#4e5d9c}
+  }
 </style>
 </head>
 <body>
@@ -463,12 +492,13 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.5
+    Lista de Contatos de Músicos · v14.6
   </footer>
 </div>
 
 <div id="balao" class="balao" role="dialog" aria-live="polite" hidden>
   <div id="balao-titulo" class="balao-titulo"></div>
+  <div id="balao-cor" class="balao-cor" hidden></div>
   <div id="balao-texto"></div>
   <span class="balao-seta"></span>
 </div>
@@ -892,24 +922,29 @@ const SELOS = {
   ABC: {sigla: "ABC", nome: "Artistas, Bandas e Cantores"},
   ENM: {sigla: "ENM", nome: "Empresas e Negócios da Música"}
 };
+// tom = cor do balão e do selo clicado; cor = a linha "Selo VERDE" do balão (só nos selos em que a cor quer dizer algo: IFC e ABC)
 function dadosDoSelo(id, c){
-  const disponibilidade = c.ifcDisponibilidade || "sim";
-  const situacao = disponibilidade === "sim" ? "verde" : disponibilidade === "nao" ? "vermelho" : "amarelo";
-  if(id === "IFC") return {...SELOS.IFC, classe: "selo-" + situacao,
-    texto: disponibilidade === "sim"
-      ? "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele. Sua disponibilidade é limitada e depende da conciliação com a agenda do conjunto, mas também aceita free-lances."
-      : disponibilidade === "raramente"
-        ? "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele. Raramente aceita free-lances."
-        : "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele. Não aceita free-lances."};
+  if(id === "IFC"){
+    const disponibilidade = c.ifcDisponibilidade || "sim";
+    const tom = disponibilidade === "sim" ? "verde" : disponibilidade === "nao" ? "vermelho" : "amarelo";
+    const base = "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele.";
+    return {...SELOS.IFC, classe: "selo-" + tom, tom, cor: tom,
+      texto: tom === "verde" ? base + " Sua disponibilidade é limitada e depende da conciliação com a agenda do conjunto. Aceita free-lances."
+        : tom === "amarelo" ? base + " Raramente aceita free-lances."
+        : base + " Não aceita free-lances."};
+  }
   if(id === "ABC"){
     // artista que oferece free-lance (Sim ou Raramente): ABC verde ou amarelo; sem free-lance: ABC roxo
-    if(ofereceFreelance(c)) return {...SELOS.ABC, classe: c.abcDisponibilidade === "sim" ? "selo-verde" : "selo-amarelo",
-      texto: c.abcDisponibilidade === "sim"
-        ? "Este profissional tem um projeto artístico próprio (artista, banda ou cantor) e sua agenda principal vinculada aos compromissos dele. Sua disponibilidade é limitada e depende da conciliação com a agenda do projeto, mas também aceita free-lances."
-        : "Este profissional tem um projeto artístico próprio (artista, banda ou cantor) e sua agenda principal vinculada aos compromissos dele. Raramente aceita free-lances."};
-    return {...SELOS.ABC, classe: "selo-abc", texto: "Artista, banda ou cantor com projeto próprio."};
+    if(ofereceFreelance(c)){
+      const tom = c.abcDisponibilidade === "sim" ? "verde" : "amarelo";
+      const base = "Este profissional tem um projeto artístico próprio (artista, banda ou cantor) e sua agenda principal vinculada aos compromissos dele.";
+      return {...SELOS.ABC, classe: "selo-" + tom, tom, cor: tom,
+        texto: tom === "verde" ? base + " Sua disponibilidade é limitada e depende da conciliação com a agenda do projeto. Aceita free-lances."
+          : base + " Raramente aceita free-lances."};
+    }
+    return {...SELOS.ABC, classe: "selo-abc", tom: "roxo", cor: "roxo", texto: "Artista, banda ou cantor com projeto próprio."};
   }
-  if(id === "ENM") return {...SELOS.ENM, classe: "selo-enm",
+  if(id === "ENM") return {...SELOS.ENM, classe: "selo-enm", tom: "azul",
     texto: "Empresa ou negócio ligado à música. O que oferece ou vende fica descrito no recado ou no perfil completo."};
   return null;
 }
@@ -918,7 +953,7 @@ let balaoDe = null;   // botão do selo que está com o balão aberto
 
 function fecharBalao(){
   $("balao").hidden = true;
-  $("balao").classList.remove("balao-verde", "balao-amarelo", "balao-vermelho");
+  $("balao").classList.remove("balao-verde", "balao-amarelo", "balao-vermelho", "balao-roxo", "balao-azul");
   if(balaoDe){ balaoDe.setAttribute("aria-expanded", "false"); balaoDe = null; }
 }
 
@@ -926,9 +961,12 @@ function alternarBalao(btn, selo){
   if(balaoDe === btn){ fecharBalao(); return; }
   fecharBalao();
   const bal = $("balao");
-  const tomSelo = String(selo.classe || "").replace("selo-", "");
-  if(["verde", "amarelo", "vermelho"].includes(tomSelo)) bal.classList.add("balao-" + tomSelo);
+  if(selo.tom) bal.classList.add("balao-" + selo.tom);
   $("balao-titulo").textContent = selo.sigla + " · " + selo.nome;
+  const cor = $("balao-cor");   // "Selo VERDE", com a cor em negrito
+  cor.textContent = "";
+  cor.hidden = !selo.cor;
+  if(selo.cor){ const forte = document.createElement("strong"); forte.textContent = selo.cor.toUpperCase(); cor.append("Selo ", forte); }
   $("balao-texto").textContent = selo.texto;
 
   const largura = Math.min(290, window.innerWidth - 16);
@@ -1747,7 +1785,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.5.html
+ Arquivo: Lista_Contatos_Musicos_v14.6.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2151,6 +2189,18 @@ v14.5 — 2026-11-21
     raramente aceita; vermelho = não aceita.
   - ABC verde e amarelo na mesma lógica (projeto artístico próprio).
     ABC roxo continua só "Artista, banda ou cantor com projeto próprio."
+  - Não mudou: abas, filtros, cartões, encaixe, catálogo e dados.
+----------------------------------------------------------------
+v14.6 — 2026-11-21
+  - Selo clicado: antes todo selo ficava amarelo ao ser tocado. Agora
+    cada um fica na própria cor, viva: verde vivo, amarelo vivo,
+    vermelho vivo, roxo vivo (ABC sem free-lance) e azul vivo (ENM).
+  - Balão dos selos IFC e ABC: embaixo do nome do selo aparece
+    "Selo VERDE" (ou AMARELO, VERMELHO, ROXO), com a cor em negrito. O
+    balão também fica na cor do selo (o do ABC roxo e o do ENM ficavam
+    com a borda amarela).
+  - Texto do IFC verde: "... depende da conciliação com a agenda do
+    conjunto. Aceita free-lances." O ABC verde segue a mesma lógica.
   - Não mudou: abas, filtros, cartões, encaixe, catálogo e dados.
 
 ================================================================
