@@ -383,9 +383,9 @@
   .balao-cor{margin:-1px 0 6px; font-size:.86rem}
   .balao-cor[hidden]{display:none}
   .balao-cor strong{font-weight:800; letter-spacing:.03em}
-  .balao-verde .balao-cor strong{color:#15803d}
-  .balao-amarelo .balao-cor strong{color:#a16207}
-  .balao-vermelho .balao-cor strong{color:#b91c1c}
+  .balao-verde .balao-cor strong, .balao-verde #balao-texto strong{color:#15803d}
+  .balao-amarelo .balao-cor strong, .balao-amarelo #balao-texto strong{color:#a16207}
+  .balao-vermelho .balao-cor strong, .balao-vermelho #balao-texto strong{color:#b91c1c}
   .balao-roxo{border-color:#c9a5e8}
   .balao-roxo .balao-titulo, .balao-roxo .balao-cor strong{color:#7e22ce}
   .balao-roxo .balao-seta{border-color:#c9a5e8}
@@ -393,9 +393,9 @@
   .balao-azul .balao-titulo{color:#33459b}
   .balao-azul .balao-seta{border-color:#9ba7e9}
   @media (prefers-color-scheme:dark){
-    .balao-verde .balao-cor strong{color:#86efac}
-    .balao-amarelo .balao-cor strong{color:#fde047}
-    .balao-vermelho .balao-cor strong{color:#fca5a5}
+    .balao-verde .balao-cor strong, .balao-verde #balao-texto strong{color:#86efac}
+    .balao-amarelo .balao-cor strong, .balao-amarelo #balao-texto strong{color:#fde047}
+    .balao-vermelho .balao-cor strong, .balao-vermelho #balao-texto strong{color:#fca5a5}
     .balao-roxo{border-color:#6a4b8c}
     .balao-roxo .balao-titulo, .balao-roxo .balao-cor strong{color:#dcc2f5}
     .balao-roxo .balao-seta{border-color:#6a4b8c}
@@ -492,7 +492,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.6
+    Lista de Contatos de Músicos · v14.7
   </footer>
 </div>
 
@@ -929,9 +929,8 @@ function dadosDoSelo(id, c){
     const tom = disponibilidade === "sim" ? "verde" : disponibilidade === "nao" ? "vermelho" : "amarelo";
     const base = "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele.";
     return {...SELOS.IFC, classe: "selo-" + tom, tom, cor: tom,
-      texto: tom === "verde" ? base + " Sua disponibilidade é limitada e depende da conciliação com a agenda do conjunto. Aceita free-lances."
-        : tom === "amarelo" ? base + " Raramente aceita free-lances."
-        : base + " Não aceita free-lances."};
+      texto: tom === "verde" ? base + " Sua disponibilidade é limitada e depende da conciliação com a agenda do conjunto." : base,
+      destaque: tom === "verde" ? "Aceita free-lances." : tom === "amarelo" ? "Raramente aceita free-lances." : "Não aceita free-lances."};
   }
   if(id === "ABC"){
     // artista que oferece free-lance (Sim ou Raramente): ABC verde ou amarelo; sem free-lance: ABC roxo
@@ -939,8 +938,8 @@ function dadosDoSelo(id, c){
       const tom = c.abcDisponibilidade === "sim" ? "verde" : "amarelo";
       const base = "Este profissional tem um projeto artístico próprio (artista, banda ou cantor) e sua agenda principal vinculada aos compromissos dele.";
       return {...SELOS.ABC, classe: "selo-" + tom, tom, cor: tom,
-        texto: tom === "verde" ? base + " Sua disponibilidade é limitada e depende da conciliação com a agenda do projeto. Aceita free-lances."
-          : base + " Raramente aceita free-lances."};
+        texto: tom === "verde" ? base + " Sua disponibilidade é limitada e depende da conciliação com a agenda do projeto." : base,
+        destaque: tom === "verde" ? "Aceita free-lances." : "Raramente aceita free-lances."};
     }
     return {...SELOS.ABC, classe: "selo-abc", tom: "roxo", cor: "roxo", texto: "Artista, banda ou cantor com projeto próprio."};
   }
@@ -968,6 +967,7 @@ function alternarBalao(btn, selo){
   cor.hidden = !selo.cor;
   if(selo.cor){ const forte = document.createElement("strong"); forte.textContent = selo.cor.toUpperCase(); cor.append("Selo ", forte); }
   $("balao-texto").textContent = selo.texto;
+  if(selo.destaque){ const d = document.createElement("strong"); d.textContent = selo.destaque; $("balao-texto").append(" ", d); }   // em negrito, na cor do selo
 
   const largura = Math.min(290, window.innerWidth - 16);
   bal.style.width = largura + "px";
@@ -1785,7 +1785,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.6.html
+ Arquivo: Lista_Contatos_Musicos_v14.7.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2202,6 +2202,12 @@ v14.6 — 2026-11-21
   - Texto do IFC verde: "... depende da conciliação com a agenda do
     conjunto. Aceita free-lances." O ABC verde segue a mesma lógica.
   - Não mudou: abas, filtros, cartões, encaixe, catálogo e dados.
+----------------------------------------------------------------
+v14.7 — 2026-11-21
+  - Balão dos selos IFC e ABC: a frase final fica em negrito, na cor do
+    selo: "Aceita free-lances." (verde), "Raramente aceita free-lances."
+    (amarelo) e "Não aceita free-lances." (vermelho).
+  - Não mudou: o resto.
 
 ================================================================
 -->
