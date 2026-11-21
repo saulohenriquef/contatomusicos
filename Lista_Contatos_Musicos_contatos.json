@@ -402,5 +402,16 @@
     "instagram": "feernando.audio",
     "email": "fernandohenrique0610@hotmail.com",
     "whatsapp": "35991301016"
+  },
+  {
+    "nome": "And Teste",
+    "categoria": "artista",
+    "tipoArtista": "Cantor solo",
+    "cidades": ["Pratápolis/MG"],
+    "instrumentos": ["Guitarra"],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "raramente",
+    "instagram": "",
+    "whatsapp": "35988257885"
   }
 ]
