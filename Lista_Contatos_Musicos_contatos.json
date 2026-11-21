@@ -390,5 +390,17 @@
     "youtube": "@leandelirio",
     "email": "fessorlele@gmail.com",
     "whatsapp": "35991498104"
+  },
+  {
+    "nome": "Fernandinho Tecnico",
+    "categoria": "musico",
+    "foto": "fernandinho-tecnico.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": ["T. Som"],
+    "selos": ["IFC"],
+    "ifcDisponibilidade": "nao",
+    "instagram": "feernando.audio",
+    "email": "fernandohenrique0610@hotmail.com",
+    "whatsapp": "35991301016"
   }
 ]
