@@ -472,6 +472,14 @@
         </div>
       </div>
 
+      <div id="boxFreelanceABC" class="opcoes-status" hidden>
+        <p class="campo">Você também aceita free-lances (tocar ou trabalhar em outros projetos)?</p>
+        <label><input type="radio" name="freelanceABC" value="nao" checked> 🚫 Não</label>
+        <label><input type="radio" name="freelanceABC" value="sim"> ✅ Sim</label>
+        <small>Com “Sim”, você escolhe os instrumentos e funções e aparece também na lista de músicos.</small>
+        <p id="msgFreelanceABC" class="dica" aria-live="polite"></p>
+      </div>
+
       <div id="boxAtuacoes">
       <div class="campo" id="rotInstr">Instrumentos e funções <b id="obrigatorioInstr" aria-hidden="true">*</b></div>
       <p id="dicaInstr" class="dica">Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.</p>
@@ -503,11 +511,11 @@
 
       </div>
       <div id="boxDisponibilidadeABC" class="opcoes-status" hidden>
-        <p class="campo">Você aceita free-lance nos instrumentos e funções que marcou?</p>
-        <label><input type="radio" name="abcDisponibilidade" value="sim"> Sim <span class="selo selo-verde" title="ABC verde: aceita free-lance">ABC</span></label>
-        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente <span class="selo selo-amarelo" title="ABC amarelo: aceita free-lance raramente">ABC</span></label>
-        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não, fico só como artista <span class="selo selo-abc" title="ABC roxo: artista, banda ou cantor com projeto próprio">ABC</span></label>
-        <small>Com Sim ou Raramente, você aparece também na lista de músicos, nesses instrumentos e funções, com o selo ABC nessa cor. Se escolher “Não”, os instrumentos e funções são desmarcados e o seu selo ABC fica roxo.</small>
+        <p class="campo">Qual selo combina com a sua disponibilidade para free-lance?</p>
+        <label><input type="radio" name="abcDisponibilidade" value="sim"> Aceito <span class="selo selo-verde" title="ABC verde: aceita free-lances">ABC</span></label>
+        <label><input type="radio" name="abcDisponibilidade" value="raramente"> Raramente <span class="selo selo-amarelo" title="ABC amarelo: raramente aceita free-lances">ABC</span></label>
+        <label><input type="radio" name="abcDisponibilidade" value="nao"> Não aceito <span class="selo selo-vermelho" title="Não aceita free-lances: a pergunta de cima volta para “Não”">ABC</span></label>
+        <small>O selo ABC aparece nessa cor no seu perfil e na lista de músicos. Vermelho é o mesmo que não aceitar free-lance: a pergunta de cima volta para “Não”.</small>
       </div>
       <div id="boxIfc">
         <label class="marcar marcar-ifc" for="fIfc">
@@ -702,7 +710,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.6
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.7
   </footer>
 </div>
 
@@ -1047,7 +1055,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.6";
+const VERSAO = "v6.7";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
@@ -1099,6 +1107,9 @@ const ICONE_WPP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2
 /* ---------- estado ---------- */
 let instr = [];                  // instrumentos e funções marcados, na ordem em que foram marcados
 let abcDisponibilidade = "nao", ifcDisponibilidade = "";
+let freelanceABC = "nao", instrGuardadosABC = [];   // ABC: aceita free-lance? (só o "Sim" abre instrumentos e funções); o que estava marcado antes de voltar para "Não"
+// ao abrir um contato ou um rascunho antigo: artista com instrumento e selo verde/amarelo = "Sim"
+function freelanceDosDados(){ return $("fCategoria").value === "artista" && instr.length && ["sim", "raramente"].includes(abcDisponibilidade) ? "sim" : "nao"; }
 let cidades = [];                // ["Franca/SP"]
 let telefones = [];              // [{rotulo, numero}]
 let links = [];                  // [{rotulo, url}]
@@ -2016,21 +2027,24 @@ function coletar(){
   const referencia = semControle($("fReferencia").value).replace(/\s+/g, " ").trim().slice(0, 60);
   if(categoria === "musico" && !instr.length) falha("chipsInstr", "Escolha pelo menos um instrumento ou serviço.");
   if(categoria === "musico" && $("fIfc").checked && !["sim","raramente","nao"].includes(ifcDisponibilidade)) falha("opcoesIfc", "Marque se aceita free-lances como integrante fixo.");
-  if(categoria === "artista" && instr.length && !["sim","raramente","nao"].includes(abcDisponibilidade)) falha("boxDisponibilidadeABC", "Marque se aceita free-lance nos instrumentos e funções que marcou.");
+  if(categoria === "artista" && freelanceABC === "sim"){
+    if(!instr.length) falha("chipsInstr", "Marque os instrumentos ou funções em que aceita free-lance (ou escolha “Não” na pergunta de free-lance).");
+    else if(!["sim","raramente"].includes(abcDisponibilidade)) falha("boxDisponibilidadeABC", "Marque o selo da sua disponibilidade para free-lance.");
+  }
   const c = {};
   c.nome = nome;
   definir(c, "referencia", referencia);
   c.categoria = categoria;
   if(categoria === "artista") definir(c, "tipoArtista", $("fTipoArtista").value);
   c.cidades = [...cidades];
-  c.instrumentos = categoria === "empresa" ? [] : AJ.instrumentos(instr);
+  c.instrumentos = categoria === "empresa" || (categoria === "artista" && freelanceABC !== "sim") ? [] : AJ.instrumentos(instr);   // artista sem free-lance não oferece instrumentos
   const selos = [];
   if(categoria === "musico" && $("fIfc").checked) selos.push("IFC");
   if(categoria === "artista") selos.push("ABC");
   if(categoria === "empresa") selos.push("ENM");
   definir(c, "selos", selos.length ? selos : null);
   if(categoria === "musico" && $("fIfc").checked) c.ifcDisponibilidade = ifcDisponibilidade;
-  if(categoria === "artista") c.abcDisponibilidade = instr.length ? abcDisponibilidade : "nao";
+  if(categoria === "artista") c.abcDisponibilidade = c.instrumentos.length ? abcDisponibilidade : "nao";
   definir(c, "instagram", ig.valor || "");
   definir(c, "youtube", yt.valor || "");
   definir(c, "email", email);
@@ -2272,7 +2286,7 @@ function estadoAtual(){
     v: 2, salvoEm: Date.now(),
     nome: $("fNome").value, referencia: $("fReferencia").value, categoria: $("fCategoria").value,
     tipoArtista: $("fTipoArtista").value, instr, cidades, ifc: $("fIfc").checked,
-    ifcDisponibilidade, abcDisponibilidade, funcoes: [...funcoesDigitadas],
+    ifcDisponibilidade, abcDisponibilidade, freelanceABC, funcoes: [...funcoesDigitadas],
     whats: $("fWhats").value, insta: $("fInsta").value, email: $("fEmail").value, youtube: $("fYoutube").value,
     tels: telefones, links, obs: $("fObs").value,
     hash: $("fHashtags").value, bio: $("fBio").value, servicos: $("fServicos").value, videos: videos.map(v => v.url),
@@ -2325,6 +2339,7 @@ function restaurarRascunho(){
     desenharTiposArtista();
     ifcDisponibilidade = ["sim","raramente","nao"].includes(e.ifcDisponibilidade) ? e.ifcDisponibilidade : (e.ifc ? "sim" : "");
     abcDisponibilidade = ["sim","raramente","nao"].includes(e.abcDisponibilidade) ? e.abcDisponibilidade : "nao";
+    freelanceABC = ["sim","nao"].includes(e.freelanceABC) ? e.freelanceABC : freelanceDosDados(); instrGuardadosABC = [];
     document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = x.value === ifcDisponibilidade);
     document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === abcDisponibilidade);
     atualizarCamposCategoria();
@@ -2598,6 +2613,7 @@ function preencherContato(c){
   $("fTipoArtista").value = c.tipoArtista || "";
   desenharTiposArtista();
   abcDisponibilidade = c.abcDisponibilidade || "nao"; ifcDisponibilidade = c.ifcDisponibilidade || ((c.selos || []).includes("IFC") ? "sim" : "");
+  freelanceABC = freelanceDosDados(); instrGuardadosABC = [];
   document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === abcDisponibilidade);
   document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = x.value === ifcDisponibilidade);
   $("fIfc").checked = (c.selos || []).includes("IFC");
@@ -3066,7 +3082,7 @@ function zerarTudo(){
   $("fUf").value = "";
   $("fIfc").checked = false;
   $("fReferencia").value = ""; $("fCategoria").value = "musico"; $("fTipoArtista").value = ""; desenharTiposArtista();
-  abcDisponibilidade = "nao"; ifcDisponibilidade = "";
+  abcDisponibilidade = "nao"; ifcDisponibilidade = ""; freelanceABC = "nao"; instrGuardadosABC = []; avisar("msgFreelanceABC", "");
   document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === "nao");
   document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = false);
   atualizarCamposCategoria();
@@ -3136,22 +3152,25 @@ function atualizarCamposCategoria(){
     document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = false);
   }
   $("blocoTipoArtista").hidden = !artista;
-  $("boxAtuacoes").hidden = empresa;
+  $("boxFreelanceABC").hidden = !artista;
+  document.querySelectorAll('input[name="freelanceABC"]').forEach(x => x.checked = x.value === freelanceABC);
+  $("boxAtuacoes").hidden = empresa || (artista && freelanceABC !== "sim");   // artista: a lista só abre com "Sim" no free-lance
   $("boxIfc").hidden = !ifcPermitido;
-  $("obrigatorioInstr").hidden = artista || empresa;
+  $("obrigatorioInstr").hidden = empresa || (artista && freelanceABC !== "sim");
   // artista: instrumentos e funções só para quem quer oferecer free-lance neles
   $("dicaInstr").textContent = artista
-    ? "Opcional: marque um instrumento ou função só se quiser oferecer free-lance nele. Quem marca aparece também na lista de músicos, com o selo ABC verde ou amarelo."
+    ? "Marque os instrumentos e funções em que você aceita free-lance. Você aparece também na lista de músicos, nesses instrumentos e funções, com o selo ABC na cor que escolher abaixo."
     : "Marque os instrumentos e funções em que você quer prestar serviços. A ordem escolhida define como aparecerão no perfil.";
-  $("boxDisponibilidadeABC").hidden = !(artista && instr.length);
+  $("boxDisponibilidadeABC").hidden = !(artista && freelanceABC === "sim");
   $("opcoesIfc").hidden = !ifcPermitido || !$("fIfc").checked;
-  if(artista && instr.length && abcDisponibilidade === "nao"){
+  if(artista && freelanceABC === "sim" && abcDisponibilidade === "nao"){
     abcDisponibilidade = "";
     document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = false);
   }
 }
 function classeDisponibilidade(valor){ return valor === "sim" ? "selo-verde" : valor === "nao" ? "selo-vermelho" : "selo-amarelo"; }
 $("fCategoria").addEventListener("change", () => {
+  if($("fCategoria").value === "artista" && instr.length) freelanceABC = "sim";   // já tinha marcado instrumentos: continuam, como free-lance
   if($("fCategoria").value === "empresa"){
     instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; $("fOutraFuncao").value = ""; avisar("msgInstr", "");
   }
@@ -3163,12 +3182,31 @@ $("fIfc").addEventListener("change", () => {
   atualizarCamposCategoria(); mudou();
 });
 document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.addEventListener("change", () => { ifcDisponibilidade = x.value; mudou(); }));
+function escolherFreelanceABC(valor, mensagem){
+  if(valor === "nao"){
+    if(instr.length){ instrGuardadosABC = [...instr]; instr = []; desenharInstrumentos(); }   // guarda: se voltar para "Sim", eles voltam
+    $("fOutroInstr").value = ""; $("fOutraFuncao").value = ""; avisar("msgInstr", "");
+    abcDisponibilidade = "nao";
+    document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(r => r.checked = false);
+  }else{
+    if(!instr.length && instrGuardadosABC.length){ instr = instrGuardadosABC.slice(0, MAX_INSTR); desenharInstrumentos(); }
+    instrGuardadosABC = [];
+    if(abcDisponibilidade === "nao") abcDisponibilidade = "";
+  }
+  freelanceABC = valor;
+  avisar("msgFreelanceABC", mensagem || "");
+  atualizarCamposCategoria(); mudou();
+}
+document.querySelectorAll('input[name="freelanceABC"]').forEach(x => x.addEventListener("change", () => {
+  escolherFreelanceABC(x.value, x.value === "nao" && instr.length
+    ? "Sem free-lance, você fica só como artista (selo ABC roxo). Os instrumentos e funções que estavam marcados foram desmarcados." : "");
+}));
 document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.addEventListener("change", () => {
-  if(x.value === "nao" && instr.length){
-    if(!confirm("Ao escolher “Não”, seus instrumentos e serviços serão desmarcados e você ficará somente na categoria ABC. Continuar?")){
-      document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(r => r.checked = r.value === abcDisponibilidade); return;
-    }
-    instr = []; desenharInstrumentos(); $("fOutroInstr").value = ""; $("fOutraFuncao").value = ""; avisar("msgInstr", "");
+  if(x.value === "nao"){   // selo vermelho = não aceitar free-lance: a pergunta de cima volta para "Não"
+    escolherFreelanceABC("nao", "Selo vermelho é o mesmo que não aceitar free-lance: marquei “Não” aqui em cima. Você fica só como artista (selo ABC roxo)" +
+      (instr.length ? " e os instrumentos e funções que estavam marcados foram desmarcados." : "."));
+    $("boxFreelanceABC").scrollIntoView({block: "center", behavior: "smooth"});
+    return;
   }
   abcDisponibilidade = x.value; atualizarCamposCategoria(); mudou();
 }));
@@ -3299,7 +3337,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.6.html
+ Arquivo: Cadastro_Musicos_v6.7.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3312,6 +3350,21 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.7 — 2026-11-21
+  - Artista (ABC): primeiro vem a pergunta "Você também aceita
+    free-lances?", com 🚫 Não (já marcado) e ✅ Sim. Só o Sim abre os
+    instrumentos e funções e, embaixo deles, a pergunta do selo: Aceito
+    (ABC verde), Raramente (ABC amarelo) ou Não aceito (ABC vermelho).
+  - Marcar o selo vermelho é o mesmo que não aceitar free-lance: a
+    pergunta de cima volta sozinha para Não, os instrumentos e funções
+    são desmarcados e aparece uma mensagem explicando (sem janela de
+    confirmação). Se a pessoa voltar para Sim, o que estava marcado volta.
+  - Com Sim, é preciso marcar pelo menos um instrumento ou função e o
+    selo. Quem já tinha instrumentos ao trocar para ABC fica com Sim.
+  - Dados e regras iguais (v4): a resposta continua em
+    abcDisponibilidade ("nao" sem instrumentos).
+
+----------------------------------------------------------------
 v6.6 — 2026-11-21
   - Artista com free-lance não usa mais o selo IFC: o próprio selo ABC
     fica verde (Sim) ou amarelo (Raramente). Sem instrumento ou função
