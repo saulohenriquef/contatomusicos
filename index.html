@@ -463,7 +463,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.4
+    Lista de Contatos de Músicos · v14.5
   </footer>
 </div>
 
@@ -897,16 +897,16 @@ function dadosDoSelo(id, c){
   const situacao = disponibilidade === "sim" ? "verde" : disponibilidade === "nao" ? "vermelho" : "amarelo";
   if(id === "IFC") return {...SELOS.IFC, classe: "selo-" + situacao,
     texto: disponibilidade === "sim"
-      ? "Verde · Sim. Este músico é integrante fixo de um conjunto e aceita convites de free-lance. Combine a agenda com o conjunto antes de fechar."
+      ? "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele. Sua disponibilidade é limitada e depende da conciliação com a agenda do conjunto, mas também aceita free-lances."
       : disponibilidade === "raramente"
-        ? "Amarelo · Raramente. Este músico é integrante fixo de um conjunto e aceita free-lances raramente. Consulte a disponibilidade e combine com antecedência."
-        : "Vermelho · Não. Este músico é integrante fixo de um conjunto e não aceita free-lances no momento."};
+        ? "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele. Raramente aceita free-lances."
+        : "Este profissional é integrante fixo de um conjunto e tem sua agenda principal vinculada aos compromissos dele. Não aceita free-lances."};
   if(id === "ABC"){
     // artista que oferece free-lance (Sim ou Raramente): ABC verde ou amarelo; sem free-lance: ABC roxo
     if(ofereceFreelance(c)) return {...SELOS.ABC, classe: c.abcDisponibilidade === "sim" ? "selo-verde" : "selo-amarelo",
       texto: c.abcDisponibilidade === "sim"
-        ? "Verde · Sim. Artista, banda ou cantor com projeto próprio que também aceita free-lance nos instrumentos e funções marcados no perfil."
-        : "Amarelo · Raramente. Artista, banda ou cantor com projeto próprio que aceita free-lance raramente nos instrumentos e funções marcados. Consulte a disponibilidade antes de convidar."};
+        ? "Este profissional tem um projeto artístico próprio (artista, banda ou cantor) e sua agenda principal vinculada aos compromissos dele. Sua disponibilidade é limitada e depende da conciliação com a agenda do projeto, mas também aceita free-lances."
+        : "Este profissional tem um projeto artístico próprio (artista, banda ou cantor) e sua agenda principal vinculada aos compromissos dele. Raramente aceita free-lances."};
     return {...SELOS.ABC, classe: "selo-abc", texto: "Artista, banda ou cantor com projeto próprio."};
   }
   if(id === "ENM") return {...SELOS.ENM, classe: "selo-enm",
@@ -1747,7 +1747,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.4.html
+ Arquivo: Lista_Contatos_Musicos_v14.5.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2142,6 +2142,15 @@ v14.4 — 2026-11-21
     marcou.
   - Artista sem free-lance: ABC roxo, e o balão só diz que é artista,
     banda ou cantor com projeto próprio.
+  - Não mudou: abas, filtros, cartões, encaixe, catálogo e dados.
+----------------------------------------------------------------
+v14.5 — 2026-11-21
+  - Textos novos nos balões dos selos IFC: integrante fixo de conjunto,
+    com a agenda principal vinculada aos compromissos dele; verde =
+    disponibilidade limitada, mas também aceita free-lances; amarelo =
+    raramente aceita; vermelho = não aceita.
+  - ABC verde e amarelo na mesma lógica (projeto artístico próprio).
+    ABC roxo continua só "Artista, banda ou cantor com projeto próprio."
   - Não mudou: abas, filtros, cartões, encaixe, catálogo e dados.
 
 ================================================================
