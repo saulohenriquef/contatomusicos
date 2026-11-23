@@ -425,6 +425,39 @@
   .balao-contato .balao-seta{background:var(--bg); border-color:var(--line)}
   .balao-contato.acima .balao-seta{top:auto; bottom:-7px; transform:translateX(-50%) rotate(225deg)}
   @media (prefers-color-scheme:dark){ .mencao{color:#8ec5ff} }
+  /* ---------- v15.3: sugestões na busca, nome completo das abreviações e seletor de instrumentos em balão (celular e tablet) ---------- */
+  .sugestoes{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px}
+  .sugestoes[hidden]{display:none}
+  .sugestoes-rotulo{font-size:.78rem; color:var(--muted); margin-right:2px}
+  .sugestoes .chip{min-height:34px; padding:0 11px; font-size:.86rem}
+  button.tag{border:0; margin:0; font-family:inherit; line-height:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent}
+  .tag-abrev{text-decoration:underline dotted; text-decoration-thickness:1px; text-underline-offset:3px}
+  .tag-abrev:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .abrir-filtros{display:flex; align-items:center; gap:8px; width:100%; margin-top:8px; min-height:42px; padding:0 14px;
+    border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--text);
+    font:inherit; font-size:.92rem; font-weight:650; cursor:pointer; text-align:left; -webkit-tap-highlight-color:transparent}
+  .abrir-filtros[hidden]{display:none}
+  #abrirFiltrosTexto{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .abrir-filtros::after{content:""; flex:none; width:8px; height:8px; margin-right:2px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:translateY(-2px) rotate(45deg); transition:transform .2s}
+  .abrir-filtros[aria-expanded="true"]::after{transform:translateY(2px) rotate(-135deg)}
+  .abrir-filtros.com-filtro{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+  .abrir-filtros:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .filtros-topo{display:none; align-items:center; justify-content:space-between; gap:8px; margin:0 0 8px}
+  .filtros-topo span{font-size:.76rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted)}
+  .filtros-topo button{border:0; border-radius:999px; padding:8px 16px; background:var(--accent); color:#fff; font:inherit; font-size:.88rem; font-weight:700; cursor:pointer}
+  @media (max-width:899px){
+    #filtros:not(.aberto){display:none}
+    #filtros.aberto{position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:6; margin:0;
+      background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px 12px 12px;
+      box-shadow:0 12px 32px rgba(0,0,0,.22); max-height:min(62vh, 480px); overflow-y:auto; overscroll-behavior:contain}
+    #filtros.aberto::before, #filtros.aberto::after{display:none}
+    #filtros.aberto .filtros-rail{flex-wrap:wrap; overflow:visible; margin:0; padding:2px 0; gap:7px}
+    #filtros.aberto .filtros-topo{display:flex}
+  }
+  @media (min-width:900px){
+    .abrir-filtros{display:none !important}
+    .sugestoes{order:1}
+  }
 </style>
 </head>
 <body>
@@ -472,6 +505,7 @@
 
   <div class="tools">
     <input id="busca" class="search" type="search" placeholder="Buscar por nome, cidade ou instrumento…" autocomplete="off">
+    <div id="sugestoes" class="sugestoes" role="group" aria-label="Sugestões de instrumentos e funções" hidden></div>
     <nav class="abas" aria-label="Categorias da lista">
       <button id="abaMusicos" class="aba" type="button" aria-pressed="true">Instrumentos e Funções</button>
       <button id="abaArtistas" class="aba" type="button" aria-pressed="false">Artistas / Bandas / Cantores</button>
@@ -481,7 +515,9 @@
       <div class="filtros-titulo">Atuações</div>
       <div id="areas-rail" class="filtros-rail" role="group" aria-label="Selecionar atuações"></div>
     </div>
+    <button id="abrirFiltros" class="abrir-filtros" type="button" aria-expanded="false" aria-controls="filtros" hidden><span aria-hidden="true">🎛️</span><span id="abrirFiltrosTexto">Escolher instrumento ou função</span></button>
     <div id="filtros" class="filtros" hidden>
+      <div class="filtros-topo"><span>Instrumentos e funções</span><button id="fecharFiltros" type="button">Pronto</button></div>
       <div id="filtrosTitulo" class="filtros-titulo" aria-hidden="true">Instrumentos</div>
       <div id="filtros-rail" class="filtros-rail" role="group" aria-label="Filtrar por instrumento"></div>
     </div>
@@ -514,7 +550,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v15.2
+    Lista de Contatos de Músicos · v15.3
   </footer>
 </div>
 
@@ -633,11 +669,14 @@ const AJ = (() => {
   // (No Lista_Contatos_Musicos_atuacoes.json o grupo é a lista em que o item está: "instrumentos" ou "funcoes".)
   const FUNCOES_PADRAO = new Set(["DJ", "T. Som", "T. Luz", "Roadie", "Produtor", "Téc. palco"].map(chave));
   const grupoDe = l => (l[6] === "f" || l[6] === "i") ? l[6] : (FUNCOES_PADRAO.has(chave(l[0])) ? "f" : "i");
+  // nome por extenso das abreviações (aparece ao passar o mouse ou tocar); no atuacoes.json é o campo "nomeCompleto"
+  const NOMES_COMPLETOS = {"T. Som": "Técnico de Som", "T. Luz": "Técnico de Luz", "Téc. palco": "Técnico de Palco"};
+  const completoDe = l => (typeof l[7] === "string" && l[7]) || NOMES_COMPLETOS[l[0]] || "";
   function montarMapa(){
     MAPA.clear();
     CATALOGO.forEach(l => {
-      const reg = {n: l[0], e: l[1], h: l[2], t: l[3], b: l[4], g: grupoDe(l)};
-      [l[0], ...(Array.isArray(l[5]) ? l[5] : [])].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
+      const reg = {n: l[0], e: l[1], h: l[2], t: l[3], b: l[4], g: grupoDe(l), c: completoDe(l)};
+      [l[0], ...(Array.isArray(l[5]) ? l[5] : []), reg.c].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
     });
   }
   montarMapa();
@@ -664,13 +703,14 @@ const AJ = (() => {
   // emoji, matiz (cor) e tom do instrumento; nome fora da tabela: 🎵 e uma cor calculada do nome
   function infoInstrumento(nome){
     const reg = achar(chave(nome));
-    if(reg) return {nome: reg.n, emoji: reg.e, matiz: reg.h, tom: reg.t, conhecido: true};
+    if(reg) return {nome: reg.n, emoji: reg.e, matiz: reg.h, tom: reg.t, conhecido: true, completo: reg.c && reg.c !== reg.n ? reg.c : ""};
     const h = hashNome(nome);
-    return {nome: instrumento(nome), emoji: "🎵", matiz: h % 360, tom: Math.floor(h / 360) % 2, conhecido: false};
+    return {nome: instrumento(nome), emoji: "🎵", matiz: h % 360, tom: Math.floor(h / 360) % 2, conhecido: false, completo: ""};
   }
   // os balões que o cadastro oferece, em ordem alfabética ("i" = só instrumentos, "f" = só funções, sem nada = todos)
   const oferecidos = grupo => CATALOGO.filter(x => x[4] && (!grupo || grupoDe(x) === grupo)).map(x => x[0]).sort((a, b) => a.localeCompare(b, PT, {sensitivity: "base"}));
   const ehFuncao = nome => { const r = achar(chave(nome)); return !!r && r.g === "f"; };
+  const nomeCompleto = nome => { const r = achar(chave(nome)); return r && r.c && r.c !== r.n ? r.c : ""; };   // "T. Som" -> "Técnico de Som"
 
   /* ---------- tipos de artista (ABC): reserva; o atuacoes.json do site manda ---------- */
   const TIPOS = [["Cantor solo", "🎤", 330], ["Dupla sertaneja", "🤠", 34], ["Dupla", "🎙️", 275], ["Banda", "🎸", 210], ["Grupo", "🎼", 150], ["Conjunto", "🎹", 185]]
@@ -689,7 +729,8 @@ const AJ = (() => {
   const ARQ_ATUACOES = "Lista_Contatos_Musicos_atuacoes.json";
   const AJUDA_ATUACOES = "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. " +
     "Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); " +
-    "tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome.";
+    "tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome; " +
+    "nomeCompleto = nome por extenso de uma abreviação (ex.: T. Som = Técnico de Som), que aparece ao passar o mouse ou tocar.";
   const txtJ = (v, max) => typeof v === "string" ? limpo(v).slice(0, max) : "";
   const matizJ = (v, nome) => Number.isFinite(v) ? ((Math.round(v) % 360) + 360) % 360 : hashNome(nome) % 360;
   function linhaDoJson(x, g){
@@ -697,7 +738,7 @@ const AJ = (() => {
     const n = txtJ(x.nome, 40);
     if(!n) return null;
     const ap = Array.isArray(x.apelidos) ? x.apelidos.map(a => txtJ(a, 40)).filter(Boolean).slice(0, 40) : [];
-    return [n, txtJ(x.emoji, 8) || (g === "f" ? "🧰" : "🎵"), matizJ(x.matiz, n), [0, 1, 2].includes(x.tom) ? x.tom : 0, x.cadastro === false ? 0 : 1, ap, g];
+    return [n, txtJ(x.emoji, 8) || (g === "f" ? "🧰" : "🎵"), matizJ(x.matiz, n), [0, 1, 2].includes(x.tom) ? x.tom : 0, x.cadastro === false ? 0 : 1, ap, g, txtJ(x.nomeCompleto, 60)];
   }
   function usarCatalogo(j){
     if(!j || typeof j !== "object" || j.formato !== "atuacoes-musica") return false;
@@ -736,7 +777,9 @@ const AJ = (() => {
   // o catálogo atual no formato do Lista_Contatos_Musicos_atuacoes.json
   function catalogoJson(){
     const item = l => {
-      const o = {nome: l[0], emoji: l[1], matiz: l[2], tom: l[3]};
+      const o = {nome: l[0]}, cpl = completoDe(l);
+      if(cpl && cpl !== l[0]) o.nomeCompleto = cpl;
+      Object.assign(o, {emoji: l[1], matiz: l[2], tom: l[3]});
       if(!l[4]) o.cadastro = false;
       if(Array.isArray(l[5]) && l[5].length) o.apelidos = l[5].slice();
       return o;
@@ -871,7 +914,8 @@ const AJ = (() => {
 
   return {LIM, chave, formatarNome, instrumento, instrumentos, infoInstrumento, oferecidos, hashtags, servicos, bio, video, videos,
           digitos, telefonesDe, acharPorTelefone, limparContato, CATALOGO,
-          ehFuncao, tiposArtista, tipoConhecido, infoTipo, ARQ_ATUACOES, usarCatalogo, carregarCatalogo, adicionarAtuacao, catalogoJson};
+          ehFuncao, tiposArtista, tipoConhecido, infoTipo, ARQ_ATUACOES, usarCatalogo, carregarCatalogo, adicionarAtuacao, catalogoJson,
+          nomeCompleto};
 })();
 
 
@@ -919,7 +963,8 @@ function ordenar(){
   });
 }
 
-function textoDist(d){ return d < 5 ? "menos de 5 km" : "≈ " + Math.round(d) + " km"; }
+// a cidade inteira vale como um ponto: perto disso, "5 km" não diz nada
+function textoDist(d){ return d < 15 ? "na sua região" : "≈ " + Math.round(d) + " km"; }
 function status(t){ $("status").textContent = t; }
 function atualizarBotao(){ $("perto").textContent = pos ? "📍 Só aleatório" : "📍 Perto de mim"; }
 
@@ -1022,7 +1067,7 @@ function alternarBalao(btn, selo){
 }
 
 document.addEventListener("click", e => {
-  if(!e.target.closest(".selo") && !e.target.closest(".balao")) fecharBalao();
+  if(!e.target.closest(".selo, .tag-abrev") && !e.target.closest(".balao")) fecharBalao();
 });
 document.addEventListener("keydown", e => { if(e.key === "Escape"){ fecharBalao(); fecharFoto(); } });
 let larguraAnterior = window.innerWidth;
@@ -1296,6 +1341,7 @@ const tomInstr = nome => AJ.infoInstrumento(nome).tom;
 
 const filtroInstr = new Set();
 let nomesInstr = new Map();
+let infoFiltros = new Map();   // chave -> {nome, qtd} dos botões de instrumento da aba (as sugestões da busca usam)
 let categoriaAtiva = "musico";
 const AREAS_MUSICO = ["instrumentos", "servicos"];
 const areasMusicoAtivas = new Set(AREAS_MUSICO);
@@ -1332,8 +1378,11 @@ function criarChip(rotulo, qtd, matizCor, emoji, tom){
 function atualizarChips(){
   $("filtros-rail").querySelectorAll(".chip").forEach(b => {
     const k = b.dataset.k;
-    b.setAttribute("aria-pressed", String(k ? filtroInstr.has(k) : filtroInstr.size === 0));
+    const marcado = k ? filtroInstr.has(k) : filtroInstr.size === 0;
+    b.setAttribute("aria-pressed", String(marcado));
+    if(b.dataset.completo) b.querySelector(".chip-nome").textContent = marcado ? b.dataset.nome + " · " + b.dataset.completo : b.dataset.nome;
   });
+  sincronizarSeletor();
   $("areas-rail").querySelectorAll(".chip[data-area]").forEach(b => {
     b.setAttribute("aria-pressed", String(areasMusicoAtivas.has(b.dataset.area)));
   });
@@ -1368,6 +1417,63 @@ function limparTudo(){
   atualizarChips(); render(); voltarAoInicio();
 }
 
+/* ---------- celular e tablet: os botões de instrumento abrem num balão, todos à vista (como no computador) ---------- */
+function abrirSeletor(){
+  const btn = $("abrirFiltros"), f = $("filtros");
+  if(!TELA_GRANDE.matches) f.style.top = (btn.offsetTop + btn.offsetHeight + 6) + "px";   // o balão abre logo embaixo do botão
+  f.classList.add("aberto");
+  btn.setAttribute("aria-expanded", "true");
+}
+function fecharSeletor(){ const f = $("filtros"); f.classList.remove("aberto"); f.style.top = ""; $("abrirFiltros").setAttribute("aria-expanded", "false"); }
+function sincronizarSeletor(){
+  const btn = $("abrirFiltros");
+  btn.hidden = $("filtros").hidden;
+  if(btn.hidden) fecharSeletor();
+  const nomes = [...filtroInstr].map(k => nomesInstr.get(k) || k);
+  $("abrirFiltrosTexto").textContent = nomes.length ? nomes.join(", ") : "Escolher instrumento ou função";
+  btn.classList.toggle("com-filtro", nomes.length > 0);
+  atualizarSugestoes();
+}
+$("abrirFiltros").addEventListener("click", () => $("filtros").classList.contains("aberto") ? fecharSeletor() : abrirSeletor());
+$("fecharFiltros").addEventListener("click", fecharSeletor);
+document.addEventListener("click", e => {
+  if($("filtros").classList.contains("aberto") && !e.target.closest("#filtros") && !e.target.closest("#abrirFiltros")) fecharSeletor();
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape") fecharSeletor(); });
+TELA_GRANDE.addEventListener("change", fecharSeletor);
+
+/* ---------- sugestões na busca: o instrumento ou a função que bate com o que foi digitado vira um balão; tocar seleciona ---------- */
+function atualizarSugestoes(){
+  const box = $("sugestoes");
+  box.textContent = "";
+  const bruto = $("busca").value.trim(), q = norm(bruto);
+  if(q.length < 2 || $("filtros").hidden){ box.hidden = true; return; }
+  const canon = chaveInstr(AJ.instrumento(bruto));   // "baterista" -> Bateria, "técnico de som" -> T. Som
+  const achados = [...infoFiltros].map(([k, v]) => {
+    const n = norm(v.nome), cpl = norm(AJ.nomeCompleto(v.nome));
+    const nota = k === canon ? 0 : (n.startsWith(q) || (cpl && cpl.startsWith(q))) ? 1 : (n.includes(q) || (cpl && cpl.includes(q))) ? 2 : 9;
+    return {k, v, nota};
+  }).filter(x => x.nota < 9)
+    .sort((a, b) => a.nota - b.nota || a.v.nome.localeCompare(b.v.nome, "pt-BR", {sensitivity: "base"})).slice(0, 6);
+  if(!achados.length){ box.hidden = true; return; }
+  const rotulo = document.createElement("span");
+  rotulo.className = "sugestoes-rotulo"; rotulo.textContent = "Filtrar por:";
+  box.appendChild(rotulo);
+  achados.forEach(({k, v}) => {
+    const b = criarChip(v.nome, v.qtd, matizInstr(v.nome), USAR_EMOJI_NOS_BOTOES ? emojiInstr(v.nome) : "", tomInstr(v.nome));
+    b.setAttribute("aria-pressed", String(filtroInstr.has(k)));
+    const completo = AJ.nomeCompleto(v.nome);
+    if(completo){ b.title = completo; b.querySelector(".chip-nome").textContent = v.nome + " · " + completo; }
+    b.addEventListener("click", () => {     // vira filtro de instrumento e a busca é limpa
+      filtroInstr.add(k);
+      $("busca").value = "";
+      aoMudarFiltro();
+    });
+    box.appendChild(b);
+  });
+  box.hidden = false;
+}
+
 function montarFiltros(){
   const mapa = new Map();
   const contatos = contatosDaArea();
@@ -1400,6 +1506,7 @@ function montarFiltros(){
     });
   });
   nomesInstr = new Map([...mapa].map(([k, v]) => [k, v.nome]));
+  infoFiltros = mapa;
   filtroInstr.clear();
   const rail = $("filtros-rail");
   rail.textContent = "";
@@ -1414,6 +1521,8 @@ function montarFiltros(){
   [...mapa].sort((a, b) => a[1].nome.localeCompare(b[1].nome, "pt-BR", {sensitivity: "base"})).forEach(([k, v]) => {
     const b = criarChip(v.nome, v.qtd, matizInstr(v.nome), USAR_EMOJI_NOS_BOTOES ? emojiInstr(v.nome) : "", tomInstr(v.nome));
     b.dataset.k = k;
+    const completo = AJ.nomeCompleto(v.nome);
+    if(completo){ b.title = completo; b.dataset.nome = v.nome; b.dataset.completo = completo; }
     b.addEventListener("click", () => alternarInstr(k));
     rail.appendChild(b);
   });
@@ -1561,10 +1670,17 @@ function criarCartao(c, estado = abertos, noBalao = false){
   if(mostraTipo && c.tipoArtista) tagsVisiveis.unshift(c.tipoArtista);
   tagsVisiveis.forEach(inst => {
     const info = (mostraTipo && inst === c.tipoArtista) ? AJ.infoTipo(inst) : AJ.infoInstrumento(inst);
-    const t = document.createElement("span");
-    t.className = "tag" + (info.tom ? " tom" + info.tom : "");
+    const completo = info.completo || "";                 // abreviação (T. Som): o nome completo aparece ao passar o mouse ou tocar
+    const t = document.createElement(completo ? "button" : "span");
+    t.className = "tag" + (info.tom ? " tom" + info.tom : "") + (completo ? " tag-abrev" : "");
     t.style.setProperty("--h", info.matiz);
     t.textContent = inst;
+    if(completo){
+      t.type = "button"; t.title = completo;
+      t.setAttribute("aria-label", inst + ": " + completo);
+      t.setAttribute("aria-expanded", "false");
+      t.addEventListener("click", () => alternarBalao(t, {sigla: inst, nome: completo, texto: ""}));
+    }
     tags.appendChild(t);
   });
 
@@ -1827,7 +1943,7 @@ function mudarCategoria(categoria){
 $("abaMusicos").addEventListener("click", () => mudarCategoria("musico"));
 $("abaArtistas").addEventListener("click", () => mudarCategoria("artista"));
 $("abaEmpresas").addEventListener("click", () => mudarCategoria("empresa"));
-$("busca").addEventListener("input", () => { render(); if(TELA_GRANDE.matches) voltarAoInicio(); });
+$("busca").addEventListener("input", () => { render(); atualizarSugestoes(); if(TELA_GRANDE.matches) voltarAoInicio(); });
 $("limpar").addEventListener("click", limparTudo);
 $("embaralhar").addEventListener("click", () => { ordem = ordenar(); render(); if(TELA_GRANDE.matches) voltarAoInicio(); });
 $("perto").addEventListener("click", () => {
@@ -1917,7 +2033,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v15.2.html
+ Arquivo: Lista_Contatos_Musicos_v15.3.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2379,6 +2495,28 @@ v15.2 — 2026-11-23
   - "Perfil completo" foi para baixo da foto, em letra pequena e em duas
     linhas ("Perfil / completo"; aberto: "Fechar / perfil"), com a
     setinha embaixo. O cartão fica mais curto.
+----------------------------------------------------------------
+v15.3 — 2026-11-23
+  - "Perto de mim": até 15 km aparece "na sua região" (a cidade inteira
+    vale como um ponto, então "5 km" não dizia nada); acima disso
+    continua "≈ N km".
+  - Busca com sugestões: ao digitar (2 letras ou mais), os instrumentos
+    e funções que batem aparecem embaixo da busca como os mesmos balões
+    do filtro ("Filtrar por:"). Tocar seleciona o filtro e limpa a
+    busca. Vale também para "baterista" (Bateria) e "técnico de som"
+    (T. Som).
+  - Abreviações: T. Som, T. Luz e Téc. palco mostram o nome completo.
+    Na etiqueta do cartão (sublinhado pontilhado): ao passar o mouse ou
+    tocar, abre o balão "T. Som · Técnico de Som". No botão do filtro:
+    ao passar o mouse e, quando marcado, "T. Som · Técnico de Som". O
+    nome completo vem do campo "nomeCompleto" do atuacoes.json (v4).
+  - Celular e tablet (menos de 900 px): os botões de instrumento e
+    função saíram da fileira que rolava para o lado. No lugar fica o
+    botão "🎛️ Escolher instrumento ou função", que abre um balão com
+    todos à vista, como no computador; "Pronto", tocar fora ou Esc
+    fecham. O botão mostra o que está marcado. A barra de cima ficou
+    mais baixa.
+  - Computador sem mudança, além das sugestões e das abreviações.
 
 ================================================================
 -->
