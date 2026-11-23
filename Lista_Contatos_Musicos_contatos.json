@@ -414,5 +414,17 @@
     "abcDisponibilidade": "raramente",
     "instagram": "",
     "whatsapp": "35988257885"
+  },
+  {
+    "nome": "Davi Fernandes",
+    "categoria": "artista",
+    "tipoArtista": "Cantor solo",
+    "foto": "davi-fernandes.jpg",
+    "cidades": ["Passos/MG", "Goiania/GO"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "davifernandescantor",
+    "whatsapp": "35997665956"
   }
 ]
