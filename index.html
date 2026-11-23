@@ -188,6 +188,7 @@
     margin-top:10px; padding:8px 11px; background:var(--bg); border-left:3px solid var(--line); border-radius:6px;
     color:var(--muted); font-size:.88rem; line-height:1.45; white-space:pre-line; overflow-wrap:anywhere;
   }
+  .obs-vazio{margin-top:10px; height:calc(.88rem * 1.45 + 16px)}   /* mesma altura de um recado de 1 linha, mas vazio */
   .btn.so-icone{padding:10px 12px}
   .fone .rotulo{flex-basis:100%; margin-bottom:-6px; color:var(--muted); font-size:.82rem}
   .wpp-mini{
@@ -404,6 +405,20 @@
     .balao-azul .balao-titulo{color:#c2cbff}
     .balao-azul .balao-seta{border-color:#4e5d9c}
   }
+  /* ---------- v15: @menções (como no Instagram) e o balão com o cartão do contato ---------- */
+  .mencao{display:inline; margin:0; padding:0; border:0; background:none; font:inherit; font-weight:650; color:#0b5cad; cursor:pointer; text-align:left}
+  .mencao:hover, .mencao[aria-expanded="true"]{text-decoration:underline}
+  .mencao:focus-visible{outline:2px solid var(--accent); outline-offset:1px; border-radius:3px}
+  .balao-contato{position:absolute; z-index:19; background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:6px; box-shadow:0 12px 36px rgba(0,0,0,.28)}
+  .balao-contato[hidden]{display:none}
+  .balao-contato-corpo{max-height:min(70vh, 640px); overflow:auto; overscroll-behavior:contain; border-radius:12px}
+  .balao-contato ul{list-style:none; margin:0; padding:0}
+  .balao-contato li.card{border-color:transparent}
+  .balao-contato-fechar{position:absolute; top:-12px; right:-8px; z-index:1; width:30px; height:30px; border-radius:50%;
+    border:1px solid var(--line); background:var(--card); color:var(--text); font-size:1.15rem; line-height:1; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .balao-contato .balao-seta{background:var(--bg); border-color:var(--line)}
+  .balao-contato.acima .balao-seta{top:auto; bottom:-7px; transform:translateX(-50%) rotate(225deg)}
+  @media (prefers-color-scheme:dark){ .mencao{color:#8ec5ff} }
 </style>
 </head>
 <body>
@@ -493,7 +508,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v14.9
+    Lista de Contatos de Músicos · v15.1
   </footer>
 </div>
 
@@ -501,6 +516,12 @@
   <div id="balao-titulo" class="balao-titulo"></div>
   <div id="balao-cor" class="balao-cor" hidden></div>
   <div id="balao-texto"></div>
+  <span class="balao-seta"></span>
+</div>
+
+<div id="balaoContato" class="balao-contato" role="dialog" aria-label="Contato" hidden>
+  <button type="button" id="balaoContatoFechar" class="balao-contato-fechar" aria-label="Fechar">×</button>
+  <div class="balao-contato-corpo"><ul id="balaoContatoCartao"></ul></div>
   <span class="balao-seta"></span>
 </div>
 
@@ -1468,13 +1489,13 @@ function montarPerfil(c, alvo){
   };
   if(c.bio){
     const p = document.createElement("p");
-    p.className = "bio"; p.textContent = c.bio;
+    p.className = "bio"; preencherComMencoes(p, c.bio);
     secao("Sobre").appendChild(p);
   }
   if(c.servicos.length){
     const ul = document.createElement("ul");
     ul.className = "servicos";
-    c.servicos.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+    c.servicos.forEach(t => { const li = document.createElement("li"); preencherComMencoes(li, t); ul.appendChild(li); });
     secao("Serviços oferecidos").appendChild(ul);
   }
   if(c.videos.length){
@@ -1485,6 +1506,252 @@ function montarPerfil(c, alvo){
   }
 }
 
+/* ---------- cartão de um contato (o da lista e o do balão de uma @menção) ---------- */
+// estado = quais cartões estão com o telefone ou o perfil aberto (o balão tem o seu, separado da lista)
+function criarCartao(c, estado = abertos, noBalao = false){
+  const mostraTipo = noBalao ? c.categoria === "artista" : categoriaAtiva === "artista";   // tipo de artista vira etiqueta
+  const li = document.createElement("li");
+  li.className = "card";
+  const idCard = ++proximoId;
+
+  const av = criarAvatar(c);
+
+  const corpo = document.createElement("div");
+
+  const nome = document.createElement("div");
+  nome.className = "name";
+  const nomeForte = document.createElement("strong");
+  const [nomeSo, apelido] = apelidoDe(c.nome);
+  nomeForte.textContent = nomeSo;
+  nome.appendChild(nomeForte);
+  if(apelido){ const ap = document.createElement("span"); ap.className = "apelido"; ap.textContent = apelido; nome.appendChild(ap); }
+  if(c.referencia){
+    const referencia = document.createElement("span");
+    referencia.className = "referencia"; referencia.textContent = " [" + c.referencia + "]";
+    nome.appendChild(referencia);
+  }
+  (c.selos||[]).forEach(id => {
+    const selo = dadosDoSelo(id, c);
+    if(!selo) return;
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "selo " + selo.classe; b.textContent = selo.sigla;
+    b.setAttribute("aria-expanded", "false");
+    b.setAttribute("aria-label", selo.sigla + ": " + selo.nome + ". Toque para saber mais.");
+    b.addEventListener("click", () => alternarBalao(b, selo));
+    nome.appendChild(b);
+  });
+
+  const local = document.createElement("div");
+  local.className = "line";
+  const d = distanciaDe(c);
+  local.textContent = "📍 " + (c.cidades||[]).join(" e ") + (isFinite(d) ? " · " + textoDist(d) : "");
+
+  const tags = document.createElement("div");
+  tags.className = "tags";
+  const tagsVisiveis = [...(c.instrumentos || [])];
+  if(mostraTipo && c.tipoArtista) tagsVisiveis.unshift(c.tipoArtista);
+  tagsVisiveis.forEach(inst => {
+    const info = (mostraTipo && inst === c.tipoArtista) ? AJ.infoTipo(inst) : AJ.infoInstrumento(inst);
+    const t = document.createElement("span");
+    t.className = "tag" + (info.tom ? " tom" + info.tom : "");
+    t.style.setProperty("--h", info.matiz);
+    t.textContent = inst;
+    tags.appendChild(t);
+  });
+
+  corpo.append(nome, local, tags);
+
+  if(c.hashtags.length){
+    const h = document.createElement("div");
+    h.className = "hashtags";
+    c.hashtags.forEach(t => {
+      const s = document.createElement("span");
+      s.textContent = "#" + t;
+      h.appendChild(s);
+    });
+    corpo.append(h);
+  }
+
+  const obs = String(c.observacoes || "").trim();
+  if(obs){
+    const o = document.createElement("div");
+    o.className = "obs"; preencherComMencoes(o, obs);
+    corpo.append(o);
+  }else{   // sem recado: espaço reservado de 1 linha, para os cartões ficarem parecidos (quem tem recado fica maior)
+    const vazio = document.createElement("div");
+    vazio.className = "obs-vazio"; vazio.setAttribute("aria-hidden", "true");
+    corpo.append(vazio);
+  }
+
+  const acoes = document.createElement("div");
+  acoes.className = "actions";
+
+  // telefones: ficam escondidos atrás do botão vermelho (o WhatsApp principal não repete aqui, pois tem o botão verde)
+  const fones = [];
+  if(formatarTel(c.whatsapp)) fones.push({numero: nacional(c.whatsapp), rotulo: "", wpp: false});
+  fones.push(...listaTelefones(c));
+  let painelFones = null;
+  if(fones.length){
+    painelFones = document.createElement("div");
+    painelFones.className = "fones"; painelFones.id = "fones-" + idCard;
+    fones.forEach(t => painelFones.appendChild(linhaTelefone(c, t)));
+    const bt = document.createElement("button");
+    bt.type = "button"; bt.className = "btn tel so-icone";
+    bt.setAttribute("aria-controls", painelFones.id);
+    bt.appendChild(criarIcone("i-fone"));
+    const aplicarFone = aberto => {
+      painelFones.hidden = !aberto;
+      bt.setAttribute("aria-expanded", String(aberto));
+      const rot = (aberto ? "Esconder o telefone de " : "Ver o telefone de ") + c.nome;
+      bt.title = rot; bt.setAttribute("aria-label", rot);
+    };
+    aplicarFone(estado.fone.has(c));
+    bt.addEventListener("click", () => {
+      const abrir = painelFones.hidden;
+      if(abrir) estado.fone.add(c); else estado.fone.delete(c);
+      aplicarFone(abrir);
+    });
+    acoes.appendChild(bt);
+  }
+
+  const w = linkWhatsapp(c.whatsapp);
+  if(w){
+    const a = document.createElement("a");
+    a.className = "btn wpp"; a.href = w; a.target = "_blank"; a.rel = "noopener";
+    a.innerHTML = ICONE_WPP + "<span></span>";
+    a.querySelector("span").textContent = "WhatsApp";
+    acoes.appendChild(a);
+  }
+  const ig = linkInstagram(c.instagram);
+  if(ig) acoes.appendChild(botaoLink(ig, "Instagram de " + c.nome, "i-ig", BOTOES_SO_ICONE));
+  const yt = linkYoutube(c.youtube);
+  if(yt) acoes.appendChild(botaoLink(yt, "YouTube de " + c.nome, "i-yt", BOTOES_SO_ICONE));
+  const em = linkEmail(c.email);
+  if(em) acoes.appendChild(botaoLink(em, "E-mail de " + c.nome, "i-mail", BOTOES_SO_ICONE));
+  listaLinks(c).forEach(l => acoes.appendChild(botaoLink(l.url, l.rotulo, "i-link")));
+
+  if(acoes.children.length) corpo.append(acoes);
+  if(painelFones) corpo.append(painelFones);
+
+  // perfil completo (bio, serviços e vídeos): só existe para quem preencheu algum deles
+  let perfil = null;
+  if(c.bio || c.servicos.length || c.videos.length){
+    perfil = document.createElement("div");
+    perfil.className = "perfil"; perfil.id = "perfil-" + idCard;
+    perfil.setAttribute("role", "region");
+    perfil.setAttribute("aria-label", "Perfil completo de " + c.nome);
+    const bp = document.createElement("button");
+    bp.type = "button"; bp.className = "perfil-btn";
+    bp.setAttribute("aria-controls", perfil.id);
+    const txt = document.createElement("span");
+    bp.appendChild(txt);
+    const aplicarPerfil = aberto => {
+      perfil.hidden = !aberto;
+      bp.setAttribute("aria-expanded", String(aberto));
+      txt.textContent = aberto ? "Ocultar perfil completo" : "Ver perfil completo";
+      if(aberto) montarPerfil(c, perfil);
+      else if(videoAtivo && perfil.contains(videoAtivo.caixa)) fecharVideo();
+    };
+    aplicarPerfil(estado.perfil.has(c));
+    bp.addEventListener("click", () => {
+      const abrir = perfil.hidden;
+      if(abrir) estado.perfil.add(c); else estado.perfil.delete(c);
+      aplicarPerfil(abrir);
+    });
+    corpo.append(bp);
+  }
+
+  li.append(av, corpo);
+  if(perfil) li.append(perfil);
+  return li;
+}
+
+/* ---------- @menções, como no Instagram ----------
+   Na bio, no recado e nos serviços, "@usuario" de um Instagram cadastrado na lista fica destacado; ao tocar,
+   abre um balão com o cartão dessa pessoa. "@" que não é de ninguém da lista fica como texto normal. */
+let mapaInstagram = new Map();   // usuário do Instagram (minúsculo) -> contato
+function usuarioInstagram(v){
+  const s = String(v || "").trim().replace(/^https?:\/\//i, "").replace(/^(www\.)?instagram\.com\//i, "").replace(/^@/, "").split(/[\/?#\s]/)[0];
+  return /^[A-Za-z0-9._]{1,30}$/.test(s) ? s.replace(/\.+$/, "").toLowerCase() : "";
+}
+function montarMapaInstagram(){
+  mapaInstagram = new Map();
+  CONTATOS.forEach(c => { const u = usuarioInstagram(c.instagram); if(u && !mapaInstagram.has(u)) mapaInstagram.set(u, c); });
+}
+const RE_MENCAO = /(^|[^A-Za-z0-9._@])@([A-Za-z0-9._]{1,30})/g;   // "email@site.com" não conta: antes do @ não pode ter letra
+function preencherComMencoes(el, texto){
+  const s = String(texto || "");
+  el.textContent = "";
+  let ultimo = 0, m;
+  RE_MENCAO.lastIndex = 0;
+  while((m = RE_MENCAO.exec(s))){
+    const usuario = m[2].replace(/\.+$/, "");         // ponto no fim é da frase ("toco com @zack.")
+    const alvo = usuario && mapaInstagram.get(usuario.toLowerCase());
+    if(!alvo) continue;
+    const inicio = m.index + m[1].length;
+    el.append(s.slice(ultimo, inicio));
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "mencao"; b.textContent = "@" + usuario;
+    b.setAttribute("aria-haspopup", "dialog");
+    b.setAttribute("aria-expanded", "false");
+    b.setAttribute("aria-label", "@" + usuario + ": ver o contato de " + alvo.nome);
+    b.addEventListener("click", () => alternarBalaoContato(b, alvo));
+    el.append(b);
+    ultimo = inicio + 1 + usuario.length;
+  }
+  el.append(s.slice(ultimo));
+}
+
+let balaoContatoDe = null;                                   // @menção que abriu o balão do contato
+const abertosNoBalao = {fone: new Set(), perfil: new Set()};
+function fecharBalaoContato(){
+  const bal = $("balaoContato");
+  if(bal.hidden) return;
+  if(videoAtivo && bal.contains(videoAtivo.caixa)) fecharVideo();
+  bal.hidden = true;
+  $("balaoContatoCartao").textContent = "";
+  if(balaoContatoDe){ balaoContatoDe.setAttribute("aria-expanded", "false"); balaoContatoDe = null; }
+}
+function alternarBalaoContato(btn, c){
+  if(balaoContatoDe === btn){ fecharBalaoContato(); return; }
+  const bal = $("balaoContato");
+  const dentro = !bal.hidden && bal.contains(btn);          // @menção dentro do próprio balão: troca o cartão no mesmo lugar
+  fecharBalao();
+  if(videoAtivo && bal.contains(videoAtivo.caixa)) fecharVideo();
+  if(balaoContatoDe) balaoContatoDe.setAttribute("aria-expanded", "false");
+  abertosNoBalao.fone.clear(); abertosNoBalao.perfil.clear();
+  const ul = $("balaoContatoCartao");
+  ul.textContent = "";
+  ul.appendChild(criarCartao(c, abertosNoBalao, true));
+  bal.setAttribute("aria-label", "Contato de " + c.nome);
+  bal.querySelector(".balao-contato-corpo").scrollTop = 0;
+  if(!dentro){
+    const largura = Math.min(420, window.innerWidth - 16);
+    bal.style.width = largura + "px";
+    bal.style.visibility = "hidden";
+    bal.hidden = false;
+    const r = btn.getBoundingClientRect();
+    const alto = bal.offsetHeight;
+    const centro = r.left + r.width / 2;
+    const esq = Math.max(8, Math.min(centro - largura / 2, window.innerWidth - largura - 8));
+    const abaixo = r.bottom + alto + 14 <= window.innerHeight || r.top - alto - 14 < 0;
+    bal.classList.toggle("acima", !abaixo);
+    bal.style.left = (esq + window.scrollX) + "px";
+    bal.style.top = ((abaixo ? r.bottom + 10 : r.top - alto - 10) + window.scrollY) + "px";
+    bal.style.setProperty("--seta", Math.max(18, Math.min(centro - esq, largura - 18)) + "px");
+    bal.style.visibility = "visible";
+  }
+  btn.setAttribute("aria-expanded", "true");
+  balaoContatoDe = btn;
+}
+$("balaoContatoFechar").addEventListener("click", fecharBalaoContato);
+document.addEventListener("click", e => {
+  if(!e.target.closest("#balaoContato") && !e.target.closest(".mencao") && !e.target.closest("#balao") && !e.target.closest("#foto-zoom")) fecharBalaoContato();
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape") fecharBalaoContato(); });
+let larguraBalaoContato = window.innerWidth;   // só fecha ao girar/redimensionar (a barra do navegador também dispara resize no celular)
+window.addEventListener("resize", () => { if(window.innerWidth !== larguraBalaoContato){ larguraBalaoContato = window.innerWidth; fecharBalaoContato(); } });
+
 /* ---------- estado e renderização ---------- */
 let ordem = [];
 
@@ -1492,6 +1759,7 @@ function render(){
   const q = norm($("busca").value.trim());
   const lista = $("lista");
   fecharBalao();
+  fecharBalaoContato();
   lista.textContent = "";
   videoAtivo = null;
   const areasSelecionadas = AREAS_MUSICO.filter(area => areasMusicoAtivas.has(area));
@@ -1530,156 +1798,7 @@ function render(){
       lista.appendChild(grupo);
       areaAnterior = area;
     }
-    const li = document.createElement("li");
-    li.className = "card";
-    const idCard = ++proximoId;
-
-    const av = criarAvatar(c);
-
-    const corpo = document.createElement("div");
-
-    const nome = document.createElement("div");
-    nome.className = "name";
-    const nomeForte = document.createElement("strong");
-    const [nomeSo, apelido] = apelidoDe(c.nome);
-    nomeForte.textContent = nomeSo;
-    nome.appendChild(nomeForte);
-    if(apelido){ const ap = document.createElement("span"); ap.className = "apelido"; ap.textContent = apelido; nome.appendChild(ap); }
-    if(c.referencia){
-      const referencia = document.createElement("span");
-      referencia.className = "referencia"; referencia.textContent = " [" + c.referencia + "]";
-      nome.appendChild(referencia);
-    }
-    (c.selos||[]).forEach(id => {
-      const selo = dadosDoSelo(id, c);
-      if(!selo) return;
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "selo " + selo.classe; b.textContent = selo.sigla;
-      b.setAttribute("aria-expanded", "false");
-      b.setAttribute("aria-label", selo.sigla + ": " + selo.nome + ". Toque para saber mais.");
-      b.addEventListener("click", () => alternarBalao(b, selo));
-      nome.appendChild(b);
-    });
-
-    const local = document.createElement("div");
-    local.className = "line";
-    const d = distanciaDe(c);
-    local.textContent = "📍 " + (c.cidades||[]).join(" e ") + (isFinite(d) ? " · " + textoDist(d) : "");
-
-    const tags = document.createElement("div");
-    tags.className = "tags";
-    const tagsVisiveis = [...(c.instrumentos || [])];
-    if(categoriaAtiva === "artista" && c.tipoArtista) tagsVisiveis.unshift(c.tipoArtista);
-    tagsVisiveis.forEach(inst => {
-      const info = (categoriaAtiva === "artista" && inst === c.tipoArtista) ? AJ.infoTipo(inst) : AJ.infoInstrumento(inst);
-      const t = document.createElement("span");
-      t.className = "tag" + (info.tom ? " tom" + info.tom : "");
-      t.style.setProperty("--h", info.matiz);
-      t.textContent = inst;
-      tags.appendChild(t);
-    });
-
-    corpo.append(nome, local, tags);
-
-    if(c.hashtags.length){
-      const h = document.createElement("div");
-      h.className = "hashtags";
-      c.hashtags.forEach(t => {
-        const s = document.createElement("span");
-        s.textContent = "#" + t;
-        h.appendChild(s);
-      });
-      corpo.append(h);
-    }
-
-    const obs = String(c.observacoes || "").trim();
-    if(obs){
-      const o = document.createElement("div");
-      o.className = "obs"; o.textContent = obs;
-      corpo.append(o);
-    }
-
-    const acoes = document.createElement("div");
-    acoes.className = "actions";
-
-    // telefones: ficam escondidos atrás do botão vermelho (o WhatsApp principal não repete aqui, pois tem o botão verde)
-    const fones = [];
-    if(formatarTel(c.whatsapp)) fones.push({numero: nacional(c.whatsapp), rotulo: "", wpp: false});
-    fones.push(...listaTelefones(c));
-    let painelFones = null;
-    if(fones.length){
-      painelFones = document.createElement("div");
-      painelFones.className = "fones"; painelFones.id = "fones-" + idCard;
-      fones.forEach(t => painelFones.appendChild(linhaTelefone(c, t)));
-      const bt = document.createElement("button");
-      bt.type = "button"; bt.className = "btn tel so-icone";
-      bt.setAttribute("aria-controls", painelFones.id);
-      bt.appendChild(criarIcone("i-fone"));
-      const aplicarFone = aberto => {
-        painelFones.hidden = !aberto;
-        bt.setAttribute("aria-expanded", String(aberto));
-        const rot = (aberto ? "Esconder o telefone de " : "Ver o telefone de ") + c.nome;
-        bt.title = rot; bt.setAttribute("aria-label", rot);
-      };
-      aplicarFone(abertos.fone.has(c));
-      bt.addEventListener("click", () => {
-        const abrir = painelFones.hidden;
-        if(abrir) abertos.fone.add(c); else abertos.fone.delete(c);
-        aplicarFone(abrir);
-      });
-      acoes.appendChild(bt);
-    }
-
-    const w = linkWhatsapp(c.whatsapp);
-    if(w){
-      const a = document.createElement("a");
-      a.className = "btn wpp"; a.href = w; a.target = "_blank"; a.rel = "noopener";
-      a.innerHTML = ICONE_WPP + "<span></span>";
-      a.querySelector("span").textContent = "WhatsApp";
-      acoes.appendChild(a);
-    }
-    const ig = linkInstagram(c.instagram);
-    if(ig) acoes.appendChild(botaoLink(ig, "Instagram de " + c.nome, "i-ig", BOTOES_SO_ICONE));
-    const yt = linkYoutube(c.youtube);
-    if(yt) acoes.appendChild(botaoLink(yt, "YouTube de " + c.nome, "i-yt", BOTOES_SO_ICONE));
-    const em = linkEmail(c.email);
-    if(em) acoes.appendChild(botaoLink(em, "E-mail de " + c.nome, "i-mail", BOTOES_SO_ICONE));
-    listaLinks(c).forEach(l => acoes.appendChild(botaoLink(l.url, l.rotulo, "i-link")));
-
-    if(acoes.children.length) corpo.append(acoes);
-    if(painelFones) corpo.append(painelFones);
-
-    // perfil completo (bio, serviços e vídeos): só existe para quem preencheu algum deles
-    let perfil = null;
-    if(c.bio || c.servicos.length || c.videos.length){
-      perfil = document.createElement("div");
-      perfil.className = "perfil"; perfil.id = "perfil-" + idCard;
-      perfil.setAttribute("role", "region");
-      perfil.setAttribute("aria-label", "Perfil completo de " + c.nome);
-      const bp = document.createElement("button");
-      bp.type = "button"; bp.className = "perfil-btn";
-      bp.setAttribute("aria-controls", perfil.id);
-      const txt = document.createElement("span");
-      bp.appendChild(txt);
-      const aplicarPerfil = aberto => {
-        perfil.hidden = !aberto;
-        bp.setAttribute("aria-expanded", String(aberto));
-        txt.textContent = aberto ? "Ocultar perfil completo" : "Ver perfil completo";
-        if(aberto) montarPerfil(c, perfil);
-        else if(videoAtivo && perfil.contains(videoAtivo.caixa)) fecharVideo();
-      };
-      aplicarPerfil(abertos.perfil.has(c));
-      bp.addEventListener("click", () => {
-        const abrir = perfil.hidden;
-        if(abrir) abertos.perfil.add(c); else abertos.perfil.delete(c);
-        aplicarPerfil(abrir);
-      });
-      corpo.append(bp);
-    }
-
-    li.append(av, corpo);
-    if(perfil) li.append(perfil);
-    lista.appendChild(li);
+    lista.appendChild(criarCartao(c));
   });
 
   $("vazio").hidden = visiveis.length > 0;
@@ -1768,6 +1887,7 @@ async function iniciar(){
     });
     const faltam = [...new Set(contatos.flatMap(c => (c.cidades||[]).filter(n => !mapa.has(chave(n)))))];
     if(faltam.length) console.warn("Cidades sem coordenadas em Lista_Contatos_Musicos_cidades.json:", faltam);
+    montarMapaInstagram();   // @menções: quem tem Instagram cadastrado
     montarFiltros();     // botões de instrumento, em ordem alfabética
     ordem = ordenar();   // sorteio a cada abertura da página
     render();
@@ -1788,7 +1908,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v14.9.html
+ Arquivo: Lista_Contatos_Musicos_v15.1.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2224,6 +2344,27 @@ v14.9 — 2026-11-21
     misturados, um cartão por contato (sem os blocos "Instrumentos" e
     "Apenas funções" e sem cartão repetido). A escolha de Instrumentos
     ou Funções só filtra; o padrão continua sendo os dois.
+----------------------------------------------------------------
+v15 — 2026-11-22
+  - @menções, como no Instagram: na bio, no recado e nos serviços,
+    "@usuario" de alguém que tem esse Instagram cadastrado na lista fica
+    em azul e negrito. Ao tocar, abre um balão com o cartão dessa pessoa
+    (foto, selos, instrumentos, telefone, WhatsApp, perfil completo...).
+    Ex.: "toco junto com @zack" abre o cartão de quem cadastrou o
+    Instagram @zack.
+  - "@" que não é de ninguém da lista fica como texto normal (como no
+    Instagram). E-mail (nome@site.com) não vira menção. O Instagram pode
+    estar cadastrado como @usuario, usuario ou o link do perfil.
+  - Uma @menção dentro do balão troca o cartão no mesmo balão. Fecha no
+    ×, tocando fora, com Esc ou ao girar a tela. Contato oculto não abre.
+  - O cartão passou a ser montado por uma função só (criarCartao), usada
+    pela lista e pelo balão; o da lista ficou igual.
+  - Não mudou: abas, filtros, selos, encaixe, catálogo e dados.
+----------------------------------------------------------------
+v15.1 — 2026-11-23
+  - Cartão sem recado ganha um espaço vazio do tamanho de 1 linha de
+    recado, no mesmo lugar. Os cartões ficam mais parecidos e quem tem
+    recado continua maior e mais chamativo.
 
 ================================================================
 -->
