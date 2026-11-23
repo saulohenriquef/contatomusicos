@@ -370,6 +370,9 @@
   footer a{color:inherit}
   footer .creditos{margin-top:6px}
   .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+  /* ---------- v7.0: tipo de cada telefone, com quem falar e "ocultar número de cadastro" (ABC) ---------- */
+  .fone-extra{margin-top:8px}
+  #boxOcultarWhats .marcar{margin-top:8px}
 </style>
 </head>
 <body>
@@ -561,12 +564,25 @@
     <section class="passo" aria-labelledby="t3">
       <h2 id="t3">Como falar com você</h2>
 
-      <label class="campo" for="fWhats">WhatsApp, com DDD <b aria-hidden="true">*</b></label>
+      <label class="campo" for="fWhats">WhatsApp (número de cadastro), com DDD <b aria-hidden="true">*</b></label>
       <input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="dicaWhats">
       <p id="dicaWhats" class="dica" aria-live="polite"></p>
       <div id="avisoNumero" class="caixa-aviso" role="status" hidden>
         <p id="textoNumero"></p>
         <button id="carregarExistente" class="btn pequeno" type="button" hidden>Editar o cadastro que já existe</button>
+      </div>
+      <div class="linha fone-extra">
+        <select id="fTipoWhats" class="entrada" aria-label="Tipo do número de cadastro"></select>
+        <input id="fTipoWhatsOutro" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Qual? (ex.: Agenda)" aria-label="Tipo do número de cadastro (escreva)" hidden>
+        <input id="fContatoWhats" class="entrada" type="text" maxlength="40" autocomplete="off" placeholder="Falar com (opcional), ex.: Joana" aria-label="Número de cadastro: falar com (opcional; nome da secretária ou do empresário)">
+      </div>
+      <div id="boxOcultarWhats" hidden>
+        <label class="marcar" for="fOcultarWhats">
+          <input id="fOcultarWhats" type="checkbox">
+          <span>Ocultar número de cadastro
+            <small>Ele some da lista e no lugar aparecem os outros números (coloque pelo menos um em “Outros telefones”, ex.: o do seu empresário). Não fica secreto: continua guardado no arquivo de dados da lista e serve para você editar o cadastro.</small>
+          </span>
+        </label>
       </div>
 
       <div id="maisContatos">
@@ -710,7 +726,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.9
+    Cadastro de Músicos · Lista de Contatos de Músicos · v7.0
   </footer>
 </div>
 
@@ -1063,10 +1079,10 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.9";
+const VERSAO = "v7.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
-// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
+// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v5.rules: publique-as ANTES desta página).
 // Onde achar: Firebase > engrenagem > Configurações do projeto > Seus aplicativos > firebaseConfig (projectId e apiKey).
 // Enquanto estiverem vazios — ou com ?demo=1 no endereço da página — ela fica em MODO DEMONSTRAÇÃO e não envia nada a lugar nenhum.
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
@@ -1090,6 +1106,8 @@ let MAX_FOTO_BYTES = 120 * 1024;         // a foto final nunca passa disso (redu
 const MAX_ARQUIVO_MB = 30;               // arquivos de foto maiores que isso são recusados
 const MAX_NOME = 80, MAX_OBS = 300, MAX_INSTR = 8, MAX_NOME_INSTR = 30, MAX_CIDADES = 5, MAX_NOME_CIDADE = 60;
 const MAX_TELEFONES = 3, MAX_LINKS = 3, MAX_ROTULO = 30, MAX_URL = 200, MAX_EMAIL = 120;
+// tipo de cada telefone: o 1º já vem marcado; "Outro" abre um campo para escrever. MAX_CONTATO_FONE = "falar com" (secretária, empresário)
+const TIPOS_FONE = ["Pessoal", "Comercial", "Fixo", "Celular 2", "Recados"], TIPO_OUTRO = "Outro", MAX_CONTATO_FONE = 40;
 // perfil completo: os limites vêm do bloco AJUDANTES (os mesmos da lista e do painel)
 const MAX_BIO = AJ.LIM.bio, MAX_SERVICOS = AJ.LIM.servicos, MAX_SERVICO = AJ.LIM.servico, MAX_HASHTAGS = AJ.LIM.hashtags, MAX_VIDEOS = AJ.LIM.videos;
 const MAX_TEXTO_HASHTAGS = 300, MAX_TEXTO_SERVICOS = 1000, MAX_URL_VIDEO = 400;
@@ -1119,7 +1137,7 @@ let freelanceABC = "nao", instrGuardadosABC = [];   // ABC: aceita free-lance? (
 // ao abrir um contato ou um rascunho antigo: artista com instrumento e selo verde/amarelo = "Sim"
 function freelanceDosDados(){ return $("fCategoria").value === "artista" && instr.length && ["sim", "raramente"].includes(abcDisponibilidade) ? "sim" : "nao"; }
 let cidades = [];                // ["Franca/SP"]
-let telefones = [];              // [{rotulo, numero}]
+let telefones = [];              // [{tipo, outro, numero, contato}]
 let links = [];                  // [{rotulo, url}]
 let videos = [];                 // [{url}] links de vídeo (YouTube ou Instagram)
 let edit = null;                 // null = cadastro novo; senão a edição em andamento: {fonte, nome, publicado, anterior, docId}
@@ -1155,6 +1173,35 @@ function semControle(s, manterQuebras){
 }
 const limparNome = v => semControle(v).replace(/\s+/g, " ").trim().slice(0, MAX_NOME);
 const limparRotulo = v => semControle(v).replace(/\s+/g, " ").trim().slice(0, MAX_ROTULO);
+const limparContatoFone = v => semControle(v).replace(/\s+/g, " ").trim().slice(0, MAX_CONTATO_FONE);
+// rótulo guardado -> {tipo, outro} da tela (vazio = o 1º tipo, Pessoal)
+function tipoDoRotulo(r){
+  r = limparRotulo(r);
+  if(!r) return {tipo: TIPOS_FONE[0], outro: ""};
+  const k = TIPOS_FONE.find(x => norm(x) === norm(r));
+  return k ? {tipo: k, outro: ""} : {tipo: TIPO_OUTRO, outro: r};
+}
+// tipo da tela -> rótulo guardado ("Outro" vale o que a pessoa escreveu)
+const rotuloDoTipo = (tipo, outro) => tipo === TIPO_OUTRO ? limparRotulo(outro) : (TIPOS_FONE.includes(tipo) ? tipo : TIPOS_FONE[0]);
+// o que aparece em cima do número, como na lista: "Comercial (Joana)"
+const textoRotuloFone = (rotulo, contato) => [rotulo, contato ? "(" + contato + ")" : ""].filter(Boolean).join(" ");
+function opcoesTipoFone(sel, valor){
+  sel.textContent = "";
+  [...TIPOS_FONE, TIPO_OUTRO].forEach(t => {
+    const o = document.createElement("option");
+    o.value = t; o.textContent = t === TIPO_OUTRO ? "Outro (escrever)" : t;
+    sel.appendChild(o);
+  });
+  sel.value = valor;
+}
+// número de cadastro: põe o tipo na tela (aceita o rótulo guardado ou o par tipo/outro do rascunho)
+function porTipoFone(tipo, outro){
+  const t = (TIPOS_FONE.includes(tipo) || tipo === TIPO_OUTRO) ? {tipo, outro: limparRotulo(outro)} : tipoDoRotulo(tipo || "");
+  $("fTipoWhats").value = t.tipo;
+  $("fTipoWhatsOutro").value = t.outro;
+  $("fTipoWhatsOutro").hidden = t.tipo !== TIPO_OUTRO;
+}
+opcoesTipoFone($("fTipoWhats"), TIPOS_FONE[0]);
 function limparObs(v){
   return semControle(String(v == null ? "" : v).replace(/\r\n?/g, "\n"), true)
     .replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_OBS);
@@ -1635,10 +1682,20 @@ function desenharTelefones(foco){
   telefones.forEach((t, i) => {
     const linha = criar("div", "item");
     const campos = criar("div", "campos");
-    const rot = campoDeLinha("text", "tel-" + i + "-rotulo", "Telefone " + (i + 1) + ": para que serve (opcional)", "Para que serve (ex.: Recados)", t.rotulo, MAX_ROTULO, v => { t.rotulo = v; });
     const num = campoDeLinha("tel", "tel-" + i + "-numero", "Telefone " + (i + 1) + ": número com DDD", "(35) 3232-1234", t.numero, 20, v => { t.numero = v; });
     num.inputMode = "tel";
-    campos.append(rot, num);
+    // tipo (Pessoal já vem marcado; "Outro" abre o campo para escrever) e com quem falar
+    const tipo = criar("select", "entrada");
+    tipo.id = "tel-" + i + "-tipo";
+    tipo.setAttribute("aria-label", "Telefone " + (i + 1) + ": tipo");
+    opcoesTipoFone(tipo, t.tipo);
+    const outro = campoDeLinha("text", "tel-" + i + "-outro", "Telefone " + (i + 1) + ": tipo (escreva)", "Qual? (ex.: Agenda)", t.outro, MAX_ROTULO, v => { t.outro = v; });
+    outro.hidden = t.tipo !== TIPO_OUTRO;
+    tipo.addEventListener("change", () => { t.tipo = tipo.value; outro.hidden = t.tipo !== TIPO_OUTRO; mudou(); if(!outro.hidden) outro.focus(); });
+    const quem = campoDeLinha("text", "tel-" + i + "-contato", "Telefone " + (i + 1) + ": falar com (opcional; nome da secretária ou do empresário)", "Falar com (opcional), ex.: Joana", t.contato, MAX_CONTATO_FONE, v => { t.contato = v; });
+    const linhaTipo = criar("div", "linha");
+    linhaTipo.append(tipo, outro, quem);
+    campos.append(num, linhaTipo);
     const x = criar("button", "btn x", "✕");
     x.type = "button";
     x.setAttribute("aria-label", "Remover o telefone " + (i + 1));
@@ -1997,12 +2054,15 @@ function coletar(){
   const numeroDe = x => typeof x === "string" ? x : x.numero;
   const tels = [];
   telefones.forEach((t, i) => {
-    const bruto = String(t.numero || "").trim(), rotulo = limparRotulo(t.rotulo);
-    if(!bruto && !rotulo) return;
+    const bruto = String(t.numero || "").trim(), rotulo = rotuloDoTipo(t.tipo, t.outro), contato = limparContatoFone(t.contato);
+    if(!bruto && !contato && !(t.tipo === TIPO_OUTRO && rotulo)) return;   // linha vazia (o tipo já vem marcado e não conta)
     const d = nacional(bruto);
     if(![10, 11].includes(d.length)){ falha("tel-" + i + "-numero", "Outro telefone " + (i + 1) + ": precisa ter DDD e número (10 ou 11 dígitos)."); return; }
     if(d === whats || tels.some(x => numeroDe(x) === d)) return;
-    tels.push(rotulo ? {numero: d, rotulo} : d);
+    const o = {numero: d};
+    if(rotulo) o.rotulo = rotulo;
+    if(contato) o.contato = contato;
+    tels.push(o.rotulo || o.contato ? o : d);
   });
 
   const lks = [];
@@ -2057,6 +2117,12 @@ function coletar(){
   definir(c, "youtube", yt.valor || "");
   definir(c, "email", email);
   definir(c, "whatsapp", whatsOk ? whats : "");
+  definir(c, "tipoWhatsapp", whatsOk ? rotuloDoTipo($("fTipoWhats").value, $("fTipoWhatsOutro").value) : "");
+  definir(c, "contatoWhatsapp", whatsOk ? limparContatoFone($("fContatoWhats").value) : "");
+  // só artista/banda (ABC): o número de cadastro some da lista (continua no arquivo de dados e serve para editar o cadastro)
+  const ocultarWhats = whatsOk && categoria === "artista" && $("fOcultarWhats").checked;
+  definir(c, "ocultarWhatsapp", ocultarWhats ? true : null);
+  if(ocultarWhats && !tels.length) falha("boxOcultarWhats", "Para ocultar o número de cadastro, coloque pelo menos um outro número em “Outros telefones”.");
   definir(c, "telefones", tels.length ? tels : null);
   definir(c, "links", lks.length ? lks : null);
   definir(c, "observacoes", limparObs($("fObs").value));
@@ -2193,10 +2259,10 @@ function montarCartao(c, fotoModo){
 
   // os telefones ficam escondidos atrás do botão vermelho, como na lista
   const fones = [];
-  if(c.whatsapp) fones.push({numero: c.whatsapp, rotulo: "", wpp: false});
+  if(c.whatsapp && !c.ocultarWhatsapp) fones.push({numero: c.whatsapp, rotulo: textoRotuloFone(c.tipoWhatsapp, c.contatoWhatsapp), wpp: false});
   (c.telefones || []).forEach(t => {
     const numero = typeof t === "string" ? t : t.numero;
-    fones.push({numero, rotulo: typeof t === "string" ? "" : (t.rotulo || ""), wpp: ehCelular(numero)});
+    fones.push({numero, rotulo: typeof t === "string" ? "" : textoRotuloFone(t.rotulo, t.contato), wpp: ehCelular(numero)});
   });
   const acoes = criar("div", "actions");
   let painelFones = null;
@@ -2216,7 +2282,8 @@ function montarCartao(c, fotoModo){
     bt.addEventListener("click", () => { previaFoneAberto = !previaFoneAberto; aplicarFone(previaFoneAberto); });
     acoes.appendChild(bt);
   }
-  if(c.whatsapp){
+  // número de cadastro oculto: o botão verde usa o primeiro outro número de celular
+  if(c.ocultarWhatsapp ? fones.some(f => f.wpp) : c.whatsapp){
     const w = criar("span", "pbtn wpp");
     w.innerHTML = ICONE_WPP + "<span></span>";
     w.querySelector("span").textContent = "WhatsApp";
@@ -2297,7 +2364,8 @@ function estadoAtual(){
     nome: $("fNome").value, referencia: $("fReferencia").value, categoria: $("fCategoria").value,
     tipoArtista: $("fTipoArtista").value, instr, cidades, ifc: $("fIfc").checked,
     ifcDisponibilidade, abcDisponibilidade, freelanceABC, funcoes: [...funcoesDigitadas],
-    whats: $("fWhats").value, insta: $("fInsta").value, email: $("fEmail").value, youtube: $("fYoutube").value,
+    whats: $("fWhats").value, tipoWhats: $("fTipoWhats").value, tipoWhatsOutro: $("fTipoWhatsOutro").value,
+    contatoWhats: $("fContatoWhats").value, ocultarWhats: $("fOcultarWhats").checked, insta: $("fInsta").value, email: $("fEmail").value, youtube: $("fYoutube").value,
     tels: telefones, links, obs: $("fObs").value,
     hash: $("fHashtags").value, bio: $("fBio").value, servicos: $("fServicos").value, videos: videos.map(v => v.url),
     edit: edit ? {fonte: edit.fonte, nome: edit.nome, publicado: edit.publicado, anterior: edit.anterior, docId: edit.docId} : null,
@@ -2354,10 +2422,15 @@ function restaurarRascunho(){
     document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.checked = x.value === abcDisponibilidade);
     atualizarCamposCategoria();
     $("fWhats").value = cortar(e.whats, 30);
+    porTipoFone(e.tipoWhats, e.tipoWhatsOutro);
+    $("fContatoWhats").value = cortar(e.contatoWhats, MAX_CONTATO_FONE);
+    $("fOcultarWhats").checked = e.ocultarWhats === true;
     $("fInsta").value = cortar(e.insta, MAX_URL);
     $("fEmail").value = cortar(e.email, MAX_EMAIL);
     $("fYoutube").value = cortar(e.youtube, MAX_URL);
-    telefones = (Array.isArray(e.tels) ? e.tels : []).slice(0, MAX_TELEFONES).map(t => ({rotulo: cortar(t && t.rotulo, MAX_ROTULO), numero: cortar(t && t.numero, 20)}));
+    telefones = (Array.isArray(e.tels) ? e.tels : []).slice(0, MAX_TELEFONES).map(t => ({   // rascunho antigo tem "rotulo"; o novo, tipo/outro
+      ...(t && typeof t.tipo === "string" && (TIPOS_FONE.includes(t.tipo) || t.tipo === TIPO_OUTRO) ? {tipo: t.tipo, outro: cortar(t.outro, MAX_ROTULO)} : tipoDoRotulo(cortar(t && t.rotulo, MAX_ROTULO))),
+      numero: cortar(t && t.numero, 20), contato: cortar(t && t.contato, MAX_CONTATO_FONE)}));
     links = (Array.isArray(e.links) ? e.links : []).slice(0, MAX_LINKS).map(l => ({rotulo: cortar(l && l.rotulo, MAX_ROTULO), url: cortar(l && l.url, MAX_URL)}));
     $("fObs").value = cortar(e.obs, MAX_OBS);
     $("fHashtags").value = cortar(e.hash, MAX_TEXTO_HASHTAGS);
@@ -2585,13 +2658,22 @@ function contatoDeFora(b){
   const yt = youtubeDoCampo(texto(b.youtube)); if(yt.valor) c.youtube = yt.valor;
   const em = semControle(texto(b.email)).trim(); if(em && em.length <= MAX_EMAIL && emailValido(em)) c.email = em;
   const w = nacional(texto(b.whatsapp)); if(w.length === 10 || w.length === 11) c.whatsapp = w;
+  if(c.whatsapp){
+    const tw = limparRotulo(texto(b.tipoWhatsapp)); if(tw) c.tipoWhatsapp = tw;
+    const cw = limparContatoFone(texto(b.contatoWhatsapp)); if(cw) c.contatoWhatsapp = cw;
+    if(b.ocultarWhatsapp === true && c.categoria === "artista") c.ocultarWhatsapp = true;
+  }
   const tels = [];
   lista(b.telefones).forEach(t => {
     const numero = nacional(typeof t === "string" ? t : texto(t && t.numero));
     if((numero.length !== 10 && numero.length !== 11) || numero === c.whatsapp || tels.length >= MAX_TELEFONES) return;
     if(tels.some(x => (typeof x === "string" ? x : x.numero) === numero)) return;
     const rotulo = t && typeof t === "object" ? limparRotulo(texto(t.rotulo)) : "";
-    tels.push(rotulo ? {numero, rotulo} : numero);
+    const contato = t && typeof t === "object" ? limparContatoFone(texto(t.contato)) : "";
+    const o = {numero};
+    if(rotulo) o.rotulo = rotulo;
+    if(contato) o.contato = contato;
+    tels.push(rotulo || contato ? o : numero);
   });
   if(tels.length) c.telefones = tels;
   const lks = [];
@@ -2628,10 +2710,14 @@ function preencherContato(c){
   $("fIfc").checked = (c.selos || []).includes("IFC");
   atualizarCamposCategoria();
   $("fWhats").value = c.whatsapp ? formatarTel(c.whatsapp) : "";
+  porTipoFone(c.whatsapp ? (c.tipoWhatsapp || "") : "", "");
+  $("fContatoWhats").value = c.contatoWhatsapp || "";
+  $("fOcultarWhats").checked = c.ocultarWhatsapp === true;
   $("fInsta").value = c.instagram ? "@" + c.instagram : "";
   $("fEmail").value = c.email || "";
   $("fYoutube").value = c.youtube || "";
-  telefones = (c.telefones || []).map(t => typeof t === "string" ? {rotulo: "", numero: formatarTel(t)} : {rotulo: t.rotulo || "", numero: formatarTel(t.numero)});
+  telefones = (c.telefones || []).map(t => typeof t === "string" ? {...tipoDoRotulo(""), numero: formatarTel(t), contato: ""}
+    : {...tipoDoRotulo(t.rotulo || ""), numero: formatarTel(t.numero), contato: t.contato || ""});
   links = (c.links || []).map(l => ({rotulo: l.rotulo || "", url: l.url}));
   $("fObs").value = c.observacoes || "";
   $("fHashtags").value = (c.hashtags || []).map(h => "#" + h).join(" ");
@@ -2647,7 +2733,7 @@ function preencherContato(c){
 function formularioVazio(){
   return !String($("fNome").value).trim() && !String($("fReferencia").value).trim() && $("fCategoria").value === "musico" &&
     !instr.length && !cidades.length && !String($("fWhats").value).trim() && !String($("fInsta").value).trim() && !String($("fEmail").value).trim() && !String($("fYoutube").value).trim() &&
-    !telefones.some(t => String(t.numero || "").trim() || String(t.rotulo || "").trim()) &&
+    !telefones.some(t => String(t.numero || "").trim() || String(t.contato || "").trim()) && !String($("fContatoWhats").value).trim() &&
     !links.some(l => String(l.url || "").trim() || String(l.rotulo || "").trim()) && !String($("fObs").value).trim() &&
     !$("fIfc").checked && !fonte && !String($("fHashtags").value).trim() && !String($("fBio").value).trim() &&
     !String($("fServicos").value).trim() && !videos.some(v => String(v.url || "").trim()) && !edit;
@@ -3162,6 +3248,7 @@ function atualizarCamposCategoria(){
   }
   $("blocoTipoArtista").hidden = !artista;
   $("boxFreelanceABC").hidden = !artista;
+  $("boxOcultarWhats").hidden = !artista;   // "Ocultar número de cadastro" é só para artista/banda (ABC)
   document.querySelectorAll('input[name="freelanceABC"]').forEach(x => x.checked = x.value === freelanceABC);
   $("boxAtuacoes").hidden = empresa || (artista && freelanceABC !== "sim");   // artista: a lista só abre com "Sim" no free-lance
   $("boxIfc").hidden = !ifcPermitido;
@@ -3227,6 +3314,14 @@ $("fNome").addEventListener("blur", () => {                  // ao sair do campo
   mudou();
 });
 $("fWhats").addEventListener("input", () => { dicaWhats(false); esconderAvisoNumero(); conferenciaN++; mudou(); });
+$("fTipoWhats").addEventListener("change", () => {
+  const outro = $("fTipoWhatsOutro");
+  outro.hidden = $("fTipoWhats").value !== TIPO_OUTRO;
+  if(!outro.hidden) outro.focus();
+  mudou();
+});
+["fTipoWhatsOutro", "fContatoWhats"].forEach(id => $(id).addEventListener("input", mudou));
+$("fOcultarWhats").addEventListener("change", mudou);
 $("fWhats").addEventListener("blur", () => {
   const d = nacional($("fWhats").value);
   if([10, 11].includes(d.length)) $("fWhats").value = formatarTel(d);
@@ -3272,7 +3367,7 @@ $("fTipoOutro").addEventListener("input", () => {
 $("addCidade").addEventListener("click", adicionarCidade);
 $("addTel").addEventListener("click", () => {
   if(telefones.length >= MAX_TELEFONES) return;
-  telefones.push({rotulo: "", numero: ""});
+  telefones.push({tipo: TIPOS_FONE[0], outro: "", numero: "", contato: ""});
   desenharTelefones("tel-" + (telefones.length - 1) + "-numero");
   mudou();
 });
@@ -3347,7 +3442,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.9.html
+ Arquivo: Cadastro_Musicos_v7.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3355,11 +3450,31 @@ iniciar();
           Lista_Contatos_Musicos_contatos.json (sem o campo "foto")
           e a foto à parte, em base64. Só o dono do projeto (com
           senha, pelo painel) lê, aprova ou apaga: as regras estão
-          em Firestore_Regras_Cadastros_v3.rules. Com o bloco
+          em Firestore_Regras_Cadastros_v5.rules. Com o bloco
           FIREBASE vazio (ou ?demo=1 no endereço) a página não envia
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v7.0 — 2026-11-23
+  - Cada telefone tem um tipo: Pessoal (já vem marcado), Comercial,
+    Fixo, Celular 2, Recados ou Outro (abre um campo para escrever).
+    Vale para o WhatsApp (número de cadastro) e para os outros números,
+    em todas as categorias.
+  - Campo opcional "Falar com" depois de cada número (nome da
+    secretária, do empresário...). Na lista fica: Comercial (Joana).
+  - Artista/banda (ABC): caixa "Ocultar número de cadastro". O número
+    some da lista e o botão verde passa a usar o primeiro outro número
+    de celular; para marcar é preciso ter pelo menos um outro número. O
+    aviso na tela diz que ele não fica secreto: continua no arquivo de
+    dados da lista e serve para editar o cadastro pelo telefone.
+  - Campos novos no contato: tipoWhatsapp, contatoWhatsapp,
+    ocultarWhatsapp e, em cada outro telefone, "contato" (o "rotulo"
+    passa a guardar o tipo). Precisa das regras
+    Firestore_Regras_Cadastros_v5.rules (publique ANTES desta página).
+  - Prévia do cartão, rascunho e edição pelo telefone já mostram e
+    guardam tudo isso.
+
+----------------------------------------------------------------
 v6.9 — 2026-11-23
   - Bloco de ajudantes igual ao da lista v15.3 e do painel v16.6: entende
     o campo "nomeCompleto" do atuacoes.json (nome por extenso de uma
