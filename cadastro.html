@@ -710,7 +710,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v6.8
+    Cadastro de Músicos · Lista de Contatos de Músicos · v6.9
   </footer>
 </div>
 
@@ -807,11 +807,14 @@ const AJ = (() => {
   // (No Lista_Contatos_Musicos_atuacoes.json o grupo é a lista em que o item está: "instrumentos" ou "funcoes".)
   const FUNCOES_PADRAO = new Set(["DJ", "T. Som", "T. Luz", "Roadie", "Produtor", "Téc. palco"].map(chave));
   const grupoDe = l => (l[6] === "f" || l[6] === "i") ? l[6] : (FUNCOES_PADRAO.has(chave(l[0])) ? "f" : "i");
+  // nome por extenso das abreviações (aparece ao passar o mouse ou tocar); no atuacoes.json é o campo "nomeCompleto"
+  const NOMES_COMPLETOS = {"T. Som": "Técnico de Som", "T. Luz": "Técnico de Luz", "Téc. palco": "Técnico de Palco"};
+  const completoDe = l => (typeof l[7] === "string" && l[7]) || NOMES_COMPLETOS[l[0]] || "";
   function montarMapa(){
     MAPA.clear();
     CATALOGO.forEach(l => {
-      const reg = {n: l[0], e: l[1], h: l[2], t: l[3], b: l[4], g: grupoDe(l)};
-      [l[0], ...(Array.isArray(l[5]) ? l[5] : [])].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
+      const reg = {n: l[0], e: l[1], h: l[2], t: l[3], b: l[4], g: grupoDe(l), c: completoDe(l)};
+      [l[0], ...(Array.isArray(l[5]) ? l[5] : []), reg.c].forEach(a => { const k = chave(a); if(k && !MAPA.has(k)) MAPA.set(k, reg); });
     });
   }
   montarMapa();
@@ -838,13 +841,14 @@ const AJ = (() => {
   // emoji, matiz (cor) e tom do instrumento; nome fora da tabela: 🎵 e uma cor calculada do nome
   function infoInstrumento(nome){
     const reg = achar(chave(nome));
-    if(reg) return {nome: reg.n, emoji: reg.e, matiz: reg.h, tom: reg.t, conhecido: true};
+    if(reg) return {nome: reg.n, emoji: reg.e, matiz: reg.h, tom: reg.t, conhecido: true, completo: reg.c && reg.c !== reg.n ? reg.c : ""};
     const h = hashNome(nome);
-    return {nome: instrumento(nome), emoji: "🎵", matiz: h % 360, tom: Math.floor(h / 360) % 2, conhecido: false};
+    return {nome: instrumento(nome), emoji: "🎵", matiz: h % 360, tom: Math.floor(h / 360) % 2, conhecido: false, completo: ""};
   }
   // os balões que o cadastro oferece, em ordem alfabética ("i" = só instrumentos, "f" = só funções, sem nada = todos)
   const oferecidos = grupo => CATALOGO.filter(x => x[4] && (!grupo || grupoDe(x) === grupo)).map(x => x[0]).sort((a, b) => a.localeCompare(b, PT, {sensitivity: "base"}));
   const ehFuncao = nome => { const r = achar(chave(nome)); return !!r && r.g === "f"; };
+  const nomeCompleto = nome => { const r = achar(chave(nome)); return r && r.c && r.c !== r.n ? r.c : ""; };   // "T. Som" -> "Técnico de Som"
 
   /* ---------- tipos de artista (ABC): reserva; o atuacoes.json do site manda ---------- */
   const TIPOS = [["Cantor solo", "🎤", 330], ["Dupla sertaneja", "🤠", 34], ["Dupla", "🎙️", 275], ["Banda", "🎸", 210], ["Grupo", "🎼", 150], ["Conjunto", "🎹", 185]]
@@ -863,7 +867,8 @@ const AJ = (() => {
   const ARQ_ATUACOES = "Lista_Contatos_Musicos_atuacoes.json";
   const AJUDA_ATUACOES = "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. " +
     "Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); " +
-    "tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome.";
+    "tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome; " +
+    "nomeCompleto = nome por extenso de uma abreviação (ex.: T. Som = Técnico de Som), que aparece ao passar o mouse ou tocar.";
   const txtJ = (v, max) => typeof v === "string" ? limpo(v).slice(0, max) : "";
   const matizJ = (v, nome) => Number.isFinite(v) ? ((Math.round(v) % 360) + 360) % 360 : hashNome(nome) % 360;
   function linhaDoJson(x, g){
@@ -871,7 +876,7 @@ const AJ = (() => {
     const n = txtJ(x.nome, 40);
     if(!n) return null;
     const ap = Array.isArray(x.apelidos) ? x.apelidos.map(a => txtJ(a, 40)).filter(Boolean).slice(0, 40) : [];
-    return [n, txtJ(x.emoji, 8) || (g === "f" ? "🧰" : "🎵"), matizJ(x.matiz, n), [0, 1, 2].includes(x.tom) ? x.tom : 0, x.cadastro === false ? 0 : 1, ap, g];
+    return [n, txtJ(x.emoji, 8) || (g === "f" ? "🧰" : "🎵"), matizJ(x.matiz, n), [0, 1, 2].includes(x.tom) ? x.tom : 0, x.cadastro === false ? 0 : 1, ap, g, txtJ(x.nomeCompleto, 60)];
   }
   function usarCatalogo(j){
     if(!j || typeof j !== "object" || j.formato !== "atuacoes-musica") return false;
@@ -910,7 +915,9 @@ const AJ = (() => {
   // o catálogo atual no formato do Lista_Contatos_Musicos_atuacoes.json
   function catalogoJson(){
     const item = l => {
-      const o = {nome: l[0], emoji: l[1], matiz: l[2], tom: l[3]};
+      const o = {nome: l[0]}, cpl = completoDe(l);
+      if(cpl && cpl !== l[0]) o.nomeCompleto = cpl;
+      Object.assign(o, {emoji: l[1], matiz: l[2], tom: l[3]});
       if(!l[4]) o.cadastro = false;
       if(Array.isArray(l[5]) && l[5].length) o.apelidos = l[5].slice();
       return o;
@@ -1045,7 +1052,8 @@ const AJ = (() => {
 
   return {LIM, chave, formatarNome, instrumento, instrumentos, infoInstrumento, oferecidos, hashtags, servicos, bio, video, videos,
           digitos, telefonesDe, acharPorTelefone, limparContato, CATALOGO,
-          ehFuncao, tiposArtista, tipoConhecido, infoTipo, ARQ_ATUACOES, usarCatalogo, carregarCatalogo, adicionarAtuacao, catalogoJson};
+          ehFuncao, tiposArtista, tipoConhecido, infoTipo, ARQ_ATUACOES, usarCatalogo, carregarCatalogo, adicionarAtuacao, catalogoJson,
+          nomeCompleto};
 })();
 
 const criar = (tag, classe, texto) => { const e = document.createElement(tag); if(classe) e.className = classe; if(texto != null) e.textContent = texto; return e; };
@@ -1055,7 +1063,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v6.8";
+const VERSAO = "v6.9";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v4.rules: publique-as ANTES desta página).
@@ -3339,7 +3347,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v6.8.html
+ Arquivo: Cadastro_Musicos_v6.9.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3352,6 +3360,13 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v6.9 — 2026-11-23
+  - Bloco de ajudantes igual ao da lista v15.3 e do painel v16.6: entende
+    o campo "nomeCompleto" do atuacoes.json (nome por extenso de uma
+    abreviação, ex.: T. Som = Técnico de Som). Escrever "técnico de som"
+    também vira T. Som. Nada mais muda na página.
+
+----------------------------------------------------------------
 v6.8 — 2026-11-21
   - Apelido x referência: o que vem entre parênteses no nome é apelido,
     ex.: Moacyr (China). Ele fica no nome, sem negrito e com a letra
