@@ -241,6 +241,12 @@
     transform:rotate(45deg) translate(-2px,-2px); transition:transform .2s;
   }
   .perfil-btn[aria-expanded="true"]::after{transform:rotate(-135deg) translate(-2px,-2px)}
+  /* v15.2: "Perfil completo" pequeno, em duas linhas, embaixo da foto */
+  .coluna-foto{display:flex; flex-direction:column; align-items:center; width:48px}
+  .perfil-btn.perfil-btn-foto{flex-direction:column; gap:3px; width:64px; margin:6px -8px 0; padding:4px 0; min-height:0;
+    font-size:.68rem; font-weight:700; line-height:1.15; text-align:center; white-space:normal}
+  .perfil-btn.perfil-btn-foto span{max-width:58px}
+  .perfil-btn.perfil-btn-foto::after{width:5px; height:5px; border-width:0 1.5px 1.5px 0}
   .perfil{grid-column:1 / -1; display:grid; gap:16px; padding-top:12px; border-top:1px solid var(--line)}
   .perfil-secao h3{margin:0 0 7px; font-size:.74rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted)}
   .bio{margin:0; font-size:.93rem; line-height:1.55; white-space:pre-line; overflow-wrap:anywhere}
@@ -508,7 +514,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v15.1
+    Lista de Contatos de Músicos · v15.2
   </footer>
 </div>
 
@@ -1515,6 +1521,9 @@ function criarCartao(c, estado = abertos, noBalao = false){
   const idCard = ++proximoId;
 
   const av = criarAvatar(c);
+  const colunaFoto = document.createElement("div");   // foto e, embaixo dela, o "Perfil completo"
+  colunaFoto.className = "coluna-foto";
+  colunaFoto.append(av);
 
   const corpo = document.createElement("div");
 
@@ -1641,14 +1650,14 @@ function criarCartao(c, estado = abertos, noBalao = false){
     perfil.setAttribute("role", "region");
     perfil.setAttribute("aria-label", "Perfil completo de " + c.nome);
     const bp = document.createElement("button");
-    bp.type = "button"; bp.className = "perfil-btn";
+    bp.type = "button"; bp.className = "perfil-btn perfil-btn-foto";
     bp.setAttribute("aria-controls", perfil.id);
     const txt = document.createElement("span");
     bp.appendChild(txt);
     const aplicarPerfil = aberto => {
       perfil.hidden = !aberto;
       bp.setAttribute("aria-expanded", String(aberto));
-      txt.textContent = aberto ? "Ocultar perfil completo" : "Ver perfil completo";
+      txt.textContent = aberto ? "Fechar perfil" : "Perfil completo";
       if(aberto) montarPerfil(c, perfil);
       else if(videoAtivo && perfil.contains(videoAtivo.caixa)) fecharVideo();
     };
@@ -1658,10 +1667,10 @@ function criarCartao(c, estado = abertos, noBalao = false){
       if(abrir) estado.perfil.add(c); else estado.perfil.delete(c);
       aplicarPerfil(abrir);
     });
-    corpo.append(bp);
+    colunaFoto.append(bp);   // embaixo da foto
   }
 
-  li.append(av, corpo);
+  li.append(colunaFoto, corpo);
   if(perfil) li.append(perfil);
   return li;
 }
@@ -1908,7 +1917,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v15.1.html
+ Arquivo: Lista_Contatos_Musicos_v15.2.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2365,6 +2374,11 @@ v15.1 — 2026-11-23
   - Cartão sem recado ganha um espaço vazio do tamanho de 1 linha de
     recado, no mesmo lugar. Os cartões ficam mais parecidos e quem tem
     recado continua maior e mais chamativo.
+----------------------------------------------------------------
+v15.2 — 2026-11-23
+  - "Perfil completo" foi para baixo da foto, em letra pequena e em duas
+    linhas ("Perfil / completo"; aberto: "Fechar / perfil"), com a
+    setinha embaixo. O cartão fica mais curto.
 
 ================================================================
 -->
