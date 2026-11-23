@@ -1,7 +1,7 @@
 {
   "formato": "atuacoes-musica",
   "versao": 1,
-  "ajuda": "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome.",
+  "ajuda": "Instrumentos, funções e tipos de artista (ABC) usados pela página de cadastro, pelo painel e pela lista. Para incluir um, copie um item da lista certa e troque o nome. emoji = desenho do balão; matiz = cor (0 a 360); tom = 0 vivo, 1 pastel, 2 suave; cadastro: false = não aparece como balão na página de cadastro; apelidos = outros jeitos de escrever que viram este nome; nomeCompleto = nome por extenso de uma abreviação (ex.: T. Som = Técnico de Som), que aparece ao passar o mouse ou tocar.",
   "instrumentos": [
     {
       "nome": "Acordeon",
@@ -409,6 +409,7 @@
   "funcoes": [
     {
       "nome": "T. Som",
+      "nomeCompleto": "Técnico de Som",
       "emoji": "🎚️",
       "matiz": 192,
       "tom": 1,
@@ -423,6 +424,7 @@
     },
     {
       "nome": "T. Luz",
+      "nomeCompleto": "Técnico de Luz",
       "emoji": "💡",
       "matiz": 201,
       "tom": 1,
@@ -455,6 +457,7 @@
     },
     {
       "nome": "Téc. palco",
+      "nomeCompleto": "Técnico de Palco",
       "emoji": "🎭",
       "matiz": 150,
       "tom": 1,
