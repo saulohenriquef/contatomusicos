@@ -550,7 +550,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v15.3
+    Lista de Contatos de Músicos · v15.4
   </footer>
 </div>
 
@@ -1238,7 +1238,8 @@ function linkEmail(v){
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "mailto:" + v : "";
 }
 
-// "telefones": ["16999990000", {"numero": "...", "rotulo": "Recados", "whatsapp": false}]
+// "telefones": ["16999990000", {"numero": "...", "rotulo": "Comercial", "contato": "Joana", "whatsapp": false}]
+// rotulo = tipo do número (Pessoal, Comercial...); contato = com quem falar (secretária, empresário)
 function listaTelefones(c){
   return (Array.isArray(c.telefones) ? c.telefones : []).map(t => {
     if(typeof t === "string") t = {numero: t};
@@ -1248,9 +1249,24 @@ function listaTelefones(c){
     return {
       numero,
       rotulo: String(t.rotulo||"").trim(),
+      contato: String(t.contato||"").trim(),
       wpp: typeof t.whatsapp === "boolean" ? t.whatsapp : ehCelular(numero)
     };
   }).filter(Boolean);
+}
+
+// telefones do cartão: o de cadastro (menos quando o artista pediu para ocultar: "ocultarWhatsapp") e os outros
+function fonesDoCartao(c){
+  const r = [];
+  if(!c.ocultarWhatsapp && formatarTel(c.whatsapp))
+    r.push({numero: nacional(c.whatsapp), rotulo: String(c.tipoWhatsapp||"").trim(), contato: String(c.contatoWhatsapp||"").trim(), wpp: false});
+  return r.concat(listaTelefones(c));
+}
+// número do botão verde: o de cadastro; se ele estiver oculto, o primeiro outro número com WhatsApp
+function whatsDoCartao(c){
+  if(!c.ocultarWhatsapp) return c.whatsapp;
+  const t = listaTelefones(c).find(x => x.wpp);
+  return t ? t.numero : "";
 }
 
 // "links": [{"rotulo": "Site", "url": "https://..."}]
@@ -1296,18 +1312,21 @@ function linhaTelefone(c, t){
   const tel = formatarTel(t.numero);
   const linha = document.createElement("div");
   linha.className = "fone";
-  if(t.rotulo){
+  // em cima do número: o tipo e, entre parênteses, com quem falar. Ex.: Comercial (Joana)
+  const rotulo = [t.rotulo, t.contato ? "(" + t.contato + ")" : ""].filter(Boolean).join(" ");
+  const qual = [t.rotulo, t.contato].filter(Boolean).join(", ");
+  if(rotulo){
     const r = document.createElement("span");
-    r.className = "rotulo"; r.textContent = t.rotulo;
+    r.className = "rotulo"; r.textContent = rotulo;
     linha.appendChild(r);
   }
   const num = document.createElement("a");
   num.className = "fone-num"; num.href = linkTel(t.numero);
   num.textContent = "📞 " + tel;
-  num.setAttribute("aria-label", "Ligar para " + c.nome + (t.rotulo ? " (" + t.rotulo + ")" : "") + ": " + tel);
+  num.setAttribute("aria-label", "Ligar para " + c.nome + (qual ? " (" + qual + ")" : "") + ": " + tel);
   const cp = document.createElement("button");
   cp.type = "button"; cp.className = "copiar"; cp.textContent = "Copiar";
-  cp.setAttribute("aria-label", "Copiar o número de " + c.nome + (t.rotulo ? " (" + t.rotulo + ")" : ""));
+  cp.setAttribute("aria-label", "Copiar o número de " + c.nome + (qual ? " (" + qual + ")" : ""));
   cp.addEventListener("click", async () => {
     const ok = await copiarTexto(tel);
     cp.textContent = ok ? "Copiado ✓" : "Não copiou";
@@ -1712,9 +1731,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
   acoes.className = "actions";
 
   // telefones: ficam escondidos atrás do botão vermelho (o WhatsApp principal não repete aqui, pois tem o botão verde)
-  const fones = [];
-  if(formatarTel(c.whatsapp)) fones.push({numero: nacional(c.whatsapp), rotulo: "", wpp: false});
-  fones.push(...listaTelefones(c));
+  const fones = fonesDoCartao(c);
   let painelFones = null;
   if(fones.length){
     painelFones = document.createElement("div");
@@ -1739,7 +1756,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
     acoes.appendChild(bt);
   }
 
-  const w = linkWhatsapp(c.whatsapp);
+  const w = linkWhatsapp(whatsDoCartao(c));
   if(w){
     const a = document.createElement("a");
     a.className = "btn wpp"; a.href = w; a.target = "_blank"; a.rel = "noopener";
@@ -2033,7 +2050,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v15.3.html
+ Arquivo: Lista_Contatos_Musicos_v15.4.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2517,6 +2534,17 @@ v15.3 — 2026-11-23
     fecham. O botão mostra o que está marcado. A barra de cima ficou
     mais baixa.
   - Computador sem mudança, além das sugestões e das abreviações.
+----------------------------------------------------------------
+v15.4 — 2026-11-23
+  - Telefones com tipo e com quem falar: em cima de cada número aparece,
+    ex.: "Pessoal" ou "Comercial (Joana)". Campos tipoWhatsapp e
+    contatoWhatsapp do número de cadastro; "rotulo" e "contato" de cada
+    outro telefone. Contato antigo, sem tipo, fica como antes.
+  - Artista com "ocultarWhatsapp": o número de cadastro não aparece no
+    cartão; o botão verde do WhatsApp usa o primeiro outro número de
+    celular (sem nenhum, fica sem botão verde). O número continua no
+    contatos.json (serve para a pessoa editar o cadastro).
+  - Não mudou: abas, filtros, busca, selos e o resto dos cartões.
 
 ================================================================
 -->
