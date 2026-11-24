@@ -550,7 +550,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v15.4
+    Lista de Contatos de Músicos · v16
   </footer>
 </div>
 
@@ -1291,6 +1291,55 @@ function criarIcone(id){
   return svg;
 }
 
+/* ---------- analytics (v16): cada toque num botão de contato vira um registro no Firebase ----------
+   Vai para a coleção "cliques" do Firestore (o mesmo projeto da página de cadastro) e só o dono lê, no Painel de
+   Contatos ("Analytics"). Guarda o que foi tocado (WhatsApp, ver telefone, ligar, copiar, Instagram, YouTube,
+   e-mail, link, perfil) e de qual contato; nada de quem tocou. A hora é a do servidor. Se falhar, ninguém percebe.
+   Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
+   em cada aparelho (?contar=1 volta a contar). */
+const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
+const VERSAO_LISTA = "v16";
+let naoContarCliques = false;
+try{
+  const q = new URLSearchParams(location.search);
+  if(q.has("naoContar")) localStorage.setItem("naoContarCliques", "1");
+  if(q.has("contar")) localStorage.removeItem("naoContarCliques");
+  naoContarCliques = localStorage.getItem("naoContarCliques") === "1";
+}catch(e){}
+const cliquesRecentes = new Map();
+function idDoClique(){      // 20 letras e números, sorteados (é o nome do documento)
+  const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", b = new Uint8Array(20);
+  crypto.getRandomValues(b);
+  return Array.from(b, x => abc[x % abc.length]).join("");
+}
+function registrarClique(c, acao, alvo){
+  try{
+    if(naoContarCliques || !FIREBASE.projectId || !FIREBASE.apiKey || !/^https?:$/.test(location.protocol)) return;
+    const nome = String((c && c.nome) || "").trim().slice(0, 100);
+    if(!nome) return;
+    const chave = nome + "|" + acao + "|" + (alvo || ""), agora = Date.now();
+    if(agora - (cliquesRecentes.get(chave) || 0) < 4000) return;      // toque duplo conta uma vez só
+    cliquesRecentes.set(chave, agora);
+    const campos = {acao: {stringValue: acao}, nome: {stringValue: nome}, pagina: {stringValue: VERSAO_LISTA}};
+    const w = nacional(c.whatsapp);
+    if(/^\d{10,11}$/.test(w)) campos.whatsapp = {stringValue: w};
+    const ig = usuarioInstagram(c.instagram);
+    if(ig) campos.instagram = {stringValue: ig};
+    const a = String(alvo || "").trim().slice(0, 120);
+    if(a) campos.alvo = {stringValue: a};
+    const base = "projects/" + FIREBASE.projectId + "/databases/(default)/documents";
+    const corpo = JSON.stringify({writes: [{
+      update: {name: base + "/cliques/" + idDoClique(), fields: campos},
+      currentDocument: {exists: false},
+      updateTransforms: [{fieldPath: "em", setToServerValue: "REQUEST_TIME"}]      // a hora é a do servidor
+    }]});
+    const url = "https://firestore.googleapis.com/v1/" + base + ":commit?key=" + encodeURIComponent(FIREBASE.apiKey);
+    const enviar = manter => fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: corpo, keepalive: manter});
+    enviar(true).catch(() => enviar(false).catch(() => {}));      // keepalive: o registro sai mesmo se a página fechar
+  }catch(e){}
+}
+const contado = (el, c, acao, alvo) => { el.addEventListener("click", () => registrarClique(c, acao, alvo)); return el; };
+
 function botaoLink(href, rotulo, icone, soIcone){
   const a = document.createElement("a");
   a.className = "btn" + (soIcone ? " so-icone" : "");
@@ -1322,12 +1371,14 @@ function linhaTelefone(c, t){
   }
   const num = document.createElement("a");
   num.className = "fone-num"; num.href = linkTel(t.numero);
+  contado(num, c, "ligar", t.rotulo);
   num.textContent = "📞 " + tel;
   num.setAttribute("aria-label", "Ligar para " + c.nome + (qual ? " (" + qual + ")" : "") + ": " + tel);
   const cp = document.createElement("button");
   cp.type = "button"; cp.className = "copiar"; cp.textContent = "Copiar";
   cp.setAttribute("aria-label", "Copiar o número de " + c.nome + (qual ? " (" + qual + ")" : ""));
   cp.addEventListener("click", async () => {
+    registrarClique(c, "copiar", t.rotulo);
     const ok = await copiarTexto(tel);
     cp.textContent = ok ? "Copiado ✓" : "Não copiou";
     clearTimeout(cp._t);
@@ -1338,6 +1389,7 @@ function linhaTelefone(c, t){
     linha.classList.add("com-wpp");
     const w = document.createElement("a");
     w.className = "wpp-mini"; w.href = linkWhatsapp(t.numero); w.target = "_blank"; w.rel = "noopener";
+    contado(w, c, "whatsapp", t.rotulo || "outro número");
     w.setAttribute("aria-label", "Chamar " + c.nome + " no WhatsApp: " + tel);
     w.innerHTML = ICONE_WPP;
     linha.appendChild(w);
@@ -1751,6 +1803,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
     bt.addEventListener("click", () => {
       const abrir = painelFones.hidden;
       if(abrir) estado.fone.add(c); else estado.fone.delete(c);
+      if(abrir) registrarClique(c, "telefone");
       aplicarFone(abrir);
     });
     acoes.appendChild(bt);
@@ -1760,17 +1813,18 @@ function criarCartao(c, estado = abertos, noBalao = false){
   if(w){
     const a = document.createElement("a");
     a.className = "btn wpp"; a.href = w; a.target = "_blank"; a.rel = "noopener";
+    contado(a, c, "whatsapp");
     a.innerHTML = ICONE_WPP + "<span></span>";
     a.querySelector("span").textContent = "WhatsApp";
     acoes.appendChild(a);
   }
   const ig = linkInstagram(c.instagram);
-  if(ig) acoes.appendChild(botaoLink(ig, "Instagram de " + c.nome, "i-ig", BOTOES_SO_ICONE));
+  if(ig) acoes.appendChild(contado(botaoLink(ig, "Instagram de " + c.nome, "i-ig", BOTOES_SO_ICONE), c, "instagram"));
   const yt = linkYoutube(c.youtube);
-  if(yt) acoes.appendChild(botaoLink(yt, "YouTube de " + c.nome, "i-yt", BOTOES_SO_ICONE));
+  if(yt) acoes.appendChild(contado(botaoLink(yt, "YouTube de " + c.nome, "i-yt", BOTOES_SO_ICONE), c, "youtube"));
   const em = linkEmail(c.email);
-  if(em) acoes.appendChild(botaoLink(em, "E-mail de " + c.nome, "i-mail", BOTOES_SO_ICONE));
-  listaLinks(c).forEach(l => acoes.appendChild(botaoLink(l.url, l.rotulo, "i-link")));
+  if(em) acoes.appendChild(contado(botaoLink(em, "E-mail de " + c.nome, "i-mail", BOTOES_SO_ICONE), c, "email"));
+  listaLinks(c).forEach(l => acoes.appendChild(contado(botaoLink(l.url, l.rotulo, "i-link"), c, "link", l.rotulo)));
 
   if(acoes.children.length) corpo.append(acoes);
   if(painelFones) corpo.append(painelFones);
@@ -1798,6 +1852,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
     bp.addEventListener("click", () => {
       const abrir = perfil.hidden;
       if(abrir) estado.perfil.add(c); else estado.perfil.delete(c);
+      if(abrir) registrarClique(c, "perfil");
       aplicarPerfil(abrir);
     });
     colunaFoto.append(bp);   // embaixo da foto
@@ -2050,7 +2105,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v15.4.html
+ Arquivo: Lista_Contatos_Musicos_v16.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2545,6 +2600,20 @@ v15.4 — 2026-11-23
     celular (sem nenhum, fica sem botão verde). O número continua no
     contatos.json (serve para a pessoa editar o cadastro).
   - Não mudou: abas, filtros, busca, selos e o resto dos cartões.
+----------------------------------------------------------------
+v16 — 2026-11-23
+  - Analytics: cada toque num botão de contato é registrado no Firebase
+    (coleção "cliques"): WhatsApp (o verde e o pequeno de cada número),
+    ver telefone (botão vermelho), ligar, copiar o número, Instagram,
+    YouTube, e-mail, cada link e "Perfil completo" (ao abrir). Guarda o
+    que foi tocado e de qual contato (nome, WhatsApp e Instagram dele),
+    com a hora do servidor; nada de quem tocou. Toque duplo em 4
+    segundos conta uma vez. Se falhar, ninguém percebe. O dono vê no
+    Painel de Contatos v18 ("Analytics").
+  - Para não contar os próprios toques: abra a lista uma vez com
+    ?naoContar=1 no fim do endereço, em cada aparelho (?contar=1 volta).
+  - Precisa das regras Firestore_Regras_Cadastros_v6.rules.
+  - Não mudou: cartões, telefones, filtros, busca e selos.
 
 ================================================================
 -->
