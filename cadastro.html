@@ -377,6 +377,12 @@
   #avisoInsta p{margin:0 0 8px}
   /* ---------- v9.1: o que veio do cadastro rápido ---------- */
   .nota-rapido{margin:0 0 12px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); border-left:4px solid var(--accent); font-size:.92rem}
+  /* ---------- v10.0: país da cidade e bandeira ---------- */
+  #fPais{max-width:22rem}
+  .linha-cidade.fora{grid-template-columns:minmax(0,1fr) 9.5rem auto}
+  .bandeira{width:15px; height:10px; vertical-align:-1px; border-radius:1.5px; box-shadow:0 0 0 .5px rgba(0,0,0,.3); margin-left:1px}
+  .sigla-pais{font-size:.78em; font-weight:700; letter-spacing:.03em; margin-left:1px}
+  @media (max-width:520px){ .linha-cidade.fora{grid-template-columns:minmax(0,1fr) auto} .linha-cidade.fora #fCidade{grid-column:1 / -1} }
 </style>
 </head>
 <body>
@@ -556,15 +562,18 @@
     <section class="passo" aria-labelledby="t2">
       <h2 id="t2">Onde você mora</h2>
 
+      <label class="campo" for="fPais">País</label>
+      <select id="fPais" class="entrada"><option value="BR">Brasil</option></select>
       <label class="campo" for="fCidade">Cidade(s) onde você mora <b aria-hidden="true">*</b></label>
       <div class="linha-cidade">
         <input id="fCidade" class="entrada" type="text" list="listaCidades" maxlength="70" autocomplete="off" placeholder="Ex.: Franca" aria-describedby="msgCidade">
         <select id="fUf" class="entrada" aria-label="Estado (UF)"><option value="">UF</option></select>
+        <input id="fRegiao" class="entrada" type="text" maxlength="40" autocomplete="off" placeholder="Estado (opcional)" aria-label="Estado ou região (opcional)" hidden>
         <button id="addCidade" class="btn" type="button">Adicionar</button>
       </div>
       <datalist id="listaCidades"></datalist>
       <div id="chipsCidades" class="chips"></div>
-      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se mora em mais de uma cidade (trabalha numa e mora em outra, tem casa de praia…), adicione todas (até 5).</p>
+      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se mora em mais de uma cidade (trabalha numa e mora em outra, tem casa de praia…), adicione todas (até 5). Mora fora do Brasil? Escolha o país acima.</p>
       <p id="msgCidade" class="dica" aria-live="polite"></p>
     </section>
 
@@ -574,6 +583,7 @@
       <label class="campo" for="fWhats">WhatsApp (número de cadastro), com DDD <b aria-hidden="true">*</b></label>
       <input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="dicaWhats">
       <p id="dicaWhats" class="dica" aria-live="polite"></p>
+      <p id="notaWhatsFora" class="dica" hidden>Número de fora do Brasil? Comece com + e o código do país (ex.: +1 954 555 0123).</p>
       <div id="avisoNumero" class="caixa-aviso" role="status" hidden>
         <p id="textoNumero"></p>
         <button id="carregarExistente" class="btn pequeno" type="button" hidden>Editar o cadastro que já existe</button>
@@ -737,7 +747,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v9.1
+    Cadastro de Músicos · Lista de Contatos de Músicos · v10.0
   </footer>
 </div>
 
@@ -1096,7 +1106,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v9.1";
+const VERSAO = "v10.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -1163,6 +1173,14 @@ let edit = null;                 // null = cadastro novo; senão a edição em a
 let fotoLista = "";              // endereço da foto que já está na lista (só em edição; vazio = não tem)
 let fotoRemovida = false;        // true = a pessoa pediu para tirar a foto da lista
 const CIDADE_UF = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([A-Z]{2})$/u;   // "Cidade/UF" como a página guarda
+const CIDADE_EXT = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([^\/|]{0,40})\/([A-Z]{2})$/u;   // de outro país: "Cidade/Região/XX" (v10.0)
+const cidadeValida = x => {
+  const s = String(x == null ? "" : x), m = s.match(CIDADE_UF);
+  if(m) return UFS.includes(m[2]);
+  const e = s.match(CIDADE_EXT);
+  return !!e && e[3] !== "BR";
+};
+let cidadesDeFora = [];          // as cidades de outros países que o site já tem ("Pompano/FL/US")
 let cidadesConhecidas = CIDADES_SUGERIDAS.slice();
 let mapaConhecidas = new Map();  // chave sem acento -> grafia certa
 const abriuEm = Date.now();
@@ -1235,18 +1253,115 @@ function slug(t){
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 }
 
-// número só com dígitos e sem o 55 do Brasil
+/* ---------- fora do Brasil: países ----------
+   Cidade do Brasil: "Cidade/UF", como sempre. Cidade de outro país: "Cidade/Região/XX", com XX = o código do país
+   (2 letras, ISO: US, AR, FR...) e a região opcional ("Pompano/FL/US", "Paris//FR"). Os nomes dos países vêm do
+   próprio navegador, em português. SIGLAS_PAIS: o que aparece quando não há a bandeira do país. */
+const SIGLAS_PAIS = {US: "EUA", AR: "ARG", PY: "PAR", UY: "URU", FR: "FRA", IT: "ITA", GB: "UK", UA: "UCR", IN: "IND", CN: "CHN", NO: "NOR"};
+const PAISES_FREQUENTES = ["US", "AR", "PY", "UY", "FR", "IT", "GB", "UA", "IN", "CN", "NO"];
+const NAO_PAIS = new Set(["AC", "CP", "DG", "EA", "EU", "EZ", "IC", "QO", "TA", "UN", "XA", "XB", "ZZ"]);
+let nomesDePais = null;
+function nomePais(cc){
+  cc = String(cc == null ? "" : cc).toUpperCase();
+  try{
+    if(!nomesDePais) nomesDePais = new Intl.DisplayNames(["pt-BR"], {type: "region", fallback: "none"});
+    const n = nomesDePais.of(cc);
+    if(n && n !== cc) return n;
+  }catch(e){ /* navegador sem os nomes: fica a sigla */ }
+  return SIGLAS_PAIS[cc] || cc;
+}
+const siglaPais = cc => { cc = String(cc == null ? "" : cc).toUpperCase(); return SIGLAS_PAIS[cc] || cc; };
+// "Pompano/FL/US" -> {cidade: "Pompano", regiao: "FL", pais: "US"}; "Varginha/MG" -> {cidade: "Varginha", regiao: "MG", pais: ""} (Brasil)
+function partesCidade(k){
+  const s = String(k == null ? "" : k).trim();
+  let m = s.match(/^([^\/]+)\/([^\/]*)\/([A-Za-z]{2})$/);
+  if(m){ const cc = m[3].toUpperCase(); return {cidade: m[1].trim(), regiao: m[2].trim(), pais: cc === "BR" ? "" : cc}; }
+  m = s.match(/^([^\/]+)\/([^\/]*)$/);
+  return m ? {cidade: m[1].trim(), regiao: m[2].trim(), pais: ""} : {cidade: s, regiao: "", pais: ""};
+}
+// a cidade sem o país: "Varginha/MG", "Pompano/FL", "Paris"
+function cidadeSemPais(k){ const p = partesCidade(k); return p.pais ? p.cidade + (p.regiao ? "/" + p.regiao : "") : String(k == null ? "" : k).trim(); }
+// para ler num texto: "Varginha/MG", "Pompano/FL (Estados Unidos)"
+function textoCidade(k){ const p = partesCidade(k); return cidadeSemPais(k) + (p.pais ? " (" + nomePais(p.pais) + ")" : ""); }
+// a chave de uma cidade de outro país: ("Pompano Beach", "FL", "us") -> "Pompano Beach/FL/US"
+const chaveCidadeExterior = (cidade, regiao, cc) => String(cidade).replace(/\s+/g, " ").trim() + "/" +
+  String(regiao == null ? "" : regiao).replace(/[\/|]/g, " ").replace(/\s+/g, " ").trim().slice(0, 40) + "/" + String(cc).toUpperCase();
+// os países do mundo com o nome em português, em ordem alfabética: [[código, nome]]
+function paisesDoMundo(){
+  const r = [];
+  for(let a = 65; a <= 90; a++) for(let b = 65; b <= 90; b++){
+    const cc = String.fromCharCode(a, b);
+    if(cc === "BR" || NAO_PAIS.has(cc)) continue;
+    const nome = nomePais(cc);
+    if(nome !== cc && nome !== SIGLAS_PAIS[cc]) r.push([cc, nome]);
+  }
+  if(!r.length) PAISES_FREQUENTES.forEach(cc => r.push([cc, nomePais(cc)]));   // navegador sem a lista: ficam os mais comuns
+  return r.sort((x, y) => x[1].localeCompare(y[1], "pt-BR"));
+}
+// <select> de país: Brasil, os mais comuns e, depois, todos
+function preencherPaises(sel){
+  sel.textContent = "";
+  const opcao = (cc, nome, pai) => { const o = document.createElement("option"); o.value = cc; o.textContent = nome; pai.appendChild(o); };
+  opcao("BR", "Brasil", sel);
+  const g1 = document.createElement("optgroup"), g2 = document.createElement("optgroup");
+  g1.label = "Mais comuns"; g2.label = "Todos os países";
+  PAISES_FREQUENTES.map(cc => [cc, nomePais(cc)]).sort((x, y) => x[1].localeCompare(y[1], "pt-BR")).forEach(([cc, n]) => opcao(cc, n, g1));
+  paisesDoMundo().forEach(([cc, n]) => opcao(cc, n, g2));
+  sel.append(g1, g2);
+  sel.value = "BR";
+}
+
+/* ---------- fora do Brasil: telefone ----------
+   Do Brasil: DDD + número, como sempre. De outro país: "+", o código do país e o número ("+19545550123"); quem digita
+   começa com + (ou 00). No banco, o nome do cadastro de um número de fora é "00" + os dígitos (o "+" não serve ali). */
+const doExterior = n => String(n == null ? "" : n).startsWith("+");
+const foneValido = n => doExterior(n) ? /^\+[1-9]\d{6,14}$/.test(n) : /^\d{10,11}$/.test(String(n == null ? "" : n));
+// quantos dígitos tem o código do país (1: +1, +7; 2: +33, +44, +54...; 3: +351, +595, +598...)
+const tamanhoDDI = d => /^[17]/.test(d) ? 1 : /^(2[07]|3[0-469]|4[013-9]|5[1-8]|6[0-6]|8[1246]|9[0-58])/.test(d) ? 2 : 3;
+function formatarExterior(n){                     // "+19545550123" -> "+1 954 555 0123"
+  const d = String(n == null ? "" : n).replace(/\D/g, ""), k = tamanhoDDI(d);
+  let resto = d.slice(k);
+  const g = [];
+  while(resto.length > 4){ const t = resto.length === 8 ? 4 : 3; g.push(resto.slice(0, t)); resto = resto.slice(t); }
+  if(resto) g.push(resto);
+  return "+" + d.slice(0, k) + (g.length ? " " + g.join(" ") : "");
+}
+const idDoNumero = n => doExterior(n) ? "00" + String(n).slice(1) : String(n == null ? "" : n);
+const numeroDoId = id => /^00[1-9]\d{6,14}$/.test(String(id)) ? "+" + String(id).slice(2) : String(id == null ? "" : id);
+
+/* bandeira pequena do país (bandeiras/xx.svg, no site); sem o arquivo, fica a sigla (EUA, ARG...) */
+const PASTA_BANDEIRAS = "bandeiras/";
+function bandeira(cc){
+  const sigla = siglaPais(cc), nome = nomePais(cc);
+  const img = document.createElement("img");
+  img.className = "bandeira"; img.alt = sigla; img.title = nome;
+  img.width = 15; img.height = 10; img.decoding = "async";
+  img.addEventListener("error", () => {
+    const s = document.createElement("span");
+    s.className = "sigla-pais"; s.textContent = sigla; s.title = nome;
+    img.replaceWith(s);
+  }, {once: true});
+  img.src = PASTA_BANDEIRAS + String(cc).toLowerCase() + ".svg";
+  return img;
+}
+
+// número só com dígitos e sem o 55 do Brasil; de outro país, "+" e os dígitos (+19545550123)
 function nacional(num){
-  const d = String(num == null ? "" : num).replace(/\D/g, "");
+  const s = String(num == null ? "" : num).trim();
+  let d = s.replace(/\D/g, "");
+  const fora = s.startsWith("+") || /^00[1-9]/.test(d);   // de outro país: + (ou 00) e o código do país
+  if(fora && !s.startsWith("+")) d = d.slice(2);
+  if(fora && d && !d.startsWith("55")) return "+" + d;
   return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d;
 }
 function formatarTel(num){
   const d = nacional(num);
+  if(doExterior(d)) return formatarExterior(d);
   if(d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
   if(d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
   return d;
 }
-const ehCelular = n => n.length === 11 && n[2] === "9";
+const ehCelular = n => doExterior(n) || (n.length === 11 && n[2] === "9");   // de outro país: não dá para saber; conta como celular
 
 const emailValido = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -1593,10 +1708,11 @@ function adicionarInstrumentoDigitado(idCampo){
 
 /* ---------- cidades ---------- */
 function desenharSugestoes(){
-  const dl = $("listaCidades");
+  const dl = $("listaCidades"), pais = $("fPais").value || "BR";
   dl.textContent = "";
-  cidadesConhecidas.forEach(n => { const o = document.createElement("option"); o.value = n; dl.appendChild(o); });
-  mapaConhecidas = new Map(cidadesConhecidas.map(n => [norm(n), n]));
+  const lista = pais === "BR" ? cidadesConhecidas : cidadesDeFora.filter(k => partesCidade(k).pais === pais).map(cidadeSemPais);
+  lista.forEach(n => { const o = document.createElement("option"); o.value = n; dl.appendChild(o); });
+  mapaConhecidas = new Map([...cidadesConhecidas, ...cidadesDeFora].map(n => [norm(n), n]));
 }
 
 // se a página estiver no mesmo site da lista, as cidades que a lista já tem viram sugestões (aberta como arquivo, não tenta)
@@ -1606,8 +1722,10 @@ async function carregarCidadesDoSite(){
     const r = await fetch(ARQ_CIDADES, {cache: "no-store"});
     if(!r.ok) return;
     const j = await r.json();
-    const nomes = Object.keys(j || {}).filter(n => { const m = n.match(CIDADE_UF); return m && UFS.includes(m[2]); });
-    if(!nomes.length) return;
+    const todas = Object.keys(j || {});
+    const nomes = todas.filter(n => { const m = n.match(CIDADE_UF); return m && UFS.includes(m[2]); });
+    cidadesDeFora = todas.filter(n => !CIDADE_UF.test(n) && cidadeValida(n));
+    if(!nomes.length && !cidadesDeFora.length) return;
     cidadesConhecidas = [...new Set([...nomes, ...CIDADES_SUGERIDAS])].sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}));
     desenharSugestoes();
   }catch(e){ /* fica a lista que já vem na página */ }
@@ -1626,6 +1744,19 @@ async function carregarAtuacoesDoSite(){
 function lerCidade(){
   const bruto = semControle($("fCidade").value).replace(/\s+/g, " ").trim();
   if(!bruto) return {erro: "Escreva o nome da cidade."};
+  const pais = $("fPais").value || "BR";
+  if(pais !== "BR"){                                   // outro país: "Pompano Beach", "Pompano Beach/FL" ou "Pompano Beach, FL"
+    const m = bruto.match(/^(.+?)\s*[\/,]\s*([^\/,]{1,40})$/);
+    let nome = m ? m[1].trim() : bruto;
+    let regiao = m ? m[2].trim() : semControle($("fRegiao").value).replace(/\s+/g, " ").trim();
+    if(nome.length < 2 || !/^[\p{L}][\p{L}\p{M}'’ .\-]*$/u.test(nome)) return {erro: "Escreva só o nome da cidade, com letras (sem números ou símbolos)."};
+    if(nome.length > MAX_NOME_CIDADE) return {erro: "O nome da cidade está grande demais."};
+    if(regiao && !/^[\p{L}\p{M}\p{N}'’ .\-]{1,40}$/u.test(regiao)) return {erro: "Escreva o estado (ou a região) só com letras, por exemplo FL."};
+    if(nome === nome.toLowerCase() || nome === nome.toUpperCase()) nome = titulo(nome);
+    if(/^[a-z]{2,3}$/i.test(regiao)) regiao = regiao.toUpperCase();
+    const final = chaveCidadeExterior(nome, regiao, pais);
+    return {cidade: mapaConhecidas.get(norm(final)) || final};
+  }
   let nome = bruto, uf = $("fUf").value;
   const comSep = bruto.match(/^(.+?)\s*[\/,\-–]\s*([A-Za-z]{2})$/);
   const semSep = bruto.match(/^(.+?)\s+([A-Za-z]{2})$/);
@@ -1633,7 +1764,7 @@ function lerCidade(){
   if(m){
     const sigla = m[2].toUpperCase();
     if(UFS.includes(sigla)){ nome = m[1].trim(); uf = sigla; }
-    else if(comSep) return {erro: "“" + m[2] + "” não é a sigla de um estado. Exemplo: Franca/SP."};
+    else if(comSep) return {erro: "“" + m[2] + "” não é a sigla de um estado. Exemplo: Franca/SP. Mora fora do Brasil? Escolha o país acima."};
   }
   if(!uf) return {erro: "Escolha o estado (UF) da cidade."};
   if(nome.length < 2 || !/^[\p{L}][\p{L}\p{M}'’ .\-]*$/u.test(nome)) return {erro: "Escreva só o nome da cidade, com letras (sem números ou símbolos)."};
@@ -1649,33 +1780,51 @@ function desenharCidades(){
   cidades.forEach((nome, i) => {
     const b = criar("button", "chip chip-rem");
     b.type = "button";
-    b.setAttribute("aria-label", "Remover " + nome);
-    b.append("📍 " + nome + " ", criar("span", "x", "✕"));
+    b.setAttribute("aria-label", "Remover " + textoCidade(nome));
+    b.append("📍 " + textoCidade(nome) + " ", criar("span", "x", "✕"));
     b.addEventListener("click", () => {
       cidades.splice(i, 1);
       desenharCidades();
-      avisar("msgCidade", nome + " removida.");
+      avisar("msgCidade", textoCidade(nome) + " removida.");
       mudou();
       const prox = $("chipsCidades").children[Math.min(i, cidades.length - 1)];
       (prox || $("fCidade")).focus({preventScroll: true});
     });
     box.appendChild(b);
   });
+  atualizarNotaWhatsFora();
 }
+
+// v10.0: outro país: some a UF e aparece o estado/região (opcional); as sugestões passam a ser as cidades desse país
+function aoTrocarPais(){
+  const fora = ($("fPais").value || "BR") !== "BR";
+  $("fUf").hidden = fora;
+  $("fRegiao").hidden = !fora;
+  $("fCidade").placeholder = fora ? "Ex.: Pompano Beach" : "Ex.: Franca";
+  document.querySelector(".linha-cidade").classList.toggle("fora", fora);
+  desenharSugestoes();
+  atualizarNotaWhatsFora();
+}
+// a dica do WhatsApp de outro país aparece para quem escolheu outro país ou já pôs uma cidade de fora
+function atualizarNotaWhatsFora(){
+  $("notaWhatsFora").hidden = ($("fPais").value || "BR") === "BR" && !cidades.some(k => partesCidade(k).pais);
+}
+$("fPais").addEventListener("change", () => { aoTrocarPais(); avisar("msgCidade", ""); $("fCidade").focus({preventScroll: true}); });
+$("fRegiao").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); adicionarCidade(); } });
 
 function adicionarCidade(){
   const r = lerCidade();
   if(r.erro){ avisar("msgCidade", r.erro, "erro"); return false; }
   const k = norm(r.cidade);
   if(cidades.some(x => norm(x) === k)){
-    avisar("msgCidade", r.cidade + " já está na lista.", "aviso");
+    avisar("msgCidade", textoCidade(r.cidade) + " já está na lista.", "aviso");
     $("fCidade").value = "";
     return true;
   }
   if(cidades.length >= MAX_CIDADES){ avisar("msgCidade", "Dá para adicionar até " + MAX_CIDADES + " cidades.", "erro"); return false; }
   cidades.push(r.cidade);
   $("fCidade").value = "";
-  avisar("msgCidade", r.cidade + " adicionada.");
+  avisar("msgCidade", textoCidade(r.cidade) + " adicionada.");
   limparErro("fCidade");
   desenharCidades();
   mudou();
@@ -2055,9 +2204,10 @@ function coletar(){
   if(!cidades.length) falha("fCidade", "Adicione pelo menos uma cidade onde você mora.");
 
   const whats = nacional($("fWhats").value);
-  const whatsOk = [10, 11].includes(whats.length);
+  const whatsOk = foneValido(whats);
   if(!whats){ if(WHATSAPP_OBRIGATORIO) falha("fWhats", "Informe o seu WhatsApp, com DDD."); }
-  else if(!whatsOk) falha("fWhats", "O WhatsApp precisa ter DDD e número (10 ou 11 dígitos).");
+  else if(!whatsOk) falha("fWhats", doExterior(whats) ? "Número de fora do Brasil: depois do +, o código do país e o número (de 7 a 15 dígitos)."
+    : "O WhatsApp precisa ter DDD e número (10 ou 11 dígitos). De outro país: comece com + e o código do país.");
 
   const ig = instaDoCampo($("fInsta").value);
   if(ig.erro) falha("fInsta", ig.erro);
@@ -2074,7 +2224,7 @@ function coletar(){
     const bruto = String(t.numero || "").trim(), rotulo = rotuloDoTipo(t.tipo, t.outro), contato = limparContatoFone(t.contato);
     if(!bruto && !contato && !(t.tipo === TIPO_OUTRO && rotulo)) return;   // linha vazia (o tipo já vem marcado e não conta)
     const d = nacional(bruto);
-    if(![10, 11].includes(d.length)){ falha("tel-" + i + "-numero", "Outro telefone " + (i + 1) + ": precisa ter DDD e número (10 ou 11 dígitos)."); return; }
+    if(!foneValido(d)){ falha("tel-" + i + "-numero", "Outro telefone " + (i + 1) + ": precisa ter DDD e número (10 ou 11 dígitos); de outro país, + e o código do país."); return; }
     if(d === whats || tels.some(x => numeroDe(x) === d)) return;
     const o = {numero: d};
     if(rotulo) o.rotulo = rotulo;
@@ -2259,7 +2409,13 @@ function montarCartao(c, fotoModo){
     nome.appendChild(criar("span", "selo " + (freelance ? classeDisponibilidade(c.abcDisponibilidade) : "selo-abc"), "ABC"));
   }
   if((c.selos || []).includes("ENM")) nome.appendChild(criar("span", "selo selo-enm", "ENM"));
-  const local = criar("div", "line" + (c.cidades.length ? "" : " vazio"), "📍 " + (c.cidades.length ? c.cidades.join(" e ") : "Suas cidades"));
+  const local = criar("div", "line" + (c.cidades.length ? "" : " vazio"), c.cidades.length ? "📍 " : "📍 Suas cidades");
+  c.cidades.forEach((k, i) => {                    // de outro país: "Pompano/FL" e a bandeira, como na lista
+    if(i) local.append(" e ");
+    const p = partesCidade(k);
+    local.append(cidadeSemPais(k));
+    if(p.pais){ local.append(" "); local.appendChild(bandeira(p.pais)); }
+  });
   corpo.append(nome, local);
   if(c.tipoArtista){ const tipo = criar("div", "tags"); tipo.appendChild(criar("span", "tag", c.tipoArtista)); corpo.appendChild(tipo); }
   if(c.instrumentos.length){
@@ -2423,8 +2579,7 @@ function restaurarRascunho(){
     });
     cidades = [];
     (Array.isArray(e.cidades) ? e.cidades : []).forEach(x => {
-      const m = (typeof x === "string" ? x : "").match(CIDADE_UF);
-      if(m && UFS.includes(m[2]) && cidades.length < MAX_CIDADES && !cidades.some(y => norm(y) === norm(x))) cidades.push(x);
+      if(cidadeValida(x) && cidades.length < MAX_CIDADES && !cidades.some(y => norm(y) === norm(x))) cidades.push(x);
     });
     $("fIfc").checked = !!e.ifc;
     funcoesDigitadas = new Set((Array.isArray(e.funcoes) ? e.funcoes : []).filter(x => typeof x === "string").slice(0, 8));
@@ -2511,6 +2666,11 @@ function dicaServicos(){
 function dicaWhats(terminou){
   const d = nacional($("fWhats").value);
   if(!d){ avisar("dicaWhats", ""); return; }
+  if(doExterior(d)){
+    if(foneValido(d)) avisar("dicaWhats", "Número de fora do Brasil. Fica assim na lista: " + formatarTel(d));
+    else avisar("dicaWhats", "Número de fora do Brasil: depois do +, o código do país e o número (de 7 a 15 dígitos no total).", terminou ? "erro" : "");
+    return;
+  }
   if(d.length === 11 && d[2] === "9") avisar("dicaWhats", "Fica assim na lista: " + formatarTel(d));
   else if(d.length === 11) avisar("dicaWhats", "Celular tem o 9 depois do DDD. Confira: " + formatarTel(d), "aviso");
   else if(d.length === 10) avisar("dicaWhats", "Só 10 dígitos: falta o 9 depois do DDD? " + formatarTel(d), "aviso");
@@ -2530,14 +2690,16 @@ function dicaInsta(terminou){
 //  - do banco (Firestore): o cadastro que a pessoa enviou e que ainda espera a conferência do organizador;
 //  - da lista pública (Lista_Contatos_Musicos_contatos.json): o cadastro já aprovado e publicado.
 // Se existem os dois, vale o do banco (é o mais novo). O que chega de fora é tratado como texto qualquer: passa pelas mesmas conferências de quando é digitado.
-const dig = v => /^\d{10,11}$/.test(String(v == null ? "" : v)) ? String(v) : null;
+const dig = v => { const s = String(v == null ? "" : v); return /^\d{10,11}$/.test(s) || /^\+[1-9]\d{6,14}$/.test(s) ? s : /^00[1-9]\d{6,14}$/.test(s) ? numeroDoId(s) : null; };   // de outro país: "+..." (o nome no banco, "00...", vira "+...")
 const urlFoto = foto => {                                  // "fulano.jpg" -> "fotos/fulano.jpg" (como a lista faz)
   foto = String(foto == null ? "" : foto).trim();
   if(!foto) return "";
   return /^https?:\/\//i.test(foto) ? foto : PASTA_FOTOS + encodeURI(foto);
 };
 const fotoListaValida = s => (typeof s === "string" && /^(?:fotos\/[^\s"<>\\]{1,300}|https?:\/\/[^\s"<>\\]{1,400})$/.test(s)) ? s : "";
-const whatsDe = c => AJ.telefonesDe(c).find(t => t.length === 10 || t.length === 11) || null;   // o WhatsApp do contato (ou o 1º telefone válido)
+// o WhatsApp do contato (ou o 1º telefone válido); de outro país, "+..."
+const whatsDe = c => [c && c.whatsapp, ...(c && Array.isArray(c.telefones) ? c.telefones : []).map(t => typeof t === "string" ? t : (t && t.numero))]
+  .map(x => nacional(x)).find(foneValido) || null;
 
 // valor "tipado" do Firestore -> valor comum do JavaScript (o contrário de paraValor)
 function deValor(v){
@@ -2560,7 +2722,7 @@ function deCampos(f){
 async function lerCadastro(tel){
   if(DEMO) return {estado: "pulado"};
   const url = API_FIRESTORE + "/v1/projects/" + encodeURIComponent(FIREBASE.projectId) + "/databases/(default)/documents/" + COLECAO +
-    "/" + encodeURIComponent(tel) + "?key=" + encodeURIComponent(FIREBASE.apiKey);
+    "/" + encodeURIComponent(idDoNumero(tel)) + "?key=" + encodeURIComponent(FIREBASE.apiKey);
   const controle = new AbortController();
   const relogio = setTimeout(() => controle.abort(), TEMPO_BUSCA_MS);
   try{
@@ -2659,8 +2821,7 @@ function contatoDeFora(b){
   c.abcDisponibilidade = ["sim","raramente","nao"].includes(b.abcDisponibilidade) ? b.abcDisponibilidade : "nao";
   c.cidades = [];
   lista(b.cidades).forEach(x => {
-    const m = texto(x).match(CIDADE_UF);
-    if(m && UFS.includes(m[2]) && c.cidades.length < MAX_CIDADES && !c.cidades.some(y => norm(y) === norm(x))) c.cidades.push(x);
+    if(cidadeValida(texto(x)) && c.cidades.length < MAX_CIDADES && !c.cidades.some(y => norm(y) === norm(x))) c.cidades.push(x);
   });
   c.instrumentos = [];
   lista(b.instrumentos).forEach(x => {
@@ -2675,7 +2836,7 @@ function contatoDeFora(b){
   const ig = instaDoCampo(texto(b.instagram)); if(ig.valor) c.instagram = ig.valor;
   const yt = youtubeDoCampo(texto(b.youtube)); if(yt.valor) c.youtube = yt.valor;
   const em = semControle(texto(b.email)).trim(); if(em && em.length <= MAX_EMAIL && emailValido(em)) c.email = em;
-  const w = nacional(texto(b.whatsapp)); if(w.length === 10 || w.length === 11) c.whatsapp = w;
+  const w = nacional(texto(b.whatsapp)); if(foneValido(w)) c.whatsapp = w;
   if(c.whatsapp){
     const tw = limparRotulo(texto(b.tipoWhatsapp)); if(tw) c.tipoWhatsapp = tw;
     const cw = limparContatoFone(texto(b.contatoWhatsapp)); if(cw) c.contatoWhatsapp = cw;
@@ -2684,7 +2845,7 @@ function contatoDeFora(b){
   const tels = [];
   lista(b.telefones).forEach(t => {
     const numero = nacional(typeof t === "string" ? t : texto(t && t.numero));
-    if((numero.length !== 10 && numero.length !== 11) || numero === c.whatsapp || tels.length >= MAX_TELEFONES) return;
+    if(!foneValido(numero) || numero === c.whatsapp || tels.length >= MAX_TELEFONES) return;
     if(tels.some(x => (typeof x === "string" ? x : x.numero) === numero)) return;
     const rotulo = t && typeof t === "object" ? limparRotulo(texto(t.rotulo)) : "";
     const contato = t && typeof t === "object" ? limparContatoFone(texto(t.contato)) : "";
@@ -2820,9 +2981,9 @@ async function buscarEEditar(){
   if(campo.value.trim().startsWith("@")) return buscarEEditarInstagram();   // com @ na frente: é o Instagram
   const tel = nacional(campo.value);
   $("buscaAcoes").hidden = true;
-  if(tel.length !== 10 && tel.length !== 11){
+  if(!foneValido(tel)){
     campo.setAttribute("aria-invalid", "true");
-    avisar("msgBusca", "Digite o WhatsApp com DDD (10 ou 11 números) ou o Instagram com @ na frente (ex.: @seuusuario).", "erro");
+    avisar("msgBusca", "Digite o WhatsApp com DDD (10 ou 11 números; de outro país, + e o código do país) ou o Instagram com @ na frente (ex.: @seuusuario).", "erro");
     campo.focus();
     return;
   }
@@ -2855,11 +3016,11 @@ $("fBusca").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventD
 $("fBusca").addEventListener("input", () => { $("fBusca").removeAttribute("aria-invalid"); $("buscaAcoes").hidden = true; avisar("msgBusca", ""); });
 $("fBusca").addEventListener("blur", () => {
   const d = nacional($("fBusca").value);
-  if(!$("fBusca").value.trim().startsWith("@") && (d.length === 10 || d.length === 11)) $("fBusca").value = formatarTel(d);
+  if(!$("fBusca").value.trim().startsWith("@") && foneValido(d)) $("fBusca").value = formatarTel(d);
 });
 $("novoComNumero").addEventListener("click", () => {
   const d = nacional($("fBusca").value);
-  if(d.length === 10 || d.length === 11){ $("fWhats").value = formatarTel(d); dicaWhats(false); mudou(); conferirNumero(); }
+  if(foneValido(d)){ $("fWhats").value = formatarTel(d); dicaWhats(false); mudou(); conferirNumero(); }
   $("buscaAcoes").hidden = true;
   avisar("msgBusca", "");
   rolarPara($("fNome"), "center");
@@ -2955,11 +3116,11 @@ $("abrirPeloInsta").addEventListener("click", async () => {
 // o que a pessoa preencheu no cadastro rápido (sem enviar) vem para cá: WhatsApp, Instagram e cidade
 function preencherDoRapido(whats, insta, cidade){
   const w = nacional(whats || ""), ig = instaDoCampo(insta || "").valor || "";
-  const cid = String(cidade || "").trim(), m = cid.match(CIDADE_UF);
-  const temCidade = !!(m && UFS.includes(m[2]));
-  if(![10, 11].includes(w.length) && !ig && !temCidade) return;
+  const cid = String(cidade || "").trim();
+  const temCidade = cidadeValida(cid);
+  if(!foneValido(w) && !ig && !temCidade) return;
   if(!formularioVazio() && !confirm("Trocar o WhatsApp, o Instagram e a cidade daqui pelo que você preencheu no cadastro rápido?")) return;
-  if([10, 11].includes(w.length)){ $("fWhats").value = formatarTel(w); dicaWhats(true); conferirNumero(); }
+  if(foneValido(w)){ $("fWhats").value = formatarTel(w); dicaWhats(true); conferirNumero(); }
   if(ig){ $("fInsta").value = "@" + ig; dicaInsta(true); }
   if(temCidade && !cidades.some(x => norm(x) === norm(cid)) && cidades.length < MAX_CIDADES){ cidades.push(cid); desenharCidades(); }
   $("notaDoRapido").hidden = false;
@@ -3010,7 +3171,7 @@ async function conferirNumero(){
   const minha = ++conferenciaN;
   const d = nacional($("fWhats").value);
   esconderAvisoNumero();
-  if(d.length !== 10 && d.length !== 11) return;
+  if(!foneValido(d)) return;
   const meus = edit ? [edit.publicado, edit.anterior, edit.docId].filter(Boolean) : [];
   if(edit && meus.includes(d)) return;                             // é o número do cadastro que está sendo editado
   const original = edit ? (edit.publicado || edit.docId) : null;
@@ -3028,7 +3189,7 @@ async function conferirNumero(){
 }
 $("carregarExistente").addEventListener("click", async () => {
   const tel = nacional($("fWhats").value);
-  if(tel.length !== 10 && tel.length !== 11) return;
+  if(!foneValido(tel)) return;
   const b = $("carregarExistente");
   b.disabled = true;
   let res = null;
@@ -3077,7 +3238,7 @@ function montarPayload(c, fotoUrl, segundos){
     formato: "cadastro-musico",
     versao: 3,
     status: "pendente",
-    id: c.whatsapp || novoId(),
+    id: c.whatsapp ? idDoNumero(c.whatsapp) : novoId(),   // de outro país: "00" + os dígitos
     enviadoEm: new Date().toISOString(),
     tipo: edit && (edit.publicado || edit.instagram) ? "edicao" : "novo",
     contato: c,
@@ -3301,7 +3462,7 @@ function zerarTudo(){
   previaFoneAberto = false; previaPerfilAberto = false;
   funcoesDigitadas = new Set(); tipoOutroAberto = false;
   ["fNome", "fCidade", "fOutroInstr", "fOutraFuncao", "fTipoOutro", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
-  $("fUf").value = "";
+  $("fUf").value = ""; $("fRegiao").value = ""; $("fPais").value = "BR"; aoTrocarPais();
   $("fIfc").checked = false;
   $("fReferencia").value = ""; $("fCategoria").value = "musico"; $("fTipoArtista").value = ""; desenharTiposArtista();
   abcDisponibilidade = "nao"; ifcDisponibilidade = ""; freelanceABC = "nao"; instrGuardadosABC = []; avisar("msgFreelanceABC", "");
@@ -3451,7 +3612,7 @@ $("fTipoWhats").addEventListener("change", () => {
 $("fOcultarWhats").addEventListener("change", mudou);
 $("fWhats").addEventListener("blur", () => {
   const d = nacional($("fWhats").value);
-  if([10, 11].includes(d.length)) $("fWhats").value = formatarTel(d);
+  if(foneValido(d)) $("fWhats").value = formatarTel(d);
   dicaWhats(true);
   mudou();
   conferirNumero();                                          // o número já tem cadastro?
@@ -3551,6 +3712,7 @@ function iniciar(){
   $("avisoDemo").hidden = !DEMO;
   $("textoAutoriza").textContent = TEXTO_AUTORIZACAO;
   UFS.forEach(uf => { const o = document.createElement("option"); o.value = uf; o.textContent = uf; $("fUf").appendChild(o); });
+  preencherPaises($("fPais"));
   desenharSugestoes();
   desenharTiposArtista();
   desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks(); desenharVideos();
@@ -3590,7 +3752,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v9.1.html
+ Arquivo: Cadastro_Musicos_v10.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3598,11 +3760,28 @@ iniciar();
           Lista_Contatos_Musicos_contatos.json (sem o campo "foto")
           e a foto à parte, em base64. Só o dono do projeto (com
           senha, pelo painel) lê, aprova ou apaga: as regras estão
-          em Firestore_Regras_Cadastros_v7.rules. Com o bloco
+          em Firestore_Regras_Cadastros_v9.rules. Com o bloco
           FIREBASE vazio (ou ?demo=1 no endereço) a página não envia
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v10.0 — 2026-11-24
+  - Onde você mora: campo "País" (Brasil já vem escolhido; depois os
+    mais comuns e todos os países, com o nome em português). Em outro
+    país, a UF dá lugar a "Estado (opcional)" e a cidade fica guardada
+    como "Cidade/Região/XX" (XX = código do país, ex.:
+    "Pompano Beach/FL/US"). As sugestões passam a ser as cidades
+    daquele país que a lista já tem. A prévia mostra a cidade com a
+    bandeira pequena (bandeiras/xx.svg) ou a sigla do país.
+  - WhatsApp e outros telefones de outro país: começando com + (ou 00)
+    e o código do país (ex.: +1 954 555 0123). Fica guardado como
+    "+19545550123"; o cadastro no banco tem o nome "0019545550123" (o +
+    não serve ali). A busca "Já tem cadastro?" também acha por esse
+    número. Os números do Brasil continuam como antes.
+  - Precisa das regras Firestore_Regras_Cadastros_v9.rules (publique
+    antes desta página).
+
+----------------------------------------------------------------
 v9.1 — 2026-11-24
   - Vindo do cadastro rápido v1.2: "Fazer o cadastro completo" (sem
     enviar o rápido) traz o WhatsApp, o Instagram e a cidade que a
