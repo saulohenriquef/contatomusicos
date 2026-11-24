@@ -481,5 +481,16 @@
     "abcDisponibilidade": "nao",
     "instagram": "cantorthomassilva",
     "whatsapp": ""
+  },
+  {
+    "nome": "Guilherme Borges",
+    "categoria": "artista",
+    "foto": "guilherme-borges.jpg",
+    "cidades": ["Cássia/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "guilhermeborges.gb",
+    "whatsapp": ""
   }
 ]
