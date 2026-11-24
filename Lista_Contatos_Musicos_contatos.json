@@ -609,5 +609,19 @@
     "selos": ["ENM"],
     "instagram": "jpsom.luz.oficial",
     "whatsapp": ""
+  },
+  {
+    "nome": "Bruno Rezende Cantor",
+    "categoria": "artista",
+    "tipoArtista": "Cantor solo",
+    "foto": "bruno-rezende-cantor.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "brunorezendecantor",
+    "email": "brunorsgra@hotmail.com",
+    "whatsapp": "35984692225",
+    "tipoWhatsapp": "Pessoal"
   }
 ]
