@@ -216,6 +216,9 @@
   .cadastre .btn-cadastre:active{filter:brightness(.92)}
   .cadastre .btn-cadastre:focus-visible{outline:3px solid var(--text); outline-offset:2px}
   @media (prefers-color-scheme: dark){ .cadastre .btn-cadastre{color:#14120f} }
+  .cadastre .botoes-cadastre{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
+  .cadastre .btn-cadastre small{font-weight:500; opacity:.85; margin-left:4px}
+  .cadastre .btn-cadastre.secundario{background:transparent; color:var(--accent); border:2px solid var(--accent)}
 
   /* ---------- v12: telefone escondido atrás do botão vermelho ---------- */
   .btn.tel{
@@ -545,12 +548,15 @@
     <div class="cadastre">
       <strong>Está ligado à música e ainda não está na lista?</strong>
       <span>Músicos, artistas, bandas, cantores e empresas podem se cadastrar. O cadastro é conferido antes de entrar.</span>
-      <a class="btn-cadastre" id="linkCadastro" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html" rel="noopener">Quero me cadastrar</a>
+      <div class="botoes-cadastre">
+        <a class="btn-cadastre" id="linkCadastroRapido" href="https://saulohenriquef.github.io/contatomusicos/cadastro-rapido.html" rel="noopener">⚡ Cadastro rápido <small>1 minuto</small></a>
+        <a class="btn-cadastre secundario" id="linkCadastro" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html" rel="noopener">📝 Cadastro completo</a>
+      </div>
       <span class="editar">Já tem cadastro? <a id="linkEditar" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html#editar" rel="noopener">Editar meu cadastro</a></span>
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v16
+    Lista de Contatos de Músicos · v16.2
   </footer>
 </div>
 
@@ -600,16 +606,22 @@ const AJ = (() => {
   /* ---------- nome: Saulo Henrique de Tarso ---------- */
   const PREPOSICOES = new Set(["de", "da", "do", "das", "dos", "e"]);
   const SIGLAS = new Set(["dj", "mc", "ii", "iii", "iv"]);
+  // pré-formatação do nome que CHEGA de um cadastro (página de cadastro, painel ao receber). Não é regra da lista: o nome que
+  // você escreve no painel fica como está. Se a pessoa não escreveu tudo em MAIÚSCULAS, a palavra toda em maiúsculas sem vogal
+  // (ou de 2 letras) é sigla e fica como está: Raphael WQ, Banda MPB.
   function formatarNome(nome){
     const t = limpo(nome);
     if(!t) return "";
-    return t.split(" ").map((w, i) => {
+    const palavras = t.split(" ");
+    const misturado = palavras.some(w => w !== alto(w));
+    return palavras.map((w, i) => {
       const b = baixo(w), a = alto(w);
       if(b === a) return w;                                       // número ou símbolo
       if(i > 0 && PREPOSICOES.has(b)) return b;                   // de, da, do, das, dos, e: minúsculas
       const soBaixa = w === b, soAlta = w === a;
       if(!soBaixa && !soAlta) return w;                           // já tem maiúscula e minúscula (Silva, McDonald, Zé): respeita
       if(SIGLAS.has(b)) return a;                                 // DJ, MC, II, III, IV
+      if(soAlta && misturado && ([...w].length <= 2 || !/[aeiouy]/.test(b.normalize("NFD").replace(/[\u0300-\u036f]/g, "")))) return w;   // sigla: WQ, MPB
       return b.replace(/(^|[-'’.(])(\p{L})/gu, (m, ant, letra) => ant + alto(letra));   // Primeira Letra Maiúscula (também depois de - ' . ( )
     }).join(" ");
   }
@@ -902,7 +914,7 @@ const AJ = (() => {
   /* ---------- contato inteiro: aplica as regras acima, sem mexer nos outros campos ---------- */
   function limparContato(c){
     const r = {...c};
-    if("nome" in r) r.nome = formatarNome(r.nome);
+    if("nome" in r) r.nome = limpo(r.nome);                       // o nome fica como está (sem arrumar maiúsculas): Raphael WQ
     if(Array.isArray(r.instrumentos)) r.instrumentos = instrumentos(r.instrumentos);
     const col = (k, valor, vazio) => { if(vazio) delete r[k]; else r[k] = valor; };
     if("hashtags" in r){ const v = hashtags(r.hashtags); col("hashtags", v, !v.length); }
@@ -2067,7 +2079,7 @@ async function iniciar(){
         ...(categoria === "artista" ? ["ABC"] : []), ...(categoria === "empresa" ? ["ENM"] : [])])];
       return {
       ...c,
-      nome: AJ.formatarNome(bruto),
+      nome: bruto.replace(/\s+/g, " ").trim(),       // como está no contatos.json (sem arrumar maiúsculas: Raphael WQ)
       referencia: String(c.referencia || ""),
       categoria, tipoArtista: String(c.tipoArtista || ""),
       ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : (categoria === "musico" && selos.includes("IFC") ? "sim" : ""),
@@ -2105,7 +2117,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v16.html
+ Arquivo: Lista_Contatos_Musicos_v16.2.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2614,6 +2626,19 @@ v16 — 2026-11-23
     ?naoContar=1 no fim do endereço, em cada aparelho (?contar=1 volta).
   - Precisa das regras Firestore_Regras_Cadastros_v6.rules.
   - Não mudou: cartões, telefones, filtros, busca e selos.
+----------------------------------------------------------------
+v16.1 — 2026-11-24
+  - No rodapé, "Quero me cadastrar" virou dois botões: "⚡ Cadastro
+    rápido (1 minuto)" (cadastro-rapido.html) e "📝 Cadastro completo"
+    (cadastro.html). "Editar meu cadastro" continua igual.
+----------------------------------------------------------------
+v16.2 — 2026-11-24
+  - O nome aparece exatamente como está no contatos.json: a lista não
+    arruma mais as maiúsculas (antes "Raphael WQ" virava "Raphael Wq").
+    A pré-formatação fica só para o que chega de cadastro.
+  - Bloco compartilhado (AJ): formatarNome respeita siglas quando a
+    pessoa não escreveu tudo em maiúsculas (palavra toda em maiúsculas
+    sem vogal, ou de 2 letras: WQ, MPB); limparContato não mexe no nome.
 
 ================================================================
 -->
