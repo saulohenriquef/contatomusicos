@@ -469,6 +469,11 @@
       <label class="campo" for="fNome">Seu nome, nome artístico ou nome da empresa <b aria-hidden="true">*</b></label>
       <input id="fNome" class="entrada" type="text" maxlength="80" autocomplete="name" placeholder="Ex.: Fulano de Tal" aria-describedby="dicaNome">
       <p id="dicaNome" class="dica" aria-live="polite"></p>
+      <div id="avisoNome" class="caixa-aviso" role="status" hidden>
+        <p id="textoAvisoNome"></p>
+        <div id="botoesNome" class="acoes" style="margin-top:6px"></div>
+        <p id="difAvisoNome" style="margin:8px 0 0"></p>
+      </div>
       <label class="campo" for="fReferencia">Referência ao lado do nome <span>(opcional)</span></label>
       <input id="fReferencia" class="entrada" type="text" maxlength="60" autocomplete="off" placeholder="Ex.: Banda Tequila ou Estruturas para Iluminação">
       <label class="campo" for="fCategoria">Onde quer aparecer na lista?</label>
@@ -562,8 +567,12 @@
     <section class="passo" aria-labelledby="t2">
       <h2 id="t2">Onde você mora</h2>
 
-      <label class="campo" for="fPais">País</label>
-      <select id="fPais" class="entrada"><option value="BR">Brasil</option></select>
+      <div class="acoes" style="margin-top:6px"><button id="usarLocal" class="btn" type="button">📍 Usar minha localização</button></div>
+      <div id="confirmaLocal" class="caixa-aviso" role="status" hidden>
+        <p id="textoLocal" style="margin:0 0 8px"></p>
+        <button id="localSim" class="btn pequeno" type="button">Sim, é essa</button>
+        <button id="localNao" class="btn pequeno" type="button">Não, é outra</button>
+      </div>
       <label class="campo" for="fCidade">Cidade(s) onde você mora <b aria-hidden="true">*</b></label>
       <div class="linha-cidade">
         <input id="fCidade" class="entrada" type="text" list="listaCidades" maxlength="70" autocomplete="off" placeholder="Ex.: Franca" aria-describedby="msgCidade">
@@ -571,9 +580,14 @@
         <input id="fRegiao" class="entrada" type="text" maxlength="40" autocomplete="off" placeholder="Estado (opcional)" aria-label="Estado ou região (opcional)" hidden>
         <button id="addCidade" class="btn" type="button">Adicionar</button>
       </div>
+      <label class="marcar" for="fFora" style="margin-top:6px"><input id="fFora" type="checkbox"><span>Moro fora do Brasil</span></label>
+      <div id="boxPais" hidden>
+        <label class="campo" for="fPais" style="margin-top:2px">País</label>
+        <select id="fPais" class="entrada"><option value="BR">Brasil</option></select>
+      </div>
       <datalist id="listaCidades"></datalist>
       <div id="chipsCidades" class="chips"></div>
-      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se mora em mais de uma cidade (trabalha numa e mora em outra, tem casa de praia…), adicione todas (até 5). Mora fora do Brasil? Escolha o país acima.</p>
+      <p class="dica">Escolha a cidade e o estado e toque em Adicionar. Se mora em mais de uma cidade (trabalha numa e mora em outra, tem casa de praia…), adicione todas (até 5). A localização serve só para achar a cidade: ela não fica guardada.</p>
       <p id="msgCidade" class="dica" aria-live="polite"></p>
     </section>
 
@@ -747,7 +761,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v10.0
+    Cadastro de Músicos · Lista de Contatos de Músicos · v10.2
   </footer>
 </div>
 
@@ -1106,7 +1120,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v10.0";
+const VERSAO = "v10.2";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -1167,6 +1181,7 @@ let cidades = [];                // ["Franca/SP"]
 let telefones = [];              // [{tipo, outro, numero, contato}]
 let links = [];                  // [{rotulo, url}]
 let videos = [];                 // [{url}] links de vídeo (YouTube ou Instagram)
+let conferenciaNome = 0, relogioNome = 0;   // v10.2: a conferência do nome igual ao de alguém da lista
 let edit = null;                 // null = cadastro novo; senão a edição em andamento: {fonte, nome, publicado, anterior, docId, instagram, instaOriginal}
                                  //   publicado = WhatsApp do contato que já está na lista; docId = nome do documento carregado do banco;
                                  //   anterior = o "telefoneAnterior" que esse documento já tinha
@@ -1722,6 +1737,7 @@ async function carregarCidadesDoSite(){
     const r = await fetch(ARQ_CIDADES, {cache: "no-store"});
     if(!r.ok) return;
     const j = await r.json();
+    if(j && typeof j === "object" && !Array.isArray(j)) coordsCidades = j;   // para achar a cidade pela localização
     const todas = Object.keys(j || {});
     const nomes = todas.filter(n => { const m = n.match(CIDADE_UF); return m && UFS.includes(m[2]); });
     cidadesDeFora = todas.filter(n => !CIDADE_UF.test(n) && cidadeValida(n));
@@ -1744,7 +1760,8 @@ async function carregarAtuacoesDoSite(){
 function lerCidade(){
   const bruto = semControle($("fCidade").value).replace(/\s+/g, " ").trim();
   if(!bruto) return {erro: "Escreva o nome da cidade."};
-  const pais = $("fPais").value || "BR";
+  const pais = $("fFora").checked ? $("fPais").value : "BR";
+  if(!pais) return {erro: "Escolha o país (ou desmarque “Moro fora do Brasil”)."};
   if(pais !== "BR"){                                   // outro país: "Pompano Beach", "Pompano Beach/FL" ou "Pompano Beach, FL"
     const m = bruto.match(/^(.+?)\s*[\/,]\s*([^\/,]{1,40})$/);
     let nome = m ? m[1].trim() : bruto;
@@ -1764,7 +1781,7 @@ function lerCidade(){
   if(m){
     const sigla = m[2].toUpperCase();
     if(UFS.includes(sigla)){ nome = m[1].trim(); uf = sigla; }
-    else if(comSep) return {erro: "“" + m[2] + "” não é a sigla de um estado. Exemplo: Franca/SP. Mora fora do Brasil? Escolha o país acima."};
+    else if(comSep) return {erro: "“" + m[2] + "” não é a sigla de um estado. Exemplo: Franca/SP. Mora fora do Brasil? Marque “Moro fora do Brasil”."};
   }
   if(!uf) return {erro: "Escolha o estado (UF) da cidade."};
   if(nome.length < 2 || !/^[\p{L}][\p{L}\p{M}'’ .\-]*$/u.test(nome)) return {erro: "Escreva só o nome da cidade, com letras (sem números ou símbolos)."};
@@ -1807,10 +1824,105 @@ function aoTrocarPais(){
 }
 // a dica do WhatsApp de outro país aparece para quem escolheu outro país ou já pôs uma cidade de fora
 function atualizarNotaWhatsFora(){
-  $("notaWhatsFora").hidden = ($("fPais").value || "BR") === "BR" && !cidades.some(k => partesCidade(k).pais);
+  $("notaWhatsFora").hidden = !$("fFora").checked && !cidades.some(k => partesCidade(k).pais);
 }
 $("fPais").addEventListener("change", () => { aoTrocarPais(); avisar("msgCidade", ""); $("fCidade").focus({preventScroll: true}); });
 $("fRegiao").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); adicionarCidade(); } });
+
+// v10.1: "Moro fora do Brasil" começa desmarcado: sem marcar, a cidade é do Brasil (Cidade + UF), como sempre
+$("fFora").addEventListener("change", () => {
+  const fora = $("fFora").checked;
+  $("boxPais").hidden = !fora;
+  $("fPais").value = fora ? "" : "BR";
+  aoTrocarPais();
+  avisar("msgCidade", "");
+  (fora ? $("fPais") : $("fCidade")).focus({preventScroll: true});
+});
+
+/* ---------- v10.1: a cidade pela localização (como no cadastro rápido) ----------
+   Primeiro a cidade da lista mais perto (até RAIO_CIDADE_KM); longe delas, pergunta ao OpenStreetMap (posição
+   arredondada, ~1 km). A pessoa confirma ("Sim, é essa") e a cidade entra na lista dela. Nada fica guardado. */
+const RAIO_CIDADE_KM = 25;
+let coordsCidades = {};          // "Cidade/UF" -> {lat, lon} (do cidades.json do site)
+let cidadeDaLocal = "";
+function distanciaKm(lat1, lon1, lat2, lon2){
+  const r = x => x * Math.PI / 180, dLat = r(lat2 - lat1), dLon = r(lon2 - lon1);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+function cidadeMaisPerto(lat, lon){
+  let melhor = "", menor = Infinity;
+  Object.keys(coordsCidades).forEach(k => {
+    const p = coordsCidades[k];
+    if(!p || typeof p.lat !== "number" || typeof p.lon !== "number" || !cidadeValida(k)) return;
+    const d = distanciaKm(lat, lon, p.lat, p.lon);
+    if(d < menor){ menor = d; melhor = k; }
+  });
+  return menor <= RAIO_CIDADE_KM ? melhor : "";
+}
+async function cidadePeloMapa(lat, lon){
+  const controle = new AbortController();
+  const relogio = setTimeout(() => controle.abort(), TEMPO_BUSCA_MS);
+  try{
+    const r = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=pt-BR&lat=" + lat.toFixed(2) + "&lon=" + lon.toFixed(2),
+      {cache: "no-store", signal: controle.signal});
+    if(!r.ok) return "";
+    const a = ((await r.json()) || {}).address || {};
+    const iso = String(a["ISO3166-2-lvl4"] || ""), cc = String(a.country_code || "").toUpperCase();
+    const nome = String(a.city || a.town || a.village || a.municipality || "").trim();
+    if(!nome) return "";
+    let k = "";
+    if(cc === "BR" || iso.startsWith("BR-")){ if(iso.startsWith("BR-")) k = nome + "/" + iso.slice(3); }
+    else if(/^[A-Z]{2}$/.test(cc)) k = chaveCidadeExterior(nome, iso.startsWith(cc + "-") ? iso.slice(cc.length + 1) : "", cc);
+    if(!k || !cidadeValida(k)) return "";
+    return mapaConhecidas.get(norm(k)) || k;
+  }finally{
+    clearTimeout(relogio);
+  }
+}
+const ROTULO_LOCAL = "📍 Usar minha localização";
+$("usarLocal").addEventListener("click", () => {
+  const b = $("usarLocal");
+  if(!navigator.geolocation){ avisar("msgCidade", "Este aparelho não informa a localização. Digite a cidade.", "aviso"); $("fCidade").focus(); return; }
+  b.disabled = true; b.textContent = "📍 Procurando a sua cidade…";
+  avisar("msgCidade", "O aparelho pode pedir permissão para usar a localização.");
+  const fim = () => { b.disabled = false; b.textContent = ROTULO_LOCAL; };
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const {latitude, longitude} = pos.coords;
+    let k = cidadeMaisPerto(latitude, longitude);
+    if(!k){ try{ k = await cidadePeloMapa(latitude, longitude); }catch(e){ k = ""; } }
+    fim();
+    if(!k){ avisar("msgCidade", "Não consegui descobrir a cidade. Digite abaixo.", "aviso"); $("fCidade").focus(); return; }
+    cidadeDaLocal = k;
+    $("textoLocal").textContent = "📍 Você está em " + textoCidade(k) + ". É a sua cidade?";
+    $("confirmaLocal").hidden = false;
+    avisar("msgCidade", "");
+    $("localSim").focus();
+  }, err => {
+    fim();
+    avisar("msgCidade", err && err.code === 1 ? "Sem permissão para a localização. Tudo bem: digite a cidade abaixo." : "Não consegui a localização agora. Digite a cidade abaixo.", "aviso");
+    $("fCidade").focus();
+  }, {enableHighAccuracy: false, timeout: TEMPO_BUSCA_MS, maximumAge: 600000});
+});
+$("localSim").addEventListener("click", () => {
+  const k = cidadeDaLocal;
+  $("confirmaLocal").hidden = true; cidadeDaLocal = "";
+  if(!k) return;
+  const p = partesCidade(k);
+  if(p.pais){ $("fFora").checked = true; $("boxPais").hidden = false; $("fPais").value = p.pais; aoTrocarPais(); }   // fora do Brasil: já marca
+  if(cidades.some(x => norm(x) === norm(k))){ avisar("msgCidade", textoCidade(k) + " já está na lista.", "aviso"); return; }
+  if(cidades.length >= MAX_CIDADES){ avisar("msgCidade", "Dá para adicionar até " + MAX_CIDADES + " cidades.", "erro"); return; }
+  cidades.push(k);
+  limparErro("fCidade");
+  desenharCidades();
+  avisar("msgCidade", textoCidade(k) + " adicionada.");
+  mudou();
+});
+$("localNao").addEventListener("click", () => {
+  $("confirmaLocal").hidden = true; cidadeDaLocal = "";
+  avisar("msgCidade", "Digite a sua cidade abaixo e toque em Adicionar.");
+  $("fCidade").focus();
+});
 
 function adicionarCidade(){
   const r = lerCidade();
@@ -2641,6 +2753,8 @@ function dicaNome(){
   const bruto = limparNome($("fNome").value);
   const bonito = AJ.formatarNome(bruto);
   avisar("dicaNome", bonito && bonito !== bruto ? "Vai aparecer assim na lista: " + bonito : "");
+  clearTimeout(relogioNome);
+  relogioNome = setTimeout(conferirNome, 500);           // v10.2: tem alguém na lista com esse nome?
 }
 
 function dicaHashtags(){
@@ -2927,6 +3041,7 @@ function mostrarEdicao(){
   $("notaSemWhats").hidden = !(edit && edit.instagram && !edit.publicado);
   $("notaRapido").hidden = !(edit && edit.rapido);
   $("avisoInsta").hidden = true;
+  $("avisoNome").hidden = true;
   atualizarBotaoEnviar();
 }
 
@@ -3039,6 +3154,10 @@ async function origemPeloInstagram(u){
   if(lista.estado !== "ok") return {estado: lista.estado};
   const achado = acharPorInstagram(lista.contatos, u);
   if(!achado) return {estado: "nao"};
+  return origemPeloContato(achado);
+}
+// v10.2: abrir para editar um contato achado na lista (pelo Instagram ou pelo nome)
+async function origemPeloContato(achado){
   const w = whatsDe(achado);
   if(w){
     let res = null;
@@ -3100,6 +3219,67 @@ async function conferirInstagram(){
   $("abrirPeloInsta").hidden = !!edit;
   caixa.hidden = false;
 }
+// v10.2: o nome digitado é igual ao de alguém da lista: "É você?" (abre o cadastro que já existe para editar) e, se não for,
+// o pedido para diferenciar (nome artístico, apelido entre parênteses ou referência). É só um aviso: dá para enviar assim mesmo.
+const MAX_IGUAIS_NOME = 3;
+function proprioNaLista(contatos){                 // em edição, o próprio contato da lista não conta
+  if(!edit) return null;
+  if(edit.publicado){ const r = AJ.acharPorTelefone(contatos, edit.publicado); if(r) return r.contato; }
+  const ig = edit.instagram || edit.instaOriginal;
+  return ig ? acharPorInstagram(contatos, ig) : null;
+}
+function quemEhNaLista(c){
+  const partes = [];
+  if(Array.isArray(c.cidades) && typeof c.cidades[0] === "string") partes.push(cidadeSemPais(c.cidades[0]));
+  if(Array.isArray(c.instrumentos) && c.instrumentos.length) partes.push(c.instrumentos.slice(0, 2).join(", "));
+  const ig = typeof c.instagram === "string" ? instaDoCampo(c.instagram).valor : "";
+  if(ig) partes.push("@" + ig);
+  return partes.join(" · ");
+}
+async function conferirNome(){
+  const n = ++conferenciaNome;
+  const caixa = $("avisoNome");
+  const nome = limparNome($("fNome").value);
+  if(norm(nome).length < 3 || finalizado){ caixa.hidden = true; return; }
+  const lista = await carregarLista();
+  if(n !== conferenciaNome) return;                // a pessoa continuou digitando
+  if(lista.estado !== "ok"){ caixa.hidden = true; return; }
+  const proprio = proprioNaLista(lista.contatos);
+  const iguais = lista.contatos.filter(c => c !== proprio && typeof c.nome === "string" && norm(c.nome) === norm(nome)).slice(0, MAX_IGUAIS_NOME);
+  if(!iguais.length){ caixa.hidden = true; return; }
+  const nomeLista = iguais[0].nome, botoes = $("botoesNome");
+  botoes.textContent = "";
+  if(edit){
+    $("textoAvisoNome").textContent = "Já existe na lista outra pessoa chamada “" + nomeLista + "”" + (quemEhNaLista(iguais[0]) ? " (" + quemEhNaLista(iguais[0]) + ")" : "") + ".";
+  }else{
+    $("textoAvisoNome").textContent = (iguais.length === 1
+      ? "Já existe na lista alguém chamado “" + nomeLista + "”" + (quemEhNaLista(iguais[0]) ? " (" + quemEhNaLista(iguais[0]) + ")" : "") + ". É você?"
+      : "Já existem na lista " + iguais.length + " pessoas chamadas “" + nomeLista + "”. Você é uma delas?") +
+      " Abra o cadastro que já existe para conferir e completar, em vez de fazer outro.";
+    iguais.forEach(c => {
+      const b = criar("button", "btn pequeno", iguais.length === 1 ? "Sim, sou eu: abrir para editar" : "Sou eu: " + (quemEhNaLista(c) || c.nome));
+      b.type = "button";
+      b.addEventListener("click", () => abrirPeloNome(c, b));
+      botoes.appendChild(b);
+    });
+  }
+  botoes.hidden = !botoes.childNodes.length;
+  $("difAvisoNome").textContent = (edit ? "" : "Se não for você, pode continuar normalmente. ") +
+    "Para quem contrata não confundir vocês, use o seu nome artístico, um apelido entre parênteses (ex.: João Silva (Joãozinho do Sax)) " +
+    "ou preencha a “Referência ao lado do nome”, logo abaixo.";
+  caixa.hidden = false;
+}
+async function abrirPeloNome(c, botao){
+  if(!confirm("Abrir o cadastro de " + c.nome + " que já está na lista, para você conferir e editar?\n\nO que você preencheu aqui será trocado pelos dados desse cadastro.")) return;
+  const rotulo = botao.textContent;
+  botao.disabled = true; botao.textContent = "Abrindo…";
+  let res = null;
+  try{ res = await origemPeloContato(c); }catch(e){ res = null; }
+  botao.disabled = false; botao.textContent = rotulo;
+  if(res && res.estado === "achou"){ $("avisoNome").hidden = true; entrarEdicao(res.o); }
+  else avisar("dicaNome", "Não consegui abrir agora. Tente de novo ou busque pelo WhatsApp ou @Instagram no topo da página.", "erro");
+}
+
 $("abrirPeloInsta").addEventListener("click", async () => {
   const r = instaDoCampo($("fInsta").value);
   if(!r.valor) return;
@@ -3462,7 +3642,8 @@ function zerarTudo(){
   previaFoneAberto = false; previaPerfilAberto = false;
   funcoesDigitadas = new Set(); tipoOutroAberto = false;
   ["fNome", "fCidade", "fOutroInstr", "fOutraFuncao", "fTipoOutro", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
-  $("fUf").value = ""; $("fRegiao").value = ""; $("fPais").value = "BR"; aoTrocarPais();
+  $("fUf").value = ""; $("fRegiao").value = ""; $("fFora").checked = false; $("boxPais").hidden = true; $("fPais").value = "BR"; aoTrocarPais();
+  $("confirmaLocal").hidden = true; cidadeDaLocal = "";
   $("fIfc").checked = false;
   $("fReferencia").value = ""; $("fCategoria").value = "musico"; $("fTipoArtista").value = ""; desenharTiposArtista();
   abcDisponibilidade = "nao"; ifcDisponibilidade = ""; freelanceABC = "nao"; instrGuardadosABC = []; avisar("msgFreelanceABC", "");
@@ -3713,6 +3894,7 @@ function iniciar(){
   $("textoAutoriza").textContent = TEXTO_AUTORIZACAO;
   UFS.forEach(uf => { const o = document.createElement("option"); o.value = uf; o.textContent = uf; $("fUf").appendChild(o); });
   preencherPaises($("fPais"));
+  $("fPais").insertBefore(new Option("Escolha o país…", ""), $("fPais").firstChild);
   desenharSugestoes();
   desenharTiposArtista();
   desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks(); desenharVideos();
@@ -3752,7 +3934,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v10.0.html
+ Arquivo: Cadastro_Musicos_v10.2.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3765,6 +3947,32 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v10.2 — 2026-11-24
+  - Nome igual ao de alguém da lista: logo abaixo do nome aparece "Já
+    existe na lista alguém chamado “Fulano” (cidade · instrumentos ·
+    @instagram). É você?", com "Sim, sou eu: abrir para editar" (abre o
+    cadastro que já existe, como no aviso do Instagram; com mais de um
+    Fulano, um botão para cada). Assim quem foi pré-cadastrado completa
+    o próprio cadastro em vez de fazer outro, mesmo que erre o @.
+  - Se não for a pessoa, pode continuar e enviar com o nome igual: é só
+    um aviso pedindo para diferenciar (nome artístico, apelido entre
+    parênteses ou a "Referência ao lado do nome"). Em edição, o próprio
+    cadastro não conta, e só fica o pedido para diferenciar.
+
+----------------------------------------------------------------
+v10.1 — 2026-11-24
+  - As cidades do Brasil continuam em primeiro: o país saiu de cima da
+    cidade. Embaixo dela fica "Moro fora do Brasil", desmarcado. Sem
+    marcar, a cidade é sempre do Brasil (Cidade + UF), como antes da
+    v10.0. Marcado, aparece o país ("Escolha o país…") e o estado
+    opcional.
+  - "📍 Usar minha localização", como no cadastro rápido: acha a cidade
+    da lista mais perto (até 25 km) ou pergunta ao OpenStreetMap
+    (posição arredondada, ~1 km). A pessoa confirma ("Sim, é essa") e a
+    cidade entra na lista dela. Se for de outro país, já marca "Moro
+    fora do Brasil". A localização não fica guardada.
+
+----------------------------------------------------------------
 v10.0 — 2026-11-24
   - Onde você mora: campo "País" (Brasil já vem escolhido; depois os
     mais comuns e todos os países, com o nome em português). Em outro
