@@ -558,5 +558,27 @@
     "abcDisponibilidade": "nao",
     "instagram": "brenoevictor",
     "whatsapp": ""
+  },
+  {
+    "nome": "Turbal & Ramon",
+    "categoria": "artista",
+    "foto": "turbal-ramon.jpg",
+    "cidades": ["São Sebastião do Paraíso/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "turbaleramon",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Matheus Teodoro",
+    "categoria": "artista",
+    "foto": "matheus-teodoro.jpg",
+    "cidades": ["Pompano/FL"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "cantormatheusteodoro",
+    "whatsapp": ""
   }
 ]
