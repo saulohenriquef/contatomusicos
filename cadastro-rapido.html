@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="description" content="Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade, o seu Instagram e o seu WhatsApp.">
+<meta name="description" content="Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade e o seu WhatsApp.">
 <meta property="og:title" content="Cadastro rápido · Lista de Contatos de Músicos">
-<meta property="og:description" content="Entre na lista em 1 minuto: só a sua cidade, o seu Instagram e o seu WhatsApp.">
+<meta property="og:description" content="Entre na lista em 1 minuto: só a sua cidade e o seu WhatsApp.">
 <link rel="icon" href="data:,">
 <title>Cadastro rápido · Lista de Contatos de Músicos</title>
 <style>
@@ -70,13 +70,14 @@
   .pronto h2{font-size:1.25rem}
   pre{white-space:pre-wrap; word-break:break-word; font-size:.78rem; background:var(--bg); padding:10px; border-radius:8px; border:1px solid var(--line)}
   .demo{margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); font-size:.88rem}
+  .opcional{font-weight:400; color:var(--muted); font-size:.9rem}
   footer{margin-top:24px; text-align:center; color:var(--muted); font-size:.8rem}
 </style>
 </head>
 <body>
 <main class="wrap">
   <h1>⚡ Cadastro rápido</h1>
-  <p class="sub">Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade, o seu Instagram e o seu WhatsApp. O resto (seu nome e o que você toca) o organizador completa olhando o seu Instagram.</p>
+  <p class="sub">Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade e o seu WhatsApp (e o Instagram, se tiver). O resto (seu nome e o que você toca) o organizador completa com você.</p>
   <p class="sub"><a id="linkCompletoTopo" href="cadastro.html">Prefere fazer o cadastro completo, com tudo? →</a></p>
   <p id="avisoDemo" class="demo" hidden>Modo demonstração: nada é enviado (a página só mostra o que seria enviado).</p>
 
@@ -100,16 +101,8 @@
       <p class="dica pequena">A localização serve só para achar a cidade: ela não fica guardada.</p>
     </section>
 
-    <section class="cartao" aria-labelledby="t2">
-      <h2 id="t2">2. Seu Instagram</h2>
-      <label class="campo" for="fInsta">Instagram <b aria-hidden="true">*</b></label>
-      <input id="fInsta" class="entrada" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario" aria-describedby="msgInsta">
-      <p id="msgInsta" class="dica" aria-live="polite"></p>
-      <p class="nota-foto">📸 A sua foto na lista será a do seu perfil do Instagram, <strong>desde que ela tenha cara profissional</strong>: rosto bem visível e boa luz (tocando ou em show fica ótimo). Se não for o caso, você pode mandar outra foto pelo cadastro completo.</p>
-    </section>
-
     <section class="cartao" aria-labelledby="t3">
-      <h2 id="t3">3. Seu WhatsApp</h2>
+      <h2 id="t3">2. Seu WhatsApp</h2>
       <p class="dica">É por ele que os contratantes falam com você (aparece na lista).</p>
       <label class="campo" for="fWhats">WhatsApp com DDD <b aria-hidden="true">*</b></label>
       <input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="msgWhats">
@@ -118,6 +111,14 @@
         <p id="textoJaExiste"></p>
         <a id="linkJaExiste" class="btn principal" href="cadastro.html">Abrir o cadastro completo</a>
       </div>
+    </section>
+
+    <section class="cartao" aria-labelledby="t2">
+      <h2 id="t2">3. Seu Instagram <span class="opcional">(opcional)</span></h2>
+      <label class="campo" for="fInsta">Instagram</label>
+      <input id="fInsta" class="entrada" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario" aria-describedby="msgInsta">
+      <p id="msgInsta" class="dica" aria-live="polite"></p>
+      <p class="nota-foto">📸 Se colocar o Instagram, a sua foto na lista será a do seu perfil, <strong>desde que ela tenha cara profissional</strong>: rosto bem visível e boa luz (tocando ou em show fica ótimo). Se não for o caso, você pode mandar outra foto pelo cadastro completo.</p>
     </section>
 
     <section class="cartao" aria-label="Autorização e envio">
@@ -138,17 +139,17 @@
     <pre id="demoPayload" hidden></pre>
   </section>
 
-  <footer>Cadastro rápido · Lista de Contatos de Músicos · v1.0</footer>
+  <footer>Cadastro rápido · Lista de Contatos de Músicos · v1.1</footer>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v1.0";
+const VERSAO = "v1.1";
 const PAGINA = "Cadastro_Rapido_Musicos_" + VERSAO;
 // o mesmo Firebase da página de cadastro completo (estes dados não são segredo; quem protege o banco são as regras do Firestore,
-// arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página). Vazio, ou ?demo=1 no endereço = modo demonstração.
+// arquivo Firestore_Regras_Cadastros_v8.rules: publique-as ANTES desta página). Vazio, ou ?demo=1 no endereço = modo demonstração.
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
 const COLECAO = "cadastros";                       // cada cadastro é um documento com o WhatsApp (só dígitos) como nome
 const API_FIRESTORE = "https://firestore.googleapis.com";
@@ -159,8 +160,8 @@ const RAIO_CIDADE_KM = 25;                         // até essa distância de um
 const TEMPO_MS = 15000;                            // espera máxima de cada pedido (milissegundos)
 const CONFIGURADO = /^[a-z][a-z0-9-]{3,28}[a-z0-9]$/.test(FIREBASE.projectId) && /^AIza[\w-]{30,}$/.test(FIREBASE.apiKey);
 const DEMO = !CONFIGURADO || /[?&]demo=1(&|#|$)/.test(location.search);
-const TEXTO_AUTORIZACAO = "Autorizo que meu Instagram (com a foto do perfil), minha cidade e meu WhatsApp apareçam na lista pública de músicos, " +
-  "que qualquer pessoa pode abrir, junto com o meu nome e o que eu toco, que o organizador completa olhando o meu Instagram. " +
+const TEXTO_AUTORIZACAO = "Autorizo que minha cidade, meu WhatsApp e, se eu informar, meu Instagram (com a foto do perfil) apareçam na lista pública de músicos, " +
+  "que qualquer pessoa pode abrir, junto com o meu nome e o que eu toco, que o organizador completa. " +
   "Sei que posso corrigir meu cadastro quando quiser e pedir para tirá-lo da lista.";
 const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
 const CIDADE_UF = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([A-Z]{2})$/u;
@@ -477,7 +478,7 @@ $("form").addEventListener("submit", async e => {
   if(!cidade) erros.push(["fCidade", "Cidade: use a localização ou escreva no formato Cidade/UF (ex.: Varginha/MG)."]);
   else if(cidadeDaLocal && !cidadeConfirmada) erros.push(["cidadeSim", "Cidade: confirme se " + cidade + " é a sua cidade (Sim, é essa) ou troque (Não, é outra)."]);
   const ig = instaDoCampo($("fInsta").value);
-  if(!ig.valor) erros.push(["fInsta", "Instagram: " + (ig.erro || "escreva o seu @usuario.")]);
+  if(ig.erro) erros.push(["fInsta", "Instagram: " + ig.erro + " (ou deixe em branco: é opcional)"]);   // opcional
   const w = nacional($("fWhats").value);
   if(!/^\d{10,11}$/.test(w)) erros.push(["fWhats", "WhatsApp: coloque o DDD e o número (10 ou 11 números)."]);
   if(!$("fAutoriza").checked) erros.push(["fAutoriza", "Marque a autorização para aparecer na lista."]);
@@ -493,7 +494,7 @@ $("form").addEventListener("submit", async e => {
     if(s && ["lista", "completo", "outro"].includes(s.tipo)){ $("jaExiste").scrollIntoView({block: "center", behavior: "smooth"}); return; }
     const payload = {
       formato: "cadastro-rapido", versao: 1, status: "pendente", id: w, enviadoEm: new Date().toISOString(),
-      contato: {whatsapp: w, instagram: ig.valor, cidades: [cidade]},
+      contato: ig.valor ? {whatsapp: w, instagram: ig.valor, cidades: [cidade]} : {whatsapp: w, cidades: [cidade]},
       autorizacao: {aceita: true, texto: TEXTO_AUTORIZACAO},
       meta: {pagina: PAGINA, segundos: Math.min(31536000, Math.max(0, Math.round((Date.now() - inicio) / 1000)))}
     };
@@ -532,15 +533,23 @@ carregarCidades();
 <!--
 ================================================================
  Cadastro rápido · Lista de Contatos de Músicos
- Arquivo: Cadastro_Rapido_Musicos_v1.0.html
+ Arquivo: Cadastro_Rapido_Musicos_v1.1.html
  No site: publique como cadastro-rapido.html, na mesma pasta do
  index.html e do cadastro.html (ela lê o contatos.json e o
  cidades.json de lá e manda para o cadastro.html quem quiser
  completar).
- Regras do Firestore: Firestore_Regras_Cadastros_v7.rules
+ Regras do Firestore: Firestore_Regras_Cadastros_v8.rules
  (publique ANTES desta página).
 ================================================================
  HISTÓRICO DE VERSÕES (mais recente primeiro)
+----------------------------------------------------------------
+v1.1 — 2026-11-24
+  - Instagram passa a ser opcional; WhatsApp e cidade continuam
+    obrigatórios. A ordem agora é: 1. cidade, 2. WhatsApp, 3. Instagram
+    (opcional). O aviso da foto diz "Se colocar o Instagram...".
+  - Texto da autorização ajustado ("se eu informar, meu Instagram").
+  - Regras: Firestore_Regras_Cadastros_v8.rules.
+
 ----------------------------------------------------------------
 v1.0 — 2026-11-24
   - Primeira versão: um pedido de interesse para entrar na lista, com
