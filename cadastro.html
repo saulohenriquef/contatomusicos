@@ -734,7 +734,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v8.1
+    Cadastro de Músicos · Lista de Contatos de Músicos · v9.0
   </footer>
 </div>
 
@@ -1087,7 +1087,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v8.1";
+const VERSAO = "v9.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -3556,7 +3556,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v8.1.html
+ Arquivo: Cadastro_Musicos_v9.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3569,7 +3569,7 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
-v8.1 — 2026-11-24
+v9.0 — 2026-11-24
   - Endereço com ?buscar=35988089192 (ou ?buscar=@usuario) já busca
     esse cadastro ao abrir. É o botão "Completar meu cadastro agora" da
     página de cadastro rápido (cadastro-rapido.html).
@@ -3578,6 +3578,8 @@ v8.1 — 2026-11-24
     rápido. Complete com o seu nome, o que você toca...". Ao enviar, o
     cadastro completo troca o pedido rápido (regras v7).
   - Regras: Firestore_Regras_Cadastros_v7.rules.
+  - Versão inteira (v9.0) por mudar junto com o cadastro rápido e as
+    regras v7.
 
 ----------------------------------------------------------------
 v8.0 — 2026-11-23
