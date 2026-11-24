@@ -373,6 +373,8 @@
   /* ---------- v7.0: tipo de cada telefone, com quem falar e "ocultar número de cadastro" (ABC) ---------- */
   .fone-extra{margin-top:8px}
   #boxOcultarWhats .marcar{margin-top:8px}
+  /* ---------- v8.0: achar o cadastro pelo @Instagram ---------- */
+  #avisoInsta p{margin:0 0 8px}
 </style>
 </head>
 <body>
@@ -429,6 +431,7 @@
     <div>
       <strong id="tituloEdicao" tabindex="-1">✏️ Editando o seu cadastro</strong>
       <p>O que você mudar vai para o organizador conferir e, depois, a lista é atualizada. Para trocar o WhatsApp, é só mudar o número abaixo.</p>
+      <p id="notaSemWhats" class="nota-edicao" hidden>Este cadastro foi feito pelo organizador só com o seu Instagram. Confira os dados, coloque o seu WhatsApp (é obrigatório) e envie.</p>
       <p id="notaEdicao" class="nota-edicao" hidden>Não consegui ver agora se você já tem mudanças esperando conferência, então abri o cadastro que está na lista. Se você já tinha enviado mudanças, confira se está tudo certo antes de enviar.</p>
     </div>
     <button id="cancelarEdicao" class="btn pequeno" type="button">Cancelar</button>
@@ -436,10 +439,10 @@
 
   <section id="sBusca" class="passo sem-numero busca" aria-labelledby="tbusca">
     <h2 id="tbusca">Já tem cadastro?</h2>
-    <p class="dica">Digite o seu WhatsApp: o seu cadastro aparece aqui, já preenchido, para você corrigir ou atualizar sem refazer tudo. Depois de enviar, o organizador confere e atualiza a lista.</p>
-    <label class="campo" for="fBusca">WhatsApp do seu cadastro</label>
+    <p class="dica">Digite o seu WhatsApp ou o seu Instagram com @ na frente (ex.: @seuusuario): o seu cadastro aparece aqui, já preenchido, para você corrigir, completar ou atualizar sem refazer tudo. Depois de enviar, o organizador confere e atualiza a lista.</p>
+    <label class="campo" for="fBusca">WhatsApp ou @Instagram do seu cadastro</label>
     <div class="linha">
-      <input id="fBusca" class="entrada" type="tel" inputmode="tel" autocomplete="off" placeholder="(35) 98808-9192" aria-describedby="msgBusca">
+      <input id="fBusca" class="entrada" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="(35) 98808-9192 ou @seuusuario" aria-describedby="msgBusca">
       <button id="buscar" class="btn" type="button">Buscar</button>
     </div>
     <p id="msgBusca" class="dica" aria-live="polite"></p>
@@ -601,6 +604,10 @@
       <label class="campo" for="fInsta">Instagram <span>(opcional)</span></label>
       <input id="fInsta" class="entrada" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario ou link do perfil" aria-describedby="dicaInsta">
       <p id="dicaInsta" class="dica" aria-live="polite"></p>
+      <div id="avisoInsta" class="caixa-aviso" role="status" hidden>
+        <p id="textoAvisoInsta"></p>
+        <button id="abrirPeloInsta" class="btn pequeno" type="button">Sim, é o meu: abrir para editar</button>
+      </div>
 
       <label class="campo" for="fYoutube">YouTube</label>
         <input id="fYoutube" class="entrada" type="text" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@canal ou link do canal">
@@ -726,7 +733,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v7.0
+    Cadastro de Músicos · Lista de Contatos de Músicos · v8.0
   </footer>
 </div>
 
@@ -1079,10 +1086,10 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v7.0";
+const VERSAO = "v8.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
-// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v5.rules: publique-as ANTES desta página).
+// Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v6.rules: publique-as ANTES desta página).
 // Onde achar: Firebase > engrenagem > Configurações do projeto > Seus aplicativos > firebaseConfig (projectId e apiKey).
 // Enquanto estiverem vazios — ou com ?demo=1 no endereço da página — ela fica em MODO DEMONSTRAÇÃO e não envia nada a lugar nenhum.
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
@@ -1140,7 +1147,7 @@ let cidades = [];                // ["Franca/SP"]
 let telefones = [];              // [{tipo, outro, numero, contato}]
 let links = [];                  // [{rotulo, url}]
 let videos = [];                 // [{url}] links de vídeo (YouTube ou Instagram)
-let edit = null;                 // null = cadastro novo; senão a edição em andamento: {fonte, nome, publicado, anterior, docId}
+let edit = null;                 // null = cadastro novo; senão a edição em andamento: {fonte, nome, publicado, anterior, docId, instagram, instaOriginal}
                                  //   publicado = WhatsApp do contato que já está na lista; docId = nome do documento carregado do banco;
                                  //   anterior = o "telefoneAnterior" que esse documento já tinha
 let fotoLista = "";              // endereço da foto que já está na lista (só em edição; vazio = não tem)
@@ -2745,6 +2752,8 @@ function mostrarEdicao(){
   $("sBusca").hidden = !!edit || finalizado;
   if(edit) $("tituloEdicao").textContent = "✏️ Editando o cadastro" + (edit.nome ? " de " + edit.nome : "");
   $("notaEdicao").hidden = !(edit && edit.aviso);
+  $("notaSemWhats").hidden = !(edit && edit.instagram && !edit.publicado);
+  $("avisoInsta").hidden = true;
   atualizarBotaoEnviar();
 }
 
@@ -2759,7 +2768,10 @@ function entrarEdicao(o){
   try{
     const c = contatoDeFora(o.contato);
     preencherContato(c);
-    edit = {fonte: o.fonte === "lista" ? "lista" : "cadastro", nome: c.nome, publicado: dig(o.publicado), anterior: dig(o.anterior), docId: dig(o.docId), aviso: o.incompleto === true};
+    edit = {fonte: o.fonte === "lista" ? "lista" : "cadastro", nome: c.nome, publicado: dig(o.publicado), anterior: dig(o.anterior), docId: dig(o.docId), aviso: o.incompleto === true,
+      // cadastro feito pelo organizador só com o Instagram (sem WhatsApp): vai no envio como "instagramAnterior"
+      instagram: typeof o.instagram === "string" && /^[A-Za-z0-9._]{1,30}$/.test(o.instagram) ? o.instagram : null,
+      instaOriginal: instaDoCampo(c.instagram || "").valor || null};
     fotoLista = fotoListaValida(o.fotoLista);
     fotoRemovida = o.removerFoto === true;
   }finally{
@@ -2793,11 +2805,12 @@ let buscando = false;
 async function buscarEEditar(){
   if(buscando) return;
   const campo = $("fBusca");
+  if(campo.value.trim().startsWith("@")) return buscarEEditarInstagram();   // com @ na frente: é o Instagram
   const tel = nacional(campo.value);
   $("buscaAcoes").hidden = true;
   if(tel.length !== 10 && tel.length !== 11){
     campo.setAttribute("aria-invalid", "true");
-    avisar("msgBusca", "Digite o WhatsApp com DDD (10 ou 11 números).", "erro");
+    avisar("msgBusca", "Digite o WhatsApp com DDD (10 ou 11 números) ou o Instagram com @ na frente (ex.: @seuusuario).", "erro");
     campo.focus();
     return;
   }
@@ -2830,7 +2843,7 @@ $("fBusca").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventD
 $("fBusca").addEventListener("input", () => { $("fBusca").removeAttribute("aria-invalid"); $("buscaAcoes").hidden = true; avisar("msgBusca", ""); });
 $("fBusca").addEventListener("blur", () => {
   const d = nacional($("fBusca").value);
-  if(d.length === 10 || d.length === 11) $("fBusca").value = formatarTel(d);
+  if(!$("fBusca").value.trim().startsWith("@") && (d.length === 10 || d.length === 11)) $("fBusca").value = formatarTel(d);
 });
 $("novoComNumero").addEventListener("click", () => {
   const d = nacional($("fBusca").value);
@@ -2840,6 +2853,93 @@ $("novoComNumero").addEventListener("click", () => {
   rolarPara($("fNome"), "center");
   $("fNome").focus({preventScroll: true});
 });
+// ---- v8.0: achar o cadastro pelo Instagram (o organizador cadastra em lote só com o Instagram)
+// o contato da lista pública com este Instagram, ou null
+function acharPorInstagram(contatos, u){
+  const alvo = String(u || "").toLowerCase();
+  if(!alvo) return null;
+  return (contatos || []).find(x => x && typeof x.instagram === "string" && String(instaDoCampo(x.instagram).valor || "").toLowerCase() === alvo) || null;
+}
+// de onde carregar o cadastro achado pelo Instagram: com WhatsApp, o caminho de sempre (o banco pode ter um mais novo); sem, o da lista
+async function origemPeloInstagram(u){
+  const lista = await carregarLista();
+  if(lista.estado !== "ok") return {estado: lista.estado};
+  const achado = acharPorInstagram(lista.contatos, u);
+  if(!achado) return {estado: "nao"};
+  const w = whatsDe(achado);
+  if(w){
+    let res = null;
+    try{ res = await buscarCadastro(w); }catch(e){ res = null; }
+    const o = res ? escolherOrigem(res) : null;
+    if(o) return {estado: "achou", o};
+  }
+  return {estado: "achou", o: {fonte: "lista", contato: achado, docId: null, anterior: null, publicado: w, fotoLista: urlFoto(achado.foto),
+    foto: "", removerFoto: false, instagram: w ? null : String(instaDoCampo(achado.instagram).valor || "")}};
+}
+async function buscarEEditarInstagram(){
+  const campo = $("fBusca");
+  const r = instaDoCampo(campo.value.trim());
+  $("buscaAcoes").hidden = true;
+  if(!r.valor){
+    campo.setAttribute("aria-invalid", "true");
+    avisar("msgBusca", r.erro || "Escreva o Instagram com @ na frente, por exemplo @seuusuario.", "erro");
+    campo.focus();
+    return;
+  }
+  campo.removeAttribute("aria-invalid");
+  buscando = true;
+  $("buscar").disabled = true;
+  $("buscar").textContent = "Buscando…";
+  avisar("msgBusca", "Buscando o seu cadastro…");
+  let res = null;
+  try{ res = await origemPeloInstagram(r.valor); }catch(e){ res = null; }
+  buscando = false;
+  $("buscar").disabled = false;
+  $("buscar").textContent = "Buscar";
+  if(res && res.estado === "achou"){
+    if(!formularioVazio() && !confirm("Isto troca o que você preencheu agora pelo cadastro que encontrei. Continuar?")){ avisar("msgBusca", ""); return; }
+    campo.value = "";
+    avisar("msgBusca", "");
+    entrarEdicao(res.o);
+    return;
+  }
+  avisar("msgBusca", res && res.estado === "nao"
+    ? "Não achei nenhum cadastro com o Instagram @" + r.valor + ". Confira se digitou certo ou busque pelo WhatsApp. Se você ainda não tem cadastro, é só preencher o formulário abaixo."
+    : "Não consegui conferir agora (confira a internet e tente de novo). Se você ainda não tem cadastro, é só preencher o formulário abaixo.", res && res.estado === "nao" ? "" : "aviso");
+}
+// a pessoa escreveu no formulário um Instagram que já tem cadastro na lista: pergunta se é ela e oferece abrir o cadastro para editar
+let conferenciaInsta = 0, relogioInsta = 0;
+async function conferirInstagram(){
+  const n = ++conferenciaInsta;
+  const caixa = $("avisoInsta");
+  const r = instaDoCampo($("fInsta").value);
+  if(!r.valor || finalizado){ caixa.hidden = true; return; }
+  if(edit && edit.instaOriginal && edit.instaOriginal.toLowerCase() === r.valor.toLowerCase()){ caixa.hidden = true; return; }   // é o do próprio cadastro em edição
+  const lista = await carregarLista();
+  if(n !== conferenciaInsta) return;      // a pessoa continuou digitando
+  const achado = lista.estado === "ok" ? acharPorInstagram(lista.contatos, r.valor) : null;
+  if(!achado){ caixa.hidden = true; return; }
+  const cidade = Array.isArray(achado.cidades) && typeof achado.cidades[0] === "string" ? " (" + achado.cidades[0] + ")" : "";
+  const nome = String(achado.nome || "sem nome");
+  $("textoAvisoInsta").textContent = edit
+    ? "Esse Instagram já está em outro cadastro da lista: " + nome + cidade + ". Se esse cadastro também é seu, avise o organizador."
+    : "Esse Instagram já tem cadastro na lista: " + nome + cidade + ". É você? Abra o cadastro que já existe para conferir e completar, em vez de fazer outro.";
+  $("abrirPeloInsta").hidden = !!edit;
+  caixa.hidden = false;
+}
+$("abrirPeloInsta").addEventListener("click", async () => {
+  const r = instaDoCampo($("fInsta").value);
+  if(!r.valor) return;
+  if(!confirm("Abrir o cadastro que já existe com o Instagram @" + r.valor + " para você conferir e editar?\n\nO que você preencheu aqui será trocado pelos dados desse cadastro.")) return;
+  const b = $("abrirPeloInsta");
+  b.disabled = true; b.textContent = "Abrindo…";
+  let res = null;
+  try{ res = await origemPeloInstagram(r.valor); }catch(e){ res = null; }
+  b.disabled = false; b.textContent = "Sim, é o meu: abrir para editar";
+  if(res && res.estado === "achou"){ $("avisoInsta").hidden = true; entrarEdicao(res.o); }
+  else avisar("dicaInsta", "Não consegui abrir agora. Tente de novo ou busque pelo WhatsApp ou @Instagram no topo da página.", "erro");
+});
+
 function irParaBusca(){
   if(edit || finalizado) return;
   rolarPara($("sBusca"), "start");
@@ -2953,13 +3053,14 @@ function montarPayload(c, fotoUrl, segundos){
     status: "pendente",
     id: c.whatsapp || novoId(),
     enviadoEm: new Date().toISOString(),
-    tipo: edit && edit.publicado ? "edicao" : "novo",
+    tipo: edit && (edit.publicado || edit.instagram) ? "edicao" : "novo",
     contato: c,
     autorizacao: {aceita: true, texto: TEXTO_AUTORIZACAO},
     meta: {pagina: PAGINA, segundos}
   };
   const anterior = telefoneAnteriorPara(c.whatsapp || "");
   if(anterior) p.telefoneAnterior = anterior;
+  if(edit && edit.instagram && !edit.publicado) p.instagramAnterior = edit.instagram;   // o painel acha o contato feito só com o Instagram
   const novas = novasAtuacoesDe(c);
   if(novas) p.novasAtuacoes = novas;
   if(fotoUrl) p.fotoJpegBase64 = fotoUrl.slice(fotoUrl.indexOf(",") + 1);
@@ -3329,12 +3430,14 @@ $("fWhats").addEventListener("blur", () => {
   mudou();
   conferirNumero();                                          // o número já tem cadastro?
 });
-$("fInsta").addEventListener("input", () => { dicaInsta(false); mudou(); });
+$("fInsta").addEventListener("input", () => { dicaInsta(false); mudou(); clearTimeout(relogioInsta); relogioInsta = setTimeout(conferirInstagram, 800); });
 $("fInsta").addEventListener("blur", () => {
   const r = instaDoCampo($("fInsta").value);
   if(r.valor) $("fInsta").value = "@" + r.valor;
   dicaInsta(true);
   mudou();
+  clearTimeout(relogioInsta);
+  conferirInstagram();
 });
 ["fEmail", "fYoutube", "fIfc"].forEach(id => $(id).addEventListener("input", mudou));
 $("fIfc").addEventListener("change", mudou);
@@ -3442,7 +3545,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v7.0.html
+ Arquivo: Cadastro_Musicos_v8.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3450,11 +3553,31 @@ iniciar();
           Lista_Contatos_Musicos_contatos.json (sem o campo "foto")
           e a foto à parte, em base64. Só o dono do projeto (com
           senha, pelo painel) lê, aprova ou apaga: as regras estão
-          em Firestore_Regras_Cadastros_v5.rules. Com o bloco
+          em Firestore_Regras_Cadastros_v6.rules. Com o bloco
           FIREBASE vazio (ou ?demo=1 no endereço) a página não envia
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v8.0 — 2026-11-23
+  - "Já tem cadastro?" aceita o WhatsApp ou o Instagram com @ na frente
+    (o @ é obrigatório: sem ele o que for digitado é tratado como
+    telefone). Achou pelo Instagram: se o contato tem WhatsApp, segue o
+    caminho de sempre (abre o cadastro que espera conferência, se
+    houver); se não tem (cadastro feito pelo organizador só com o
+    Instagram), abre o da lista e avisa: "Este cadastro foi feito pelo
+    organizador só com o seu Instagram... coloque o seu WhatsApp".
+  - No formulário, ao escrever um Instagram que já tem cadastro na
+    lista, aparece "Esse Instagram já tem cadastro na lista: Fulano
+    (cidade). É você?" com o botão "Sim, é o meu: abrir para editar",
+    que pede confirmação e abre o cadastro para editar. Editando outro
+    cadastro, só avisa.
+  - Envio: quem completa um cadastro feito só com o Instagram vai como
+    "edicao" e com "instagramAnterior" (o @ do contato da lista), para
+    o painel achar o contato certo mesmo se a pessoa trocar o @.
+    Precisa das regras Firestore_Regras_Cadastros_v6.rules (publique
+    ANTES desta página).
+
+----------------------------------------------------------------
 v7.0 — 2026-11-23
   - Cada telefone tem um tipo: Pessoal (já vem marcado), Comercial,
     Fixo, Celular 2, Recados ou Outro (abre um campo para escrever).
