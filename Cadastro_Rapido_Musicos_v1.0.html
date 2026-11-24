@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade, o seu Instagram e o seu WhatsApp.">
+<meta property="og:title" content="Cadastro rápido · Lista de Contatos de Músicos">
+<meta property="og:description" content="Entre na lista em 1 minuto: só a sua cidade, o seu Instagram e o seu WhatsApp.">
+<link rel="icon" href="data:,">
+<title>Cadastro rápido · Lista de Contatos de Músicos</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --text:#1d1b16; --muted:#6d685c;
+    --line:#e6e1d4; --accent:#b4531a; --accent-soft:#f6e6d9;
+    --botao:#13803d; --botao-ativo:#0e6a31; --erro:#c0392b; --aviso:#9a6c00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14120f; --card:#1e1b17; --text:#f1ece1; --muted:#a39d8f;
+      --line:#2e2a23; --accent:#e08a4f; --accent-soft:#33261b;
+      --botao:#13803d; --botao-ativo:#0e6a31; --erro:#ff7b6b; --aviso:#f0c860;
+    }
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.45;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  .wrap{max-width:560px; margin:0 auto; padding:20px 16px 40px}
+  h1{margin:6px 0 6px; font-size:1.5rem; letter-spacing:-.01em}
+  .sub{margin:0 0 8px; color:var(--muted)}
+  a{color:var(--accent)}
+  .cartao{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:14px}
+  .cartao h2{margin:0 0 4px; font-size:1.08rem}
+  .campo{display:block; margin:12px 0 6px; font-weight:600; font-size:.95rem}
+  .campo b{color:var(--erro)}
+  .entrada{width:100%; font:inherit; font-size:1rem; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--text)}
+  .entrada:focus{outline:2px solid var(--accent); outline-offset:1px}
+  .entrada[aria-invalid="true"]{border-color:var(--erro)}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; font:inherit; font-weight:600; padding:11px 16px; border-radius:10px;
+    border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; text-decoration:none; min-height:44px}
+  .btn:hover{border-color:var(--accent)}
+  .btn.principal{background:var(--botao); border-color:var(--botao); color:#fff}
+  .btn.principal:hover{background:var(--botao-ativo)}
+  .btn.grande{width:100%; padding:15px; font-size:1.08rem; margin-top:14px}
+  .btn.local{width:100%}
+  .btn:disabled{opacity:.6; cursor:default}
+  .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .acoes{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+  .dica{margin:6px 0 0; color:var(--muted); font-size:.9rem}
+  .dica:empty{display:none}
+  .dica.ok{color:var(--botao); font-weight:600}
+  .dica.aviso{color:var(--aviso)}
+  .dica.erro{color:var(--erro)}
+  .pequena{font-size:.8rem}
+  .ou{display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.85rem; margin:14px 0 0}
+  .ou::before, .ou::after{content:""; flex:1; border-top:1px solid var(--line)}
+  .confirma{margin-top:12px; padding:12px; border-radius:10px; background:var(--accent-soft)}
+  .confirma p{margin:0; font-weight:600}
+  .nota-foto{margin:12px 0 0; padding:10px 12px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:8px; font-size:.92rem}
+  .caixa-aviso{margin-top:12px; padding:12px; border:1px solid var(--aviso); border-radius:10px}
+  .caixa-aviso p{margin:0 0 10px}
+  .marcar{display:flex; gap:10px; align-items:flex-start; font-size:.92rem; cursor:pointer}
+  .marcar input{width:20px; height:20px; margin-top:2px; flex:none; accent-color:var(--botao)}
+  .marcar.invalido{color:var(--erro)}
+  .resultado{margin:12px 0 0; padding:10px 12px; border-radius:10px; font-size:.93rem; border-left:4px solid var(--muted); background:var(--bg)}
+  .resultado.erro{border-left-color:var(--erro)}
+  .resultado ul{margin:6px 0 0; padding-left:20px}
+  .pronto h2{font-size:1.25rem}
+  pre{white-space:pre-wrap; word-break:break-word; font-size:.78rem; background:var(--bg); padding:10px; border-radius:8px; border:1px solid var(--line)}
+  .demo{margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); font-size:.88rem}
+  footer{margin-top:24px; text-align:center; color:var(--muted); font-size:.8rem}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>⚡ Cadastro rápido</h1>
+  <p class="sub">Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade, o seu Instagram e o seu WhatsApp. O resto (seu nome e o que você toca) o organizador completa olhando o seu Instagram.</p>
+  <p class="sub"><a id="linkCompletoTopo" href="cadastro.html">Prefere fazer o cadastro completo, com tudo? →</a></p>
+  <p id="avisoDemo" class="demo" hidden>Modo demonstração: nada é enviado (a página só mostra o que seria enviado).</p>
+
+  <form id="form" novalidate>
+    <section class="cartao" aria-labelledby="t1">
+      <h2 id="t1">1. Sua cidade</h2>
+      <p class="dica">A cidade onde você mora ou de onde atende.</p>
+      <div class="acoes"><button id="usarLocal" class="btn local" type="button">📍 Usar minha localização</button></div>
+      <div id="confirmaCidade" class="confirma" role="status" hidden>
+        <p id="textoCidade"></p>
+        <div class="acoes">
+          <button id="cidadeSim" class="btn principal" type="button">Sim, é essa</button>
+          <button id="cidadeNao" class="btn" type="button">Não, é outra</button>
+        </div>
+      </div>
+      <p class="ou">ou digite</p>
+      <label class="campo" for="fCidade">Cidade/UF <b aria-hidden="true">*</b></label>
+      <input id="fCidade" class="entrada" list="listaCidades" autocomplete="off" placeholder="Ex.: Varginha/MG" aria-describedby="msgCidade">
+      <datalist id="listaCidades"></datalist>
+      <p id="msgCidade" class="dica" aria-live="polite"></p>
+      <p class="dica pequena">A localização serve só para achar a cidade: ela não fica guardada.</p>
+    </section>
+
+    <section class="cartao" aria-labelledby="t2">
+      <h2 id="t2">2. Seu Instagram</h2>
+      <label class="campo" for="fInsta">Instagram <b aria-hidden="true">*</b></label>
+      <input id="fInsta" class="entrada" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario" aria-describedby="msgInsta">
+      <p id="msgInsta" class="dica" aria-live="polite"></p>
+      <p class="nota-foto">📸 A sua foto na lista será a do seu perfil do Instagram, <strong>desde que ela tenha cara profissional</strong>: rosto bem visível e boa luz (tocando ou em show fica ótimo). Se não for o caso, você pode mandar outra foto pelo cadastro completo.</p>
+    </section>
+
+    <section class="cartao" aria-labelledby="t3">
+      <h2 id="t3">3. Seu WhatsApp</h2>
+      <p class="dica">É por ele que os contratantes falam com você (aparece na lista).</p>
+      <label class="campo" for="fWhats">WhatsApp com DDD <b aria-hidden="true">*</b></label>
+      <input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="msgWhats">
+      <p id="msgWhats" class="dica" aria-live="polite"></p>
+      <div id="jaExiste" class="caixa-aviso" role="status" hidden>
+        <p id="textoJaExiste"></p>
+        <a id="linkJaExiste" class="btn principal" href="cadastro.html">Abrir o cadastro completo</a>
+      </div>
+    </section>
+
+    <section class="cartao" aria-label="Autorização e envio">
+      <label id="rotAutoriza" class="marcar" for="fAutoriza">
+        <input id="fAutoriza" type="checkbox">
+        <span id="textoAutoriza"></span>
+      </label>
+      <div id="msgEnvio" class="resultado" role="alert" hidden></div>
+      <button id="enviar" class="btn principal grande" type="submit">Quero entrar na lista</button>
+    </section>
+  </form>
+
+  <section id="pronto" class="cartao pronto" role="status" hidden>
+    <h2>✅ Pronto, recebemos o seu pedido!</h2>
+    <p>O organizador vai completar o seu cadastro (nome e o que você toca) olhando o seu Instagram e colocar você na lista.</p>
+    <p>Quer completar você mesmo agora? Leva uns 3 minutos e você escolhe tudo: nome, instrumentos, foto, outros contatos.</p>
+    <a id="completarAgora" class="btn principal" href="cadastro.html">Completar meu cadastro agora</a>
+    <pre id="demoPayload" hidden></pre>
+  </section>
+
+  <footer>Cadastro rápido · Lista de Contatos de Músicos · v1.0</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ---------- ajustes ---------- */
+const VERSAO = "v1.0";
+const PAGINA = "Cadastro_Rapido_Musicos_" + VERSAO;
+// o mesmo Firebase da página de cadastro completo (estes dados não são segredo; quem protege o banco são as regras do Firestore,
+// arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página). Vazio, ou ?demo=1 no endereço = modo demonstração.
+const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
+const COLECAO = "cadastros";                       // cada cadastro é um documento com o WhatsApp (só dígitos) como nome
+const API_FIRESTORE = "https://firestore.googleapis.com";
+const ARQ_CONTATOS = "Lista_Contatos_Musicos_contatos.json";   // a lista pública (para avisar quem já está nela)
+const ARQ_CIDADES = "Lista_Contatos_Musicos_cidades.json";     // as cidades da lista (sugestões e a cidade mais perto)
+const PAGINA_COMPLETA = "cadastro.html";                       // a página de cadastro completo, na mesma pasta
+const RAIO_CIDADE_KM = 25;                         // até essa distância de uma cidade da lista, a localização usa essa cidade
+const TEMPO_MS = 15000;                            // espera máxima de cada pedido (milissegundos)
+const CONFIGURADO = /^[a-z][a-z0-9-]{3,28}[a-z0-9]$/.test(FIREBASE.projectId) && /^AIza[\w-]{30,}$/.test(FIREBASE.apiKey);
+const DEMO = !CONFIGURADO || /[?&]demo=1(&|#|$)/.test(location.search);
+const TEXTO_AUTORIZACAO = "Autorizo que meu Instagram (com a foto do perfil), minha cidade e meu WhatsApp apareçam na lista pública de músicos, " +
+  "que qualquer pessoa pode abrir, junto com o meu nome e o que eu toco, que o organizador completa olhando o meu Instagram. " +
+  "Sei que posso corrigir meu cadastro quando quiser e pedir para tirá-lo da lista.";
+const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
+const CIDADE_UF = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([A-Z]{2})$/u;
+const inicio = Date.now();
+
+/* ---------- textos ---------- */
+const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+function semControle(s){
+  return String(s == null ? "" : s).normalize("NFC").replace(/[\u0000-\u001F\u007F-\u009F]/g, " ").replace(/[​-‏‪-‮⁠-⁤⁦-⁯﻿]/g, "");
+}
+function nacional(num){
+  const d = String(num == null ? "" : num).replace(/\D/g, "");
+  return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d;
+}
+function formatarTel(num){
+  const d = nacional(num);
+  if(d.length === 11) return "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
+  if(d.length === 10) return "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6);
+  return d;
+}
+const INSTA_RESERVADOS = new Set(["p", "reel", "reels", "stories", "explore", "accounts", "tv", "direct", "about", "legal", "web", "developer"]);
+// Instagram: só o usuário (sem @ e sem o endereço); {valor} ou {erro}  (o mesmo da página de cadastro completo)
+function instaDoCampo(v){
+  v = semControle(v).trim();
+  if(!v) return {valor: ""};
+  const m = v.match(/^(?:https?:\/\/)?(?:www\.|m\.)?instagram\.com\/([^\/?#\s]+)/i);
+  let h = v;
+  if(m){
+    h = m[1];
+    if(INSTA_RESERVADOS.has(h.toLowerCase())) return {erro: "Cole o link do seu perfil (instagram.com/seuusuario), não o de uma publicação."};
+  }else if(/^[a-z][a-z0-9+.\-]*:\/\//i.test(v) || /[\/\s]/.test(v)){
+    return {erro: "Escreva @seuusuario ou cole o link do seu perfil."};
+  }
+  h = h.replace(/^@/, "");
+  if(!/^[A-Za-z0-9._]{1,30}$/.test(h)) return {erro: "O usuário do Instagram só tem letras, números, ponto e sublinhado (até 30 caracteres)."};
+  return {valor: h};
+}
+function dica(id, texto, tipo){
+  const el = $(id);
+  el.textContent = texto || "";
+  el.className = "dica" + (tipo ? " " + tipo : "");
+}
+
+/* ---------- cidade: localização ou digitada ---------- */
+let cidades = {};               // "Cidade/UF" -> {lat, lon}: as cidades que já estão na lista
+let cidadeDaLocal = "";         // a cidade que a localização achou (a pessoa precisa confirmar)
+let cidadeConfirmada = false;
+const PEQUENAS = new Set(["da", "de", "do", "das", "dos", "e"]);
+const capitalizar = t => t.toLowerCase().split(/(\s+|-)/).map((p, i) => (i && PEQUENAS.has(p)) ? p : p.charAt(0).toUpperCase() + p.slice(1)).join("");
+// texto digitado ("Varginha/MG", "varginha mg", "Varginha - MG") -> "Cidade/UF" (com a grafia da lista, se ela já tiver a cidade), ou ""
+function cidadeDoTexto(v){
+  v = semControle(v).replace(/\s+/g, " ").trim();
+  const m = v.match(/^(.+?)\s*(?:\/|-|,|\s)\s*([A-Za-z]{2})$/);
+  if(!m) return "";
+  const uf = m[2].toUpperCase();
+  if(!UFS.includes(uf)) return "";
+  const nome = m[1].trim();
+  const daLista = Object.keys(cidades).find(k => norm(k) === norm(nome + "/" + uf));
+  const c = daLista || capitalizar(nome) + "/" + uf;
+  return CIDADE_UF.test(c) ? c : "";
+}
+async function carregarCidades(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  try{
+    const r = await fetch(ARQ_CIDADES, {cache: "no-store"});
+    if(!r.ok) return;
+    const j = await r.json();
+    if(!j || typeof j !== "object" || Array.isArray(j)) return;
+    cidades = j;
+    const dl = $("listaCidades");
+    dl.textContent = "";
+    Object.keys(j).filter(k => { const m = k.match(CIDADE_UF); return m && UFS.includes(m[2]); })
+      .sort((a, b) => a.localeCompare(b, "pt-BR", {sensitivity: "base"}))
+      .forEach(k => { const o = document.createElement("option"); o.value = k; dl.appendChild(o); });
+  }catch(e){ /* sem sugestões: a pessoa digita */ }
+}
+function distanciaKm(lat1, lon1, lat2, lon2){
+  const r = x => x * Math.PI / 180, dLat = r(lat2 - lat1), dLon = r(lon2 - lon1);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+// a cidade da lista mais perto (até RAIO_CIDADE_KM), ou ""
+function cidadeMaisPerto(lat, lon){
+  let melhor = "", menor = Infinity;
+  Object.keys(cidades).forEach(k => {
+    const p = cidades[k];
+    if(!p || typeof p.lat !== "number" || typeof p.lon !== "number" || !CIDADE_UF.test(k)) return;
+    const d = distanciaKm(lat, lon, p.lat, p.lon);
+    if(d < menor){ menor = d; melhor = k; }
+  });
+  return menor <= RAIO_CIDADE_KM ? melhor : "";
+}
+// longe das cidades da lista: pergunta ao OpenStreetMap qual é a cidade (manda a posição arredondada, ~1 km)
+async function cidadePeloMapa(lat, lon){
+  const controle = new AbortController();
+  const relogio = setTimeout(() => controle.abort(), TEMPO_MS);
+  try{
+    const r = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=pt-BR&lat=" + lat.toFixed(2) + "&lon=" + lon.toFixed(2),
+      {cache: "no-store", signal: controle.signal});
+    if(!r.ok) return "";
+    const j = await r.json();
+    const a = (j && j.address) || {};
+    const iso = String(a["ISO3166-2-lvl4"] || "");
+    const uf = iso.startsWith("BR-") ? iso.slice(3) : "";
+    const nome = a.city || a.town || a.village || a.municipality || "";
+    return uf && nome ? cidadeDoTexto(nome + "/" + uf) : "";
+  }finally{
+    clearTimeout(relogio);
+  }
+}
+const ROTULO_LOCAL = "📍 Usar minha localização";
+$("usarLocal").addEventListener("click", () => {
+  const b = $("usarLocal");
+  if(!navigator.geolocation){ dica("msgCidade", "Este aparelho não informa a localização. Digite a cidade.", "aviso"); $("fCidade").focus(); return; }
+  b.disabled = true;
+  b.textContent = "📍 Procurando a sua cidade…";
+  dica("msgCidade", "O aparelho pode pedir permissão para usar a localização.");
+  const fim = () => { b.disabled = false; b.textContent = ROTULO_LOCAL; };
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const {latitude, longitude} = pos.coords;
+    let c = cidadeMaisPerto(latitude, longitude);
+    if(!c){ try{ c = await cidadePeloMapa(latitude, longitude); }catch(e){ c = ""; } }
+    fim();
+    if(!c){ dica("msgCidade", "Não consegui descobrir a cidade. Digite abaixo, no formato Cidade/UF.", "aviso"); $("fCidade").focus(); return; }
+    cidadeDaLocal = c;
+    cidadeConfirmada = false;
+    $("fCidade").value = c;
+    $("fCidade").removeAttribute("aria-invalid");
+    $("textoCidade").textContent = "📍 Você está em " + c + ". É a sua cidade?";
+    $("confirmaCidade").hidden = false;
+    dica("msgCidade", "");
+    $("cidadeSim").focus();
+  }, err => {
+    fim();
+    dica("msgCidade", err && err.code === 1 ? "Sem permissão para a localização. Tudo bem: digite a cidade abaixo." : "Não consegui a localização agora. Digite a cidade abaixo.", "aviso");
+    $("fCidade").focus();
+  }, {enableHighAccuracy: false, timeout: TEMPO_MS, maximumAge: 600000});
+});
+$("cidadeSim").addEventListener("click", () => {
+  cidadeConfirmada = true;
+  $("confirmaCidade").hidden = true;
+  dica("msgCidade", "✓ " + $("fCidade").value, "ok");
+});
+$("cidadeNao").addEventListener("click", () => {
+  cidadeDaLocal = ""; cidadeConfirmada = false;
+  $("confirmaCidade").hidden = true;
+  $("fCidade").value = "";
+  dica("msgCidade", "Digite a sua cidade no formato Cidade/UF (ex.: Varginha/MG).");
+  $("fCidade").focus();
+});
+$("fCidade").addEventListener("input", () => {
+  if($("fCidade").value !== cidadeDaLocal){ cidadeDaLocal = ""; cidadeConfirmada = false; $("confirmaCidade").hidden = true; }
+  $("fCidade").removeAttribute("aria-invalid");
+  dica("msgCidade", "");
+});
+$("fCidade").addEventListener("blur", () => {
+  const v = $("fCidade").value.trim();
+  if(!v || cidadeDaLocal) return;
+  const c = cidadeDoTexto(v);
+  if(c){ $("fCidade").value = c; dica("msgCidade", "✓ " + c, "ok"); }
+  else dica("msgCidade", "Use o formato Cidade/UF, por exemplo Varginha/MG.", "aviso");
+});
+
+/* ---------- lista pública e banco: quem já tem cadastro ---------- */
+let listaPublica = null;
+function carregarLista(){
+  if(listaPublica) return listaPublica;
+  const p = (async () => {
+    if(!/^https?:$/.test(location.protocol)) return {estado: "indisponivel"};
+    const controle = new AbortController();
+    const relogio = setTimeout(() => controle.abort(), TEMPO_MS);
+    try{
+      const r = await fetch(ARQ_CONTATOS, {cache: "no-store", signal: controle.signal});
+      if(!r.ok) return {estado: "erro"};
+      const j = await r.json();
+      return Array.isArray(j) ? {estado: "ok", contatos: j.filter(x => x && typeof x === "object")} : {estado: "erro"};
+    }catch(e){ return {estado: "erro"}; }
+    finally{ clearTimeout(relogio); }
+  })();
+  listaPublica = p;
+  p.then(r => { if(r.estado === "erro" && listaPublica === p) listaPublica = null; });
+  return p;
+}
+const numerosDe = c => [c.whatsapp, ...(Array.isArray(c.telefones) ? c.telefones : []).map(t => typeof t === "string" ? t : t && t.numero)]
+  .map(nacional).filter(n => n.length >= 10);
+const acharPorTelefone = (contatos, w) => contatos.find(c => numerosDe(c).includes(w)) || null;
+const acharPorInstagram = (contatos, u) => contatos.find(c => typeof c.instagram === "string" && String(instaDoCampo(c.instagram).valor || "").toLowerCase() === u.toLowerCase()) || null;
+const urlDoBanco = w => API_FIRESTORE + "/v1/projects/" + encodeURIComponent(FIREBASE.projectId) + "/databases/(default)/documents/" + COLECAO +
+  "/" + encodeURIComponent(w) + "?key=" + encodeURIComponent(FIREBASE.apiKey);
+// o cadastro deste número no banco: {estado: "nao" | "achou" | "negado" | "erro" | "pulado", formato, status}
+async function lerCadastro(w){
+  if(DEMO) return {estado: "pulado"};
+  const controle = new AbortController();
+  const relogio = setTimeout(() => controle.abort(), TEMPO_MS);
+  try{
+    const r = await fetch(urlDoBanco(w), {signal: controle.signal, credentials: "omit", cache: "no-store"});
+    if(r.status === 404) return {estado: "nao"};
+    if(r.status === 401 || r.status === 403) return {estado: "negado"};
+    if(r.status !== 200) return {estado: "erro"};
+    const j = await r.json();
+    const f = (j && j.fields) || {};
+    const s = k => (f[k] && typeof f[k].stringValue === "string") ? f[k].stringValue : "";
+    return {estado: "achou", formato: s("formato"), status: s("status")};
+  }catch(e){ return {estado: "erro"}; }
+  finally{ clearTimeout(relogio); }
+}
+const linkCompleto = busca => PAGINA_COMPLETA + "?buscar=" + encodeURIComponent(busca);
+function mostrarJaExiste(texto, busca){
+  $("textoJaExiste").textContent = texto;
+  $("linkJaExiste").href = linkCompleto(busca);
+  $("jaExiste").hidden = false;
+}
+// confere o WhatsApp: {tipo: "livre" | "rapido" | "lista" | "completo" | "outro", nome?}; "lista", "completo" e "outro" não deixam enviar
+let conferencia = 0;
+async function conferirWhats(){
+  const n = ++conferencia;
+  const w = nacional($("fWhats").value);
+  $("jaExiste").hidden = true;
+  if(!/^\d{10,11}$/.test(w)) return null;
+  const [lista, doc] = await Promise.all([carregarLista(), lerCadastro(w)]);
+  if(n !== conferencia) return null;
+  const naLista = lista.estado === "ok" ? acharPorTelefone(lista.contatos, w) : null;
+  let s = {tipo: "livre"};
+  if(naLista) s = {tipo: "lista", nome: String(naLista.nome || "")};
+  else if(doc.estado === "achou" && doc.formato === "cadastro-rapido") s = {tipo: "rapido"};
+  else if(doc.estado === "achou" && doc.status === "pendente") s = {tipo: "completo"};
+  else if(doc.estado === "achou") s = {tipo: "outro"};
+  if(s.tipo === "lista") mostrarJaExiste("Você já está na lista" + (s.nome ? " como " + s.nome : "") + "! Para atualizar os seus dados, use o cadastro completo.", w);
+  else if(s.tipo === "completo") mostrarJaExiste("Você já tem um cadastro esperando a conferência do organizador. Para mudar alguma coisa, use o cadastro completo.", w);
+  else if(s.tipo === "outro") mostrarJaExiste("Este número já tem um cadastro. Para mudar alguma coisa, use o cadastro completo.", w);
+  else if(s.tipo === "rapido") dica("msgWhats", "Você já mandou um pedido com este número: enviar de novo atualiza o pedido.", "");
+  return s;
+}
+$("fWhats").addEventListener("input", () => { conferencia++; $("jaExiste").hidden = true; $("fWhats").removeAttribute("aria-invalid"); dica("msgWhats", ""); });
+$("fWhats").addEventListener("blur", () => {
+  const w = nacional($("fWhats").value);
+  if(!$("fWhats").value.trim()) return;
+  if(!/^\d{10,11}$/.test(w)){ dica("msgWhats", "Coloque o DDD e o número (10 ou 11 números).", "aviso"); return; }
+  $("fWhats").value = formatarTel(w);
+  conferirWhats();
+});
+// Instagram que já está na lista: pode enviar (o WhatsApp e a cidade completam o cadastro que o organizador fez), ou completar tudo
+let conferenciaInsta = 0;
+$("fInsta").addEventListener("input", () => { conferenciaInsta++; $("fInsta").removeAttribute("aria-invalid"); dica("msgInsta", ""); });
+$("fInsta").addEventListener("blur", async () => {
+  const n = ++conferenciaInsta;
+  const r = instaDoCampo($("fInsta").value);
+  if(!$("fInsta").value.trim()) return;
+  if(!r.valor){ dica("msgInsta", r.erro, "aviso"); return; }
+  $("fInsta").value = "@" + r.valor;
+  const lista = await carregarLista();
+  if(n !== conferenciaInsta || lista.estado !== "ok") return;
+  const c = acharPorInstagram(lista.contatos, r.valor);
+  const el = $("msgInsta");
+  el.textContent = "";
+  el.className = "dica";
+  if(!c) return;
+  const a = document.createElement("a");
+  a.href = linkCompleto("@" + r.valor);
+  a.textContent = "completar tudo pelo cadastro completo";
+  el.append("Esse Instagram já está na lista" + (c.nome ? " (" + String(c.nome) + ")" : "") +
+    ". Pode enviar: o seu WhatsApp e a cidade completam o cadastro que já existe. Ou, se preferir, ", a, ".");
+});
+
+/* ---------- envio ---------- */
+function paraValor(v){
+  if(v === null) return {nullValue: null};
+  if(typeof v === "boolean") return {booleanValue: v};
+  if(typeof v === "number") return Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v};
+  if(typeof v === "string") return {stringValue: v};
+  if(Array.isArray(v)) return {arrayValue: v.length ? {values: v.map(paraValor)} : {}};
+  return {mapValue: {fields: paraCampos(v)}};
+}
+function paraCampos(o){
+  const f = {};
+  Object.keys(o).forEach(k => { if(o[k] !== undefined) f[k] = paraValor(o[k]); });
+  return f;
+}
+// grava o pedido no documento com o nome do WhatsApp (PATCH = cria; se já existia um pedido rápido, troca por este)
+async function gravar(payload){
+  const controle = new AbortController();
+  const relogio = setTimeout(() => controle.abort(), TEMPO_MS + 10000);
+  try{
+    const r = await fetch(urlDoBanco(payload.id), {method: "PATCH", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({fields: paraCampos(payload)}), signal: controle.signal, credentials: "omit", cache: "no-store"});
+    return r.status;
+  }catch(e){ return 0; }
+  finally{ clearTimeout(relogio); }
+}
+function mostrarErros(erros){
+  const box = $("msgEnvio");
+  box.textContent = "";
+  box.className = "resultado erro";
+  if(erros.length === 1) box.textContent = erros[0][1];
+  else{
+    box.append("Falta pouco:");
+    const ul = document.createElement("ul");
+    erros.forEach(([, t]) => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+    box.appendChild(ul);
+  }
+  box.hidden = false;
+  erros.forEach(([id]) => { const el = $(id); if(el && el.tagName === "INPUT" && el.type !== "checkbox") el.setAttribute("aria-invalid", "true"); });
+  $("rotAutoriza").classList.toggle("invalido", erros.some(([id]) => id === "fAutoriza"));
+  const primeiro = $(erros[0][0]);
+  if(primeiro){ primeiro.scrollIntoView({block: "center", behavior: "smooth"}); if(primeiro.focus) primeiro.focus({preventScroll: true}); }
+}
+let enviando = false;
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if(enviando) return;
+  $("msgEnvio").hidden = true;
+  const erros = [];
+  const cidade = cidadeDoTexto($("fCidade").value);
+  if(!cidade) erros.push(["fCidade", "Cidade: use a localização ou escreva no formato Cidade/UF (ex.: Varginha/MG)."]);
+  else if(cidadeDaLocal && !cidadeConfirmada) erros.push(["cidadeSim", "Cidade: confirme se " + cidade + " é a sua cidade (Sim, é essa) ou troque (Não, é outra)."]);
+  const ig = instaDoCampo($("fInsta").value);
+  if(!ig.valor) erros.push(["fInsta", "Instagram: " + (ig.erro || "escreva o seu @usuario.")]);
+  const w = nacional($("fWhats").value);
+  if(!/^\d{10,11}$/.test(w)) erros.push(["fWhats", "WhatsApp: coloque o DDD e o número (10 ou 11 números)."]);
+  if(!$("fAutoriza").checked) erros.push(["fAutoriza", "Marque a autorização para aparecer na lista."]);
+  if(erros.length){ mostrarErros(erros); return; }
+  $("rotAutoriza").classList.remove("invalido");
+
+  enviando = true;
+  const b = $("enviar");
+  b.disabled = true;
+  b.textContent = "Conferindo…";
+  try{
+    const s = await conferirWhats();
+    if(s && ["lista", "completo", "outro"].includes(s.tipo)){ $("jaExiste").scrollIntoView({block: "center", behavior: "smooth"}); return; }
+    const payload = {
+      formato: "cadastro-rapido", versao: 1, status: "pendente", id: w, enviadoEm: new Date().toISOString(),
+      contato: {whatsapp: w, instagram: ig.valor, cidades: [cidade]},
+      autorizacao: {aceita: true, texto: TEXTO_AUTORIZACAO},
+      meta: {pagina: PAGINA, segundos: Math.min(31536000, Math.max(0, Math.round((Date.now() - inicio) / 1000)))}
+    };
+    b.textContent = "Enviando…";
+    let http = 200;
+    if(DEMO){ $("demoPayload").textContent = "O que seria enviado:\n" + JSON.stringify(payload, null, 2); $("demoPayload").hidden = false; }
+    else http = await gravar(payload);
+    if(http === 200){
+      $("form").hidden = true;
+      $("completarAgora").href = linkCompleto(w);
+      $("pronto").hidden = false;
+      $("pronto").scrollIntoView({block: "start", behavior: "smooth"});
+      return;
+    }
+    const box = $("msgEnvio");
+    box.className = "resultado erro";
+    box.textContent = http === 429 ? "Muitos envios ao mesmo tempo. Espere um minuto e toque em enviar de novo."
+      : (http === 401 || http === 403) ? "O banco não aceitou o envio. Se você já tem cadastro com este número, use o cadastro completo; se não, tente de novo mais tarde."
+      : "Não consegui enviar (a internet caiu?). Confira a conexão e toque em enviar de novo.";
+    box.hidden = false;
+  }finally{
+    enviando = false;
+    b.disabled = false;
+    b.textContent = "Quero entrar na lista";
+  }
+});
+$("fAutoriza").addEventListener("change", () => $("rotAutoriza").classList.remove("invalido"));
+
+/* ---------- começo ---------- */
+$("textoAutoriza").textContent = TEXTO_AUTORIZACAO;
+$("avisoDemo").hidden = !DEMO;
+carregarCidades();
+</script>
+</body>
+</html>
+<!--
+================================================================
+ Cadastro rápido · Lista de Contatos de Músicos
+ Arquivo: Cadastro_Rapido_Musicos_v1.0.html
+ No site: publique como cadastro-rapido.html, na mesma pasta do
+ index.html e do cadastro.html (ela lê o contatos.json e o
+ cidades.json de lá e manda para o cadastro.html quem quiser
+ completar).
+ Regras do Firestore: Firestore_Regras_Cadastros_v7.rules
+ (publique ANTES desta página).
+================================================================
+ HISTÓRICO DE VERSÕES (mais recente primeiro)
+----------------------------------------------------------------
+v1.0 — 2026-11-24
+  - Primeira versão: um pedido de interesse para entrar na lista, com
+    só três coisas: a cidade, o Instagram e o WhatsApp (os três
+    obrigatórios). Nome e instrumentos o organizador completa no
+    Painel, olhando o Instagram.
+  - Cidade: botão "📍 Usar minha localização". Usa a cidade da lista
+    mais perto (até 25 km); longe delas, pergunta ao OpenStreetMap com
+    a posição arredondada (~1 km). Mostra "Você está em X. É a sua
+    cidade?" (Sim, é essa / Não, é outra), porque a localização é onde
+    a pessoa está agora, não onde mora. Também dá para digitar
+    (Cidade/UF, com sugestões das cidades da lista). Só a cidade é
+    guardada.
+  - Instagram: aceita @usuario ou o link do perfil. Lembra que a foto
+    da lista será a do Instagram, desde que tenha cara profissional.
+    Instagram que já está na lista: avisa que o envio completa o
+    cadastro que já existe (ou leva ao cadastro completo).
+  - WhatsApp: quem já está na lista, ou já tem um cadastro completo
+    esperando conferência, não envia o rápido: vê o botão "Abrir o
+    cadastro completo" (já buscando o número). Pedido rápido anterior
+    com o mesmo número é trocado pelo novo.
+  - Autorização (LGPD) obrigatória, com texto próprio.
+  - Envio: documento "cadastro-rapido" (versao 1) na coleção
+    cadastros, com o WhatsApp como nome do documento, status
+    "pendente". No fim, "Completar meu cadastro agora" abre o cadastro
+    completo já com o pedido carregado.
+  - ?demo=1 no endereço: não envia, só mostra o que seria enviado.
+================================================================
+-->
