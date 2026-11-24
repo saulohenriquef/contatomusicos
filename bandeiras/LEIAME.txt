@@ -1,0 +1,25 @@
+Bandeiras dos países (lista de contatos dos músicos)
+====================================================
+
+Esta pasta vai no repositório do site, ao lado do index.html, com o nome "bandeiras".
+A lista mostra a bandeira pequena ao lado da cidade de quem mora fora do Brasil
+(ex.: Pompano/FL e a bandeira dos EUA). Se a bandeira do país não estiver aqui, a lista
+mostra a sigla do país no lugar (EUA, ARG, FRA...).
+
+Para pôr a bandeira de outro país:
+  - o nome do arquivo é o código do país com 2 letras, em minúsculas, e .svg
+    (ex.: de.svg para a Alemanha, es.svg para a Espanha, pt.svg para Portugal,
+    jp.svg para o Japão, ca.svg para o Canadá, mx.svg para o México);
+  - o código é o mesmo que fica no fim da cidade no Lista_Contatos_Musicos_cidades.json
+    (ex.: "Pompano/FL/US" usa us.svg);
+  - de preferência no formato 3:2 (ex.: viewBox="0 0 30 20"): a lista mostra todas
+    com o mesmo tamanho (15 x 10).
+
+Bandeiras que já estão aqui:
+  us.svg  Estados Unidos      ar.svg  Argentina       py.svg  Paraguai
+  uy.svg  Uruguai             fr.svg  França          it.svg  Itália
+  gb.svg  Reino Unido         ua.svg  Ucrânia         in.svg  Índia
+  cn.svg  China               no.svg  Noruega
+
+Versão 1 — 2026-11-24
+  - Primeiras 11 bandeiras, simplificadas para o tamanho pequeno.
