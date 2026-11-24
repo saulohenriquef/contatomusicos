@@ -580,5 +580,34 @@
     "abcDisponibilidade": "nao",
     "instagram": "cantormatheusteodoro",
     "whatsapp": ""
+  },
+  {
+    "nome": "M2 Eventos",
+    "categoria": "empresa",
+    "foto": "m2-eventos.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ENM"],
+    "instagram": "m2_eventos",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Clesinho Som e Luz (CSL)",
+    "categoria": "empresa",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ENM"],
+    "instagram": "clesinhosomluz",
+    "whatsapp": ""
+  },
+  {
+    "nome": "JP Som e Luz",
+    "categoria": "empresa",
+    "foto": "jp-som-e-luz.jpg",
+    "cidades": ["Itaú de Minas/MG"],
+    "instrumentos": [],
+    "selos": ["ENM"],
+    "instagram": "jpsom.luz.oficial",
+    "whatsapp": ""
   }
 ]
