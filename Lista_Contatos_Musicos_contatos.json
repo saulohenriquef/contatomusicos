@@ -547,5 +547,16 @@
     "abcDisponibilidade": "nao",
     "instagram": "kaykerhyan",
     "whatsapp": ""
+  },
+  {
+    "nome": "Breno & Victor",
+    "categoria": "artista",
+    "foto": "breno-victor.jpg",
+    "cidades": ["Piumhi/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "brenoevictor",
+    "whatsapp": ""
   }
 ]
