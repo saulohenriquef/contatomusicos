@@ -461,6 +461,19 @@
     .abrir-filtros{display:none !important}
     .sugestoes{order:1}
   }
+  /* ---------- v17: fora do Brasil (bandeira) e OOR (radar) ---------- */
+  .bandeira{width:15px; height:10px; vertical-align:-1px; border-radius:1.5px; box-shadow:0 0 0 .5px rgba(0,0,0,.3); margin-left:1px}
+  .sigla-pais{font-size:.78em; font-weight:700; letter-spacing:.03em; margin-left:1px}
+  .oor{display:inline-flex; align-items:center; gap:4px; font-weight:700; letter-spacing:.05em; font-size:.92em; vertical-align:-2px; cursor:help}
+  .radar{position:relative; display:inline-block; width:15px; height:15px; border-radius:50%; flex:none; overflow:hidden;
+    background:radial-gradient(circle, #2fbf71 0 1px, transparent 1.5px), radial-gradient(circle, transparent 0 3.6px, rgba(47,191,113,.7) 3.6px 4.3px, transparent 4.4px), #08261a;
+    box-shadow:inset 0 0 0 1px #2fbf71}
+  .radar::before{content:""; position:absolute; inset:0;
+    background:linear-gradient(rgba(47,191,113,.35), rgba(47,191,113,.35)) center / 1px 100% no-repeat, linear-gradient(rgba(47,191,113,.35), rgba(47,191,113,.35)) center / 100% 1px no-repeat}
+  .radar::after{content:""; position:absolute; inset:0; border-radius:50%; background:conic-gradient(rgba(47,191,113,0) 0 250deg, rgba(47,191,113,.9) 360deg);
+    animation:varreduraRadar 2.6s linear infinite}
+  @keyframes varreduraRadar{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){ .radar::after{animation:none} }
 </style>
 </head>
 <body>
@@ -556,7 +569,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v16.2
+    Lista de Contatos de Músicos · v17
   </footer>
 </div>
 
@@ -1177,9 +1190,117 @@ function linkInstagram(v){
   return "https://www.instagram.com/" + v.replace(/^@/,"");
 }
 
-// número só com dígitos e sem o 55 do Brasil
+/* ---------- fora do Brasil: países ----------
+   Cidade do Brasil: "Cidade/UF", como sempre. Cidade de outro país: "Cidade/Região/XX", com XX = o código do país
+   (2 letras, ISO: US, AR, FR...) e a região opcional ("Pompano/FL/US", "Paris//FR"). Os nomes dos países vêm do
+   próprio navegador, em português. SIGLAS_PAIS: o que aparece quando não há a bandeira do país. */
+const SIGLAS_PAIS = {US: "EUA", AR: "ARG", PY: "PAR", UY: "URU", FR: "FRA", IT: "ITA", GB: "UK", UA: "UCR", IN: "IND", CN: "CHN", NO: "NOR"};
+const PAISES_FREQUENTES = ["US", "AR", "PY", "UY", "FR", "IT", "GB", "UA", "IN", "CN", "NO"];
+const NAO_PAIS = new Set(["AC", "CP", "DG", "EA", "EU", "EZ", "IC", "QO", "TA", "UN", "XA", "XB", "ZZ"]);
+let nomesDePais = null;
+function nomePais(cc){
+  cc = String(cc == null ? "" : cc).toUpperCase();
+  try{
+    if(!nomesDePais) nomesDePais = new Intl.DisplayNames(["pt-BR"], {type: "region", fallback: "none"});
+    const n = nomesDePais.of(cc);
+    if(n && n !== cc) return n;
+  }catch(e){ /* navegador sem os nomes: fica a sigla */ }
+  return SIGLAS_PAIS[cc] || cc;
+}
+const siglaPais = cc => { cc = String(cc == null ? "" : cc).toUpperCase(); return SIGLAS_PAIS[cc] || cc; };
+// "Pompano/FL/US" -> {cidade: "Pompano", regiao: "FL", pais: "US"}; "Varginha/MG" -> {cidade: "Varginha", regiao: "MG", pais: ""} (Brasil)
+function partesCidade(k){
+  const s = String(k == null ? "" : k).trim();
+  let m = s.match(/^([^\/]+)\/([^\/]*)\/([A-Za-z]{2})$/);
+  if(m){ const cc = m[3].toUpperCase(); return {cidade: m[1].trim(), regiao: m[2].trim(), pais: cc === "BR" ? "" : cc}; }
+  m = s.match(/^([^\/]+)\/([^\/]*)$/);
+  return m ? {cidade: m[1].trim(), regiao: m[2].trim(), pais: ""} : {cidade: s, regiao: "", pais: ""};
+}
+// a cidade sem o país: "Varginha/MG", "Pompano/FL", "Paris"
+function cidadeSemPais(k){ const p = partesCidade(k); return p.pais ? p.cidade + (p.regiao ? "/" + p.regiao : "") : String(k == null ? "" : k).trim(); }
+// para ler num texto: "Varginha/MG", "Pompano/FL (Estados Unidos)"
+function textoCidade(k){ const p = partesCidade(k); return cidadeSemPais(k) + (p.pais ? " (" + nomePais(p.pais) + ")" : ""); }
+// a chave de uma cidade de outro país: ("Pompano Beach", "FL", "us") -> "Pompano Beach/FL/US"
+const chaveCidadeExterior = (cidade, regiao, cc) => String(cidade).replace(/\s+/g, " ").trim() + "/" +
+  String(regiao == null ? "" : regiao).replace(/[\/|]/g, " ").replace(/\s+/g, " ").trim().slice(0, 40) + "/" + String(cc).toUpperCase();
+// os países do mundo com o nome em português, em ordem alfabética: [[código, nome]]
+function paisesDoMundo(){
+  const r = [];
+  for(let a = 65; a <= 90; a++) for(let b = 65; b <= 90; b++){
+    const cc = String.fromCharCode(a, b);
+    if(cc === "BR" || NAO_PAIS.has(cc)) continue;
+    const nome = nomePais(cc);
+    if(nome !== cc && nome !== SIGLAS_PAIS[cc]) r.push([cc, nome]);
+  }
+  if(!r.length) PAISES_FREQUENTES.forEach(cc => r.push([cc, nomePais(cc)]));   // navegador sem a lista: ficam os mais comuns
+  return r.sort((x, y) => x[1].localeCompare(y[1], "pt-BR"));
+}
+// <select> de país: Brasil, os mais comuns e, depois, todos
+function preencherPaises(sel){
+  sel.textContent = "";
+  const opcao = (cc, nome, pai) => { const o = document.createElement("option"); o.value = cc; o.textContent = nome; pai.appendChild(o); };
+  opcao("BR", "Brasil", sel);
+  const g1 = document.createElement("optgroup"), g2 = document.createElement("optgroup");
+  g1.label = "Mais comuns"; g2.label = "Todos os países";
+  PAISES_FREQUENTES.map(cc => [cc, nomePais(cc)]).sort((x, y) => x[1].localeCompare(y[1], "pt-BR")).forEach(([cc, n]) => opcao(cc, n, g1));
+  paisesDoMundo().forEach(([cc, n]) => opcao(cc, n, g2));
+  sel.append(g1, g2);
+  sel.value = "BR";
+}
+
+/* ---------- fora do Brasil: telefone ----------
+   Do Brasil: DDD + número, como sempre. De outro país: "+", o código do país e o número ("+19545550123"); quem digita
+   começa com + (ou 00). No banco, o nome do cadastro de um número de fora é "00" + os dígitos (o "+" não serve ali). */
+const doExterior = n => String(n == null ? "" : n).startsWith("+");
+const foneValido = n => doExterior(n) ? /^\+[1-9]\d{6,14}$/.test(n) : /^\d{10,11}$/.test(String(n == null ? "" : n));
+// quantos dígitos tem o código do país (1: +1, +7; 2: +33, +44, +54...; 3: +351, +595, +598...)
+const tamanhoDDI = d => /^[17]/.test(d) ? 1 : /^(2[07]|3[0-469]|4[013-9]|5[1-8]|6[0-6]|8[1246]|9[0-58])/.test(d) ? 2 : 3;
+function formatarExterior(n){                     // "+19545550123" -> "+1 954 555 0123"
+  const d = String(n == null ? "" : n).replace(/\D/g, ""), k = tamanhoDDI(d);
+  let resto = d.slice(k);
+  const g = [];
+  while(resto.length > 4){ const t = resto.length === 8 ? 4 : 3; g.push(resto.slice(0, t)); resto = resto.slice(t); }
+  if(resto) g.push(resto);
+  return "+" + d.slice(0, k) + (g.length ? " " + g.join(" ") : "");
+}
+const idDoNumero = n => doExterior(n) ? "00" + String(n).slice(1) : String(n == null ? "" : n);
+const numeroDoId = id => /^00[1-9]\d{6,14}$/.test(String(id)) ? "+" + String(id).slice(2) : String(id == null ? "" : id);
+
+/* bandeira pequena do país (arquivo bandeiras/xx.svg, no site); sem o arquivo, fica a sigla (EUA, ARG...) */
+const PASTA_BANDEIRAS = "bandeiras/";
+function bandeira(cc){
+  const sigla = siglaPais(cc), nome = nomePais(cc);
+  const img = document.createElement("img");
+  img.className = "bandeira"; img.alt = sigla; img.title = nome;
+  img.width = 15; img.height = 10; img.decoding = "async";
+  img.addEventListener("error", () => {
+    const s = document.createElement("span");
+    s.className = "sigla-pais"; s.textContent = sigla; s.title = nome;
+    img.replaceWith(s);
+  }, {once: true});
+  img.src = PASTA_BANDEIRAS + String(cc).toLowerCase() + ".svg";
+  return img;
+}
+/* OOR (out of range, fora de alcance): quem está a mais de ALCANCE_KM de quem abriu a lista (com "Perto de mim").
+   No lugar dos km, aparece um radar pequeno que procura e não acha nada, e "OOR". */
+const ALCANCE_KM = 3000;
+function selosOOR(){
+  const s = document.createElement("span");
+  s.className = "oor";
+  s.title = "Fora de alcance (out of range): mais de " + ALCANCE_KM.toLocaleString("pt-BR") + " km de você";
+  const r = document.createElement("span");
+  r.className = "radar"; r.setAttribute("aria-hidden", "true");
+  s.append(r, "OOR");
+  return s;
+}
+
+// número só com dígitos e sem o 55 do Brasil; de outro país, "+" e os dígitos (+19545550123)
 function nacional(num){
-  const d = String(num||"").replace(/\D/g,"");
+  const s = String(num == null ? "" : num).trim();
+  let d = s.replace(/\D/g, "");
+  const fora = s.startsWith("+") || /^00[1-9]/.test(d);   // de outro país: + (ou 00) e o código do país
+  if(fora && !s.startsWith("+")) d = d.slice(2);
+  if(fora && d && !d.startsWith("55")) return "+" + d;
   return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d;
 }
 
@@ -1189,16 +1310,17 @@ const MENSAGEM_WHATSAPP = "Olá, te encontrei pela lista Contatos dos Músicos."
 function linkWhatsapp(num){
   const d = nacional(num);
   if(!d) return "";
-  return "https://wa.me/55" + d + (MENSAGEM_WHATSAPP ? "?text=" + encodeURIComponent(MENSAGEM_WHATSAPP) : "");
+  return "https://wa.me/" + (doExterior(d) ? d.slice(1) : "55" + d) + (MENSAGEM_WHATSAPP ? "?text=" + encodeURIComponent(MENSAGEM_WHATSAPP) : "");
 }
 
 function linkTel(num){
   const d = nacional(num);
-  return d ? "tel:+55" + d : "";
+  return d ? "tel:" + (doExterior(d) ? d : "+55" + d) : "";
 }
 
 function formatarTel(num){
   const d = nacional(num);
+  if(doExterior(d)) return formatarExterior(d);
   if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
   if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
   return d;
@@ -1224,7 +1346,7 @@ async function copiarTexto(t){
 }
 
 /* ---------- campos opcionais: só aparecem quando o contato tem ---------- */
-const ehCelular = n => n.length === 11 && n[2] === "9";
+const ehCelular = n => doExterior(n) || (n.length === 11 && n[2] === "9");   // de outro país: não dá para saber; conta como celular
 
 // aceita só endereços http(s); qualquer outro tipo (javascript:, data:...) é descartado
 function urlSegura(v){
@@ -1310,7 +1432,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v16";
+const VERSAO_LISTA = "v17";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -1745,7 +1867,18 @@ function criarCartao(c, estado = abertos, noBalao = false){
   const local = document.createElement("div");
   local.className = "line";
   const d = distanciaDe(c);
-  local.textContent = "📍 " + (c.cidades||[]).join(" e ") + (isFinite(d) ? " · " + textoDist(d) : "");
+  local.append("📍 ");
+  (c.cidades||[]).forEach((k, i) => {
+    if(i) local.append(" e ");
+    const p = partesCidade(k);
+    local.append(cidadeSemPais(k));
+    if(p.pais){ local.append(" "); local.appendChild(bandeira(p.pais)); }
+  });
+  if(isFinite(d)){
+    local.append(" · ");
+    if(d > ALCANCE_KM) local.appendChild(selosOOR());
+    else local.append(textoDist(d));
+  }
 
   const tags = document.createElement("div");
   tags.className = "tags";
@@ -1989,7 +2122,7 @@ function render(){
     if(!naAba(c, categoriaAtiva)) return false;
     if(categoriaAtiva === "musico" && !areasSelecionadas.some(area => tagsDaArea(c, area).length)) return false;
     if(categoriaAtiva === "musico" && !passaInstr(c)) return false;
-    const termos = [c.nome,c.referencia,c.tipoArtista,(c.cidades||[]).join(" "),(c.instrumentos||[]).join(" "),
+    const termos = [c.nome,c.referencia,c.tipoArtista,(c.cidades||[]).map(k => { const p = partesCidade(k); return cidadeSemPais(k) + (p.pais ? " " + nomePais(p.pais) + " " + siglaPais(p.pais) : ""); }).join(" "),(c.instrumentos||[]).join(" "),
       (c.selos||[]).join(" "), (c.hashtags||[]).join(" "), (c.servicos||[]).join(" "), c.bio, c.observacoes].join(" ");
     return !q || norm(termos).includes(q);
   });
@@ -2117,7 +2250,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v16.2.html
+ Arquivo: Lista_Contatos_Musicos_v17.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2639,6 +2772,23 @@ v16.2 — 2026-11-24
   - Bloco compartilhado (AJ): formatarNome respeita siglas quando a
     pessoa não escreveu tudo em maiúsculas (palavra toda em maiúsculas
     sem vogal, ou de 2 letras: WQ, MPB); limparContato não mexe no nome.
+----------------------------------------------------------------
+v17 — 2026-11-24
+  - Quem mora fora do Brasil: a cidade fica no formato
+    "Cidade/Região/XX" no contatos.json e no cidades.json (XX = código
+    do país, ex.: "Pompano/FL/US"; a região pode ficar vazia:
+    "Paris//FR"). O cartão mostra "Pompano/FL" e a bandeira pequena do
+    país (arquivo bandeiras/us.svg, no site). Sem o arquivo da
+    bandeira, aparece a sigla do país (EUA, ARG, FRA...). A busca acha
+    pelo nome e pela sigla do país.
+  - OOR (out of range): com "Perto de mim", quem está a mais de
+    ALCANCE_KM (3.000 km) de quem abriu a lista aparece com um radar
+    pequeno que procura e não acha nada e "OOR", no lugar dos km. O
+    radar para de girar para quem pediu menos movimento no aparelho.
+  - Telefone de outro país: no contatos.json, "+" e o código do país
+    ("+19545550123"). O cartão mostra "+1 954 555 0123", o WhatsApp
+    abre wa.me/19545550123 e o Ligar liga para +19545550123. Os
+    números do Brasil continuam como antes.
 
 ================================================================
 -->
