@@ -426,5 +426,38 @@
     "abcDisponibilidade": "nao",
     "instagram": "davifernandescantor",
     "whatsapp": "35997665956"
+  },
+  {
+    "nome": "Anderson Júnior (Andin)",
+    "categoria": "artista",
+    "foto": "anderson-junior-andin.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "andersonjrcantor",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Luan & Rafael",
+    "categoria": "artista",
+    "foto": "luan-rafael.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "luanerafael",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Amanda & Cuiabano",
+    "categoria": "artista",
+    "foto": "amanda-cuiabano.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "amandaecuiabano",
+    "whatsapp": ""
   }
 ]
