@@ -383,6 +383,11 @@
   .bandeira{width:15px; height:10px; vertical-align:-1px; border-radius:1.5px; box-shadow:0 0 0 .5px rgba(0,0,0,.3); margin-left:1px}
   .sigla-pais{font-size:.78em; font-weight:700; letter-spacing:.03em; margin-left:1px}
   @media (max-width:520px){ .linha-cidade.fora{grid-template-columns:minmax(0,1fr) auto} .linha-cidade.fora #fCidade{grid-column:1 / -1} }
+  /* ---------- v10.3: dupla: os dois nomes no "Falar com" ---------- */
+  .membros{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:6px}
+  .membros[hidden]{display:none}
+  .membros .rot-membros{font-size:.82rem; color:var(--muted)}
+  .membros .chip{min-height:34px; padding:4px 12px; font-size:.86rem}
 </style>
 </head>
 <body>
@@ -607,6 +612,7 @@
         <input id="fTipoWhatsOutro" class="entrada" type="text" maxlength="30" autocomplete="off" placeholder="Qual? (ex.: Agenda)" aria-label="Tipo do número de cadastro (escreva)" hidden>
         <input id="fContatoWhats" class="entrada" type="text" maxlength="40" autocomplete="off" placeholder="Falar com (opcional), ex.: Joana" aria-label="Número de cadastro: falar com (opcional; nome da secretária ou do empresário)">
       </div>
+      <div id="membrosWhats" class="membros" hidden></div>
       <div id="boxOcultarWhats" hidden>
         <label class="marcar" for="fOcultarWhats">
           <input id="fOcultarWhats" type="checkbox">
@@ -761,7 +767,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v10.2
+    Cadastro de Músicos · Lista de Contatos de Músicos · v10.3
   </footer>
 </div>
 
@@ -1120,7 +1126,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v10.2";
+const VERSAO = "v10.3";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -1148,7 +1154,9 @@ const MAX_ARQUIVO_MB = 30;               // arquivos de foto maiores que isso s�
 const MAX_NOME = 80, MAX_OBS = 300, MAX_INSTR = 8, MAX_NOME_INSTR = 30, MAX_CIDADES = 5, MAX_NOME_CIDADE = 60;
 const MAX_TELEFONES = 3, MAX_LINKS = 3, MAX_ROTULO = 30, MAX_URL = 200, MAX_EMAIL = 120;
 // tipo de cada telefone: o 1º já vem marcado; "Outro" abre um campo para escrever. MAX_CONTATO_FONE = "falar com" (secretária, empresário)
-const TIPOS_FONE = ["Pessoal", "Comercial", "Fixo", "Celular 2", "Recados"], TIPO_OUTRO = "Outro", MAX_CONTATO_FONE = 40;
+const TIPOS_FONE = ["Pessoal", "Membro", "Comercial", "Fixo", "Celular 2", "Recados"], TIPO_OUTRO = "Outro", MAX_CONTATO_FONE = 40;   // v10.3: + Membro
+const TIPO_MEMBRO = "Membro";
+let membrosNoForm = "";          // v10.3: os nomes da dupla já desenhados nos telefones (redesenha só quando mudam)
 // perfil completo: os limites vêm do bloco AJUDANTES (os mesmos da lista e do painel)
 const MAX_BIO = AJ.LIM.bio, MAX_SERVICOS = AJ.LIM.servicos, MAX_SERVICO = AJ.LIM.servico, MAX_HASHTAGS = AJ.LIM.hashtags, MAX_VIDEOS = AJ.LIM.videos;
 const MAX_TEXTO_HASHTAGS = 300, MAX_TEXTO_SERVICOS = 1000, MAX_URL_VIDEO = 400;
@@ -1252,6 +1260,44 @@ function porTipoFone(tipo, outro){
   $("fTipoWhatsOutro").hidden = t.tipo !== TIPO_OUTRO;
 }
 opcoesTipoFone($("fTipoWhats"), TIPOS_FONE[0]);
+// v10.3 / v23.1: nome de dupla -> os dois nomes ("Fulano e Beltrano", "Fulano & Beltrano", "Dupla Fulano + Beltrano"); outro nome -> []
+function membrosDaDupla(){
+  const t = String($("fNome").value || "").replace(/\s+/g, " ").trim()
+    .replace(/\s*\([^()]*\)$/, "")                                     // sem o apelido entre parênteses
+    .replace(/^dupla(\s+sertaneja)?\s*[:\-–—]?\s+/i, "").trim();
+  const partes = t.split(/\s*[&+]\s*|\s+e\s+/i).map(s => s.trim()).filter(Boolean);
+  if(partes.length !== 2 || partes.some(p => p.length < 2 || p.length > 40 || !/\p{L}/u.test(p))) return [];
+  return partes;
+}
+// os dois nomes da dupla como atalhos embaixo de um "Falar com": tocar escreve o nome (tocar de novo apaga) e troca Pessoal por Membro
+function atalhosMembros(caixa, campo, sel){
+  const nomes = membrosDaDupla();
+  caixa.textContent = "";
+  caixa.hidden = !nomes.length;
+  if(!nomes.length) return;
+  caixa.appendChild(criar("span", "rot-membros", "Falar com:"));
+  const marcar = () => caixa.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(norm(campo.value) === norm(b.textContent))));
+  nomes.forEach(n => {
+    const b = criar("button", "chip", n);
+    b.type = "button";
+    b.setAttribute("aria-label", "Falar com " + n);
+    b.addEventListener("click", () => {
+      const tirar = norm(campo.value) === norm(n);
+      campo.value = tirar ? "" : n;
+      if(!tirar && sel.value === TIPOS_FONE[0]){ sel.value = TIPO_MEMBRO; sel.dispatchEvent(new Event("change")); }
+      campo.dispatchEvent(new Event("input"));
+      marcar();
+    });
+    caixa.appendChild(b);
+  });
+  marcar();
+  campo._marcarMembros = marcar;
+  if(!campo._ouveMembros){ campo._ouveMembros = true; campo.addEventListener("input", () => { if(campo._marcarMembros) campo._marcarMembros(); }); }
+}
+function atualizarMembros(){
+  atalhosMembros($("membrosWhats"), $("fContatoWhats"), $("fTipoWhats"));
+  if(membrosDaDupla().join("|") !== membrosNoForm) desenharTelefones();
+}
 function limparObs(v){
   return semControle(String(v == null ? "" : v).replace(/\r\n?/g, "\n"), true)
     .replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, MAX_OBS);
@@ -1957,6 +2003,7 @@ function campoDeLinha(tipo, id, nomeAcessivel, dica, valor, max, aoMudar){
 function desenharTelefones(foco){
   const box = $("listaTels");
   box.textContent = "";
+  membrosNoForm = membrosDaDupla().join("|");
   telefones.forEach((t, i) => {
     const linha = criar("div", "item");
     const campos = criar("div", "campos");
@@ -1973,7 +2020,9 @@ function desenharTelefones(foco){
     const quem = campoDeLinha("text", "tel-" + i + "-contato", "Telefone " + (i + 1) + ": falar com (opcional; nome da secretária ou do empresário)", "Falar com (opcional), ex.: Joana", t.contato, MAX_CONTATO_FONE, v => { t.contato = v; });
     const linhaTipo = criar("div", "linha");
     linhaTipo.append(tipo, outro, quem);
-    campos.append(num, linhaTipo);
+    const membros = criar("div", "membros");                      // v10.3: dupla: os dois nomes como atalho
+    atalhosMembros(membros, quem, tipo);
+    campos.append(num, linhaTipo, membros);
     const x = criar("button", "btn x", "✕");
     x.type = "button";
     x.setAttribute("aria-label", "Remover o telefone " + (i + 1));
@@ -2753,6 +2802,7 @@ function dicaNome(){
   const bruto = limparNome($("fNome").value);
   const bonito = AJ.formatarNome(bruto);
   avisar("dicaNome", bonito && bonito !== bruto ? "Vai aparecer assim na lista: " + bonito : "");
+  atualizarMembros();                                     // v10.3: nome de dupla: os nomes no "Falar com"
   clearTimeout(relogioNome);
   relogioNome = setTimeout(conferirNome, 500);           // v10.2: tem alguém na lista com esse nome?
 }
@@ -3779,6 +3829,7 @@ document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.add
 $("fNome").addEventListener("blur", () => {                  // ao sair do campo, o nome fica arrumado: Saulo Henrique de Tarso
   const bonito = AJ.formatarNome(limparNome($("fNome").value));
   if(bonito) $("fNome").value = bonito;
+  atualizarMembros();
   // a dica "Vai aparecer assim…" NÃO some aqui: se sumisse, os balões de instrumento logo abaixo subiriam no meio do toque e o primeiro toque num balão se perderia
   mudou();
 });
@@ -3934,7 +3985,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v10.2.html
+ Arquivo: Cadastro_Musicos_v10.3.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3947,6 +3998,18 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v10.3 — 2026-11-24
+  - Tipo de telefone "Membro", para todos, logo depois de "Pessoal" (o
+    número de um integrante). Na lista aparece em cima do número, como
+    os outros tipos: "Membro (Fulano)".
+  - Dupla: com o nome no padrão "Fulano e Beltrano" ou "Fulano &
+    Beltrano" (também "Dupla Fulano e Beltrano"), embaixo de cada
+    "Falar com" aparecem os dois nomes. Tocar num deles escreve o nome
+    ali (tocar de novo apaga) e, se o tipo estiver em Pessoal, troca
+    para Membro. O "Falar com" continua aceitando qualquer nome. Não
+    precisa de regras novas.
+
+----------------------------------------------------------------
 v10.2 — 2026-11-24
   - Nome igual ao de alguém da lista: logo abaixo do nome aparece "Já
     existe na lista alguém chamado “Fulano” (cidade · instrumentos ·
