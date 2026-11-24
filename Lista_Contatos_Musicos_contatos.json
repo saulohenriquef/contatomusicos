@@ -492,5 +492,60 @@
     "abcDisponibilidade": "nao",
     "instagram": "guilhermeborges.gb",
     "whatsapp": ""
+  },
+  {
+    "nome": "Marcelo Morais",
+    "categoria": "artista",
+    "foto": "marcelo-morais.jpg",
+    "cidades": ["Franca/SP"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "marcelo_mmorais",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Luiz Otávio e Gabriel",
+    "categoria": "artista",
+    "foto": "luiz-otavio-e-gabriel.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "uspadrin_loeg",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Robson Augusto",
+    "categoria": "artista",
+    "foto": "robson-augusto.jpg",
+    "cidades": ["Piumhi/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "robsonaugusto.cantor",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Augusto & Guilherme",
+    "categoria": "artista",
+    "foto": "augusto-guilherme.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "augusttoeguilherme",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Kayke Rhyan",
+    "categoria": "artista",
+    "foto": "kayke-rhyan.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "kaykerhyan",
+    "whatsapp": ""
   }
 ]
