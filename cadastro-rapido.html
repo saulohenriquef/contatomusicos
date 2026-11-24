@@ -13,7 +13,7 @@
   :root{
     --bg:#f6f4ef; --card:#ffffff; --text:#1d1b16; --muted:#6d685c;
     --line:#e6e1d4; --accent:#b4531a; --accent-soft:#f6e6d9;
-    --botao:#13803d; --botao-ativo:#0e6a31; --erro:#c0392b; --aviso:#9a6c00;
+    --botao:#13803d; --botao-ativo:#0e6a31; --erro:#c0392b; --aviso:#9a6c00; --wpp:#25d366;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -27,24 +27,53 @@
   html{-webkit-text-size-adjust:100%}
   body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.45;
     padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-  .wrap{max-width:560px; margin:0 auto; padding:20px 16px 40px}
-  h1{margin:6px 0 6px; font-size:1.5rem; letter-spacing:-.01em}
-  .sub{margin:0 0 8px; color:var(--muted)}
+  .wrap{max-width:560px; margin:0 auto; padding:18px 16px 40px}
   a{color:var(--accent)}
-  .cartao{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-top:14px}
-  .cartao h2{margin:0 0 4px; font-size:1.08rem}
+
+  /* topo */
+  .topo{text-align:center; margin:4px 0 6px}
+  .selo-rapido{display:inline-block; padding:4px 12px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-weight:800; font-size:.85rem}
+  h1{margin:10px 0 6px; font-size:1.55rem; line-height:1.2; letter-spacing:-.01em}
+  .sub{margin:0; color:var(--muted)}
+
+  /* card chamativo do cadastro completo */
+  .card-completo{display:grid; gap:7px; margin:16px 0 4px; padding:18px; border-radius:18px; text-decoration:none; color:#fff;
+    background:linear-gradient(135deg, #a8471a 0%, #cf6f24 55%, #e59a33 100%); box-shadow:0 10px 24px rgba(168,71,26,.28)}
+  .card-completo:hover{filter:brightness(1.05)}
+  .card-completo:focus-visible{outline:3px solid var(--text); outline-offset:3px}
+  .cc-selo{justify-self:start; padding:3px 10px; border-radius:999px; background:rgba(255,255,255,.22); font-size:.78rem; font-weight:800; letter-spacing:.02em}
+  .cc-titulo{font-size:1.28rem; line-height:1.2}
+  .cc-texto{font-size:.93rem; opacity:.96}
+  .cc-lista{display:flex; flex-wrap:wrap; gap:6px; margin-top:2px}
+  .cc-lista span{padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.2); font-size:.85rem; font-weight:600}
+  .cc-botao{justify-self:start; margin-top:6px; padding:11px 18px; border-radius:12px; background:#fff; color:#a8471a; font-weight:800}
+  .cc-tempo{font-size:.8rem; opacity:.92}
+  .ou-rapido{display:flex; align-items:center; gap:10px; color:var(--muted); font-weight:700; font-size:.9rem; margin:18px 0 0}
+  .ou-rapido::before, .ou-rapido::after{content:""; flex:1; border-top:1px solid var(--line)}
+
+  /* passos */
+  .cartao{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-top:14px}
+  .cartao h2{display:flex; align-items:center; gap:8px; margin:0 0 4px; font-size:1.08rem}
+  .num{display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-size:.85rem; font-weight:800; flex:none}
+  .ico{width:22px; height:22px; flex:none}
+  .ico-wpp{fill:var(--wpp)}
+  .opcional{font-weight:500; color:var(--muted); font-size:.9rem}
   .campo{display:block; margin:12px 0 6px; font-weight:600; font-size:.95rem}
   .campo b{color:var(--erro)}
-  .entrada{width:100%; font:inherit; font-size:1rem; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--text)}
+  .entrada{width:100%; font:inherit; font-size:1rem; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--text)}
   .entrada:focus{outline:2px solid var(--accent); outline-offset:1px}
   .entrada[aria-invalid="true"]{border-color:var(--erro)}
-  .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; font:inherit; font-weight:600; padding:11px 16px; border-radius:10px;
+  .com-icone{position:relative}
+  .com-icone .entrada{padding-left:46px}
+  .com-icone > svg{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:21px; height:21px; pointer-events:none}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; font:inherit; font-weight:700; padding:11px 16px; border-radius:12px;
     border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; text-decoration:none; min-height:44px}
   .btn:hover{border-color:var(--accent)}
   .btn.principal{background:var(--botao); border-color:var(--botao); color:#fff}
   .btn.principal:hover{background:var(--botao-ativo)}
+  .btn.destaque{background:var(--accent); border-color:var(--accent); color:#fff}
   .btn.grande{width:100%; padding:15px; font-size:1.08rem; margin-top:14px}
-  .btn.local{width:100%}
+  .btn.local{width:100%; border:2px solid var(--accent); color:var(--accent)}
   .btn:disabled{opacity:.6; cursor:default}
   .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
   .acoes{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
@@ -56,34 +85,56 @@
   .pequena{font-size:.8rem}
   .ou{display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.85rem; margin:14px 0 0}
   .ou::before, .ou::after{content:""; flex:1; border-top:1px solid var(--line)}
-  .confirma{margin-top:12px; padding:12px; border-radius:10px; background:var(--accent-soft)}
-  .confirma p{margin:0; font-weight:600}
-  .nota-foto{margin:12px 0 0; padding:10px 12px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:8px; font-size:.92rem}
-  .caixa-aviso{margin-top:12px; padding:12px; border:1px solid var(--aviso); border-radius:10px}
+  .confirma{margin-top:12px; padding:12px; border-radius:12px; background:var(--accent-soft)}
+  .confirma p{margin:0; font-weight:700}
+  .nota-foto{margin:12px 0 0; font-size:.9rem; color:var(--muted)}
+  .caixa-aviso{margin-top:12px; padding:12px; border:1px solid var(--aviso); border-radius:12px}
   .caixa-aviso p{margin:0 0 10px}
-  .marcar{display:flex; gap:10px; align-items:flex-start; font-size:.92rem; cursor:pointer}
+  .marcar{display:flex; gap:10px; align-items:flex-start; font-size:.9rem; cursor:pointer}
   .marcar input{width:20px; height:20px; margin-top:2px; flex:none; accent-color:var(--botao)}
   .marcar.invalido{color:var(--erro)}
   .resultado{margin:12px 0 0; padding:10px 12px; border-radius:10px; font-size:.93rem; border-left:4px solid var(--muted); background:var(--bg)}
   .resultado.erro{border-left-color:var(--erro)}
   .resultado ul{margin:6px 0 0; padding-left:20px}
-  .pronto h2{font-size:1.25rem}
+
+  /* card do fim: aproveitar o que foi preenchido */
+  .card-fim{display:grid; gap:8px; justify-items:center; text-align:center; margin-top:16px; padding:18px; border-radius:16px;
+    border:2px dashed var(--accent); background:var(--accent-soft)}
+  .card-fim strong{font-size:1.05rem}
+  .card-fim span{font-size:.9rem; color:var(--muted)}
+  .pronto h2{font-size:1.25rem; display:block}
   pre{white-space:pre-wrap; word-break:break-word; font-size:.78rem; background:var(--bg); padding:10px; border-radius:8px; border:1px solid var(--line)}
   .demo{margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); font-size:.88rem}
-  .opcional{font-weight:400; color:var(--muted); font-size:.9rem}
   footer{margin-top:24px; text-align:center; color:var(--muted); font-size:.8rem}
 </style>
 </head>
 <body>
 <main class="wrap">
-  <h1>⚡ Cadastro rápido</h1>
-  <p class="sub">Entre na Lista de Contatos de Músicos em 1 minuto: só a sua cidade e o seu WhatsApp (e o Instagram, se tiver). O resto (seu nome e o que você toca) o organizador completa com você.</p>
-  <p class="sub"><a id="linkCompletoTopo" href="cadastro.html">Prefere fazer o cadastro completo, com tudo? →</a></p>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="gIg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f9a825"/><stop offset=".5" stop-color="#e1306c"/><stop offset="1" stop-color="#833ab4"/></linearGradient></defs>
+  </svg>
+
+  <header class="topo">
+    <span class="selo-rapido">⚡ Cadastro rápido · 1 minuto</span>
+    <h1>Entre na Lista de Contatos de Músicos</h1>
+    <p class="sub">Só a sua cidade e o seu WhatsApp (e o Instagram, se tiver). O organizador completa o resto com você.</p>
+  </header>
+
+  <a id="linkCompletoTopo" class="card-completo" href="cadastro.html">
+    <span class="cc-selo">⭐ RECOMENDADO</span>
+    <strong class="cc-titulo">Faça o cadastro completo</strong>
+    <span class="cc-texto">Quem tem cadastro completo aparece melhor para os contratantes:</span>
+    <span class="cc-lista"><span>📸 sua foto</span><span>🎵 o que você toca</span><span>🎬 vídeos e links</span><span>✍️ sua bio</span></span>
+    <span class="cc-botao">Fazer o cadastro completo →</span>
+    <span class="cc-tempo">Leva uns 3 minutos.</span>
+  </a>
+
+  <p class="ou-rapido">ou faça o rápido agora</p>
   <p id="avisoDemo" class="demo" hidden>Modo demonstração: nada é enviado (a página só mostra o que seria enviado).</p>
 
   <form id="form" novalidate>
     <section class="cartao" aria-labelledby="t1">
-      <h2 id="t1">1. Sua cidade</h2>
+      <h2 id="t1"><span class="num">1</span> Sua cidade</h2>
       <p class="dica">A cidade onde você mora ou de onde atende.</p>
       <div class="acoes"><button id="usarLocal" class="btn local" type="button">📍 Usar minha localização</button></div>
       <div id="confirmaCidade" class="confirma" role="status" hidden>
@@ -101,11 +152,11 @@
       <p class="dica pequena">A localização serve só para achar a cidade: ela não fica guardada.</p>
     </section>
 
-    <section class="cartao" aria-labelledby="t3">
-      <h2 id="t3">2. Seu WhatsApp</h2>
+    <section class="cartao" aria-labelledby="t2">
+      <h2 id="t2"><span class="num">2</span> <svg class="ico ico-wpp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.5 15.07L2 22l5.07-1.5A9.93 9.93 0 1 0 12.04 2Zm5.8 14.1c-.25.7-1.45 1.33-2 1.4-.52.07-1.17.1-1.9-.12a17 17 0 0 1-1.72-.64c-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.6-.38.8-.38l.58.01c.19.01.43-.07.67.5.25.6.85 2.07.92 2.22.08.15.13.33.03.52-.1.2-.15.32-.3.5-.15.17-.32.38-.45.51-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1 2.09 1.32 2.39 1.47.3.15.47.12.65-.07.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.12.08.72-.17 1.42Z"/></svg> Seu WhatsApp</h2>
       <p class="dica">É por ele que os contratantes falam com você (aparece na lista).</p>
       <label class="campo" for="fWhats">WhatsApp com DDD <b aria-hidden="true">*</b></label>
-      <input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="msgWhats">
+      <div class="com-icone"><svg class="ico ico-wpp" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2a9.93 9.93 0 0 0-8.5 15.07L2 22l5.07-1.5A9.93 9.93 0 1 0 12.04 2Zm5.8 14.1c-.25.7-1.45 1.33-2 1.4-.52.07-1.17.1-1.9-.12a17 17 0 0 1-1.72-.64c-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.6-.38.8-.38l.58.01c.19.01.43-.07.67.5.25.6.85 2.07.92 2.22.08.15.13.33.03.52-.1.2-.15.32-.3.5-.15.17-.32.38-.45.51-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1 2.09 1.32 2.39 1.47.3.15.47.12.65-.07.17-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.28.1 1.76.83 2.06.98.3.15.5.22.57.35.08.12.08.72-.17 1.42Z"/></svg><input id="fWhats" class="entrada" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(35) 98808-9192" aria-describedby="msgWhats"></div>
       <p id="msgWhats" class="dica" aria-live="polite"></p>
       <div id="jaExiste" class="caixa-aviso" role="status" hidden>
         <p id="textoJaExiste"></p>
@@ -113,12 +164,12 @@
       </div>
     </section>
 
-    <section class="cartao" aria-labelledby="t2">
-      <h2 id="t2">3. Seu Instagram <span class="opcional">(opcional)</span></h2>
+    <section class="cartao" aria-labelledby="t3">
+      <h2 id="t3"><span class="num">3</span> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="17.4" cy="6.6" r="1.3" fill="url(#gIg)"/></svg> Seu Instagram <span class="opcional">(opcional)</span></h2>
       <label class="campo" for="fInsta">Instagram</label>
-      <input id="fInsta" class="entrada" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario" aria-describedby="msgInsta">
+      <div class="com-icone"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="17.4" cy="6.6" r="1.3" fill="url(#gIg)"/></svg><input id="fInsta" class="entrada" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario" aria-describedby="msgInsta"></div>
       <p id="msgInsta" class="dica" aria-live="polite"></p>
-      <p class="nota-foto">📸 Se colocar o Instagram, a sua foto na lista será a do seu perfil, <strong>desde que ela tenha cara profissional</strong>: rosto bem visível e boa luz (tocando ou em show fica ótimo). Se não for o caso, você pode mandar outra foto pelo cadastro completo.</p>
+      <p class="nota-foto">📸 A foto do seu perfil vai para a lista, desde que tenha ar profissional.</p>
     </section>
 
     <section class="cartao" aria-label="Autorização e envio">
@@ -131,22 +182,28 @@
     </section>
   </form>
 
+  <section id="cardFim" class="card-fim" aria-labelledby="tFim">
+    <strong id="tFim">Quer aproveitar e já fazer o cadastro completo?</strong>
+    <span>O que você preencheu aqui (cidade, WhatsApp e Instagram) já vai junto. Nada é enviado até você terminar lá.</span>
+    <a id="linkCompletoFim" class="btn destaque" href="cadastro.html">Continuar no cadastro completo →</a>
+  </section>
+
   <section id="pronto" class="cartao pronto" role="status" hidden>
     <h2>✅ Pronto, recebemos o seu pedido!</h2>
-    <p>O organizador vai completar o seu cadastro (nome e o que você toca) olhando o seu Instagram e colocar você na lista.</p>
+    <p>O organizador vai completar o seu cadastro (nome e o que você toca) e colocar você na lista.</p>
     <p>Quer completar você mesmo agora? Leva uns 3 minutos e você escolhe tudo: nome, instrumentos, foto, outros contatos.</p>
     <a id="completarAgora" class="btn principal" href="cadastro.html">Completar meu cadastro agora</a>
     <pre id="demoPayload" hidden></pre>
   </section>
 
-  <footer>Cadastro rápido · Lista de Contatos de Músicos · v1.1</footer>
+  <footer>Cadastro rápido · Lista de Contatos de Músicos · v1.2</footer>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v1.1";
+const VERSAO = "v1.2";
 const PAGINA = "Cadastro_Rapido_Musicos_" + VERSAO;
 // o mesmo Firebase da página de cadastro completo (estes dados não são segredo; quem protege o banco são as regras do Firestore,
 // arquivo Firestore_Regras_Cadastros_v8.rules: publique-as ANTES desta página). Vazio, ou ?demo=1 no endereço = modo demonstração.
@@ -368,7 +425,22 @@ async function lerCadastro(w){
   }catch(e){ return {estado: "erro"}; }
   finally{ clearTimeout(relogio); }
 }
-const linkCompleto = busca => PAGINA_COMPLETA + "?buscar=" + encodeURIComponent(busca);
+// o cadastro completo já buscando este número/@ (depois do #, que não vai para o servidor)
+const linkCompleto = busca => PAGINA_COMPLETA + "#buscar=" + encodeURIComponent(busca);
+// "Fazer o cadastro completo" sem enviar o rápido: leva o que já foi preenchido aqui; a página completa preenche sozinha (v9.1)
+function linkCompletar(){
+  const q = new URLSearchParams();
+  const w = nacional($("fWhats").value);
+  if(/^\d{10,11}$/.test(w)) q.set("whats", w);
+  const ig = instaDoCampo($("fInsta").value).valor;
+  if(ig) q.set("insta", ig);
+  const c = cidadeDoTexto($("fCidade").value);
+  if(c && (!cidadeDaLocal || cidadeConfirmada)) q.set("cidade", c);      // a da localização, só depois do "Sim, é essa"
+  const s = q.toString();
+  return PAGINA_COMPLETA + (s ? "#completar?" + s : "");
+}
+["linkCompletoTopo", "linkCompletoFim"].forEach(id => ["pointerdown", "focus", "click"].forEach(ev =>
+  $(id).addEventListener(ev, () => { $(id).href = linkCompletar(); })));
 function mostrarJaExiste(texto, busca){
   $("textoJaExiste").textContent = texto;
   $("linkJaExiste").href = linkCompleto(busca);
@@ -504,6 +576,7 @@ $("form").addEventListener("submit", async e => {
     else http = await gravar(payload);
     if(http === 200){
       $("form").hidden = true;
+      $("cardFim").hidden = true;
       $("completarAgora").href = linkCompleto(w);
       $("pronto").hidden = false;
       $("pronto").scrollIntoView({block: "start", behavior: "smooth"});
@@ -533,7 +606,7 @@ carregarCidades();
 <!--
 ================================================================
  Cadastro rápido · Lista de Contatos de Músicos
- Arquivo: Cadastro_Rapido_Musicos_v1.1.html
+ Arquivo: Cadastro_Rapido_Musicos_v1.2.html
  No site: publique como cadastro-rapido.html, na mesma pasta do
  index.html e do cadastro.html (ela lê o contatos.json e o
  cidades.json de lá e manda para o cadastro.html quem quiser
@@ -542,6 +615,24 @@ carregarCidades();
  (publique ANTES desta página).
 ================================================================
  HISTÓRICO DE VERSÕES (mais recente primeiro)
+----------------------------------------------------------------
+v1.2 — 2026-11-24
+  - Visual novo: selo "⚡ Cadastro rápido · 1 minuto", passos numerados
+    em círculos, ícones do WhatsApp e do Instagram no título e dentro do
+    campo, botão de localização com contorno.
+  - Cadastro completo virou um card chamativo no topo ("⭐ RECOMENDADO
+    · Faça o cadastro completo", com sua foto, o que você toca, vídeos
+    e links, sua bio).
+  - Card no fim: "Quer aproveitar e já fazer o cadastro completo?". O
+    botão leva o que foi preenchido (WhatsApp, Instagram e a cidade
+    confirmada) para o cadastro completo v9.1, que preenche sozinho.
+    Vai depois do # do endereço (não passa pelo servidor). O card do
+    topo leva também, se a pessoa já tiver preenchido algo.
+  - "Abrir o cadastro completo" e "Completar meu cadastro agora" usam
+    #buscar= (antes ?buscar=).
+  - Aviso da foto resumido: "A foto do seu perfil vai para a lista,
+    desde que tenha ar profissional."
+
 ----------------------------------------------------------------
 v1.1 — 2026-11-24
   - Instagram passa a ser opcional; WhatsApp e cidade continuam
