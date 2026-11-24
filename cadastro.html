@@ -375,6 +375,8 @@
   #boxOcultarWhats .marcar{margin-top:8px}
   /* ---------- v8.0: achar o cadastro pelo @Instagram ---------- */
   #avisoInsta p{margin:0 0 8px}
+  /* ---------- v9.1: o que veio do cadastro rápido ---------- */
+  .nota-rapido{margin:0 0 12px; padding:10px 12px; border-radius:10px; background:var(--accent-soft); border-left:4px solid var(--accent); font-size:.92rem}
 </style>
 </head>
 <body>
@@ -453,6 +455,7 @@
   </section>
 
   <form id="formulario" novalidate>
+    <p id="notaDoRapido" class="nota-rapido" role="status" hidden>✓ Trouxemos o que você preencheu no cadastro rápido. Complete o resto (nome, o que você toca, foto...) e envie.</p>
 
     <section class="passo" aria-labelledby="t1">
       <h2 id="t1">Seus dados</h2>
@@ -734,7 +737,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v9.0
+    Cadastro de Músicos · Lista de Contatos de Músicos · v9.1
   </footer>
 </div>
 
@@ -762,16 +765,22 @@ const AJ = (() => {
   /* ---------- nome: Saulo Henrique de Tarso ---------- */
   const PREPOSICOES = new Set(["de", "da", "do", "das", "dos", "e"]);
   const SIGLAS = new Set(["dj", "mc", "ii", "iii", "iv"]);
+  // pré-formatação do nome que CHEGA de um cadastro (página de cadastro, painel ao receber). Não é regra da lista: o nome que
+  // você escreve no painel fica como está. Se a pessoa não escreveu tudo em MAIÚSCULAS, a palavra toda em maiúsculas sem vogal
+  // (ou de 2 letras) é sigla e fica como está: Raphael WQ, Banda MPB.
   function formatarNome(nome){
     const t = limpo(nome);
     if(!t) return "";
-    return t.split(" ").map((w, i) => {
+    const palavras = t.split(" ");
+    const misturado = palavras.some(w => w !== alto(w));
+    return palavras.map((w, i) => {
       const b = baixo(w), a = alto(w);
       if(b === a) return w;                                       // número ou símbolo
       if(i > 0 && PREPOSICOES.has(b)) return b;                   // de, da, do, das, dos, e: minúsculas
       const soBaixa = w === b, soAlta = w === a;
       if(!soBaixa && !soAlta) return w;                           // já tem maiúscula e minúscula (Silva, McDonald, Zé): respeita
       if(SIGLAS.has(b)) return a;                                 // DJ, MC, II, III, IV
+      if(soAlta && misturado && ([...w].length <= 2 || !/[aeiouy]/.test(b.normalize("NFD").replace(/[\u0300-\u036f]/g, "")))) return w;   // sigla: WQ, MPB
       return b.replace(/(^|[-'’.(])(\p{L})/gu, (m, ant, letra) => ant + alto(letra));   // Primeira Letra Maiúscula (também depois de - ' . ( )
     }).join(" ");
   }
@@ -1064,7 +1073,7 @@ const AJ = (() => {
   /* ---------- contato inteiro: aplica as regras acima, sem mexer nos outros campos ---------- */
   function limparContato(c){
     const r = {...c};
-    if("nome" in r) r.nome = formatarNome(r.nome);
+    if("nome" in r) r.nome = limpo(r.nome);                       // o nome fica como está (sem arrumar maiúsculas): Raphael WQ
     if(Array.isArray(r.instrumentos)) r.instrumentos = instrumentos(r.instrumentos);
     const col = (k, valor, vazio) => { if(vazio) delete r[k]; else r[k] = valor; };
     if("hashtags" in r){ const v = hashtags(r.hashtags); col("hashtags", v, !v.length); }
@@ -1087,7 +1096,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v9.0";
+const VERSAO = "v9.1";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -2943,6 +2952,20 @@ $("abrirPeloInsta").addEventListener("click", async () => {
   else avisar("dicaInsta", "Não consegui abrir agora. Tente de novo ou busque pelo WhatsApp ou @Instagram no topo da página.", "erro");
 });
 
+// o que a pessoa preencheu no cadastro rápido (sem enviar) vem para cá: WhatsApp, Instagram e cidade
+function preencherDoRapido(whats, insta, cidade){
+  const w = nacional(whats || ""), ig = instaDoCampo(insta || "").valor || "";
+  const cid = String(cidade || "").trim(), m = cid.match(CIDADE_UF);
+  const temCidade = !!(m && UFS.includes(m[2]));
+  if(![10, 11].includes(w.length) && !ig && !temCidade) return;
+  if(!formularioVazio() && !confirm("Trocar o WhatsApp, o Instagram e a cidade daqui pelo que você preencheu no cadastro rápido?")) return;
+  if([10, 11].includes(w.length)){ $("fWhats").value = formatarTel(w); dicaWhats(true); conferirNumero(); }
+  if(ig){ $("fInsta").value = "@" + ig; dicaInsta(true); }
+  if(temCidade && !cidades.some(x => norm(x) === norm(cid)) && cidades.length < MAX_CIDADES){ cidades.push(cid); desenharCidades(); }
+  $("notaDoRapido").hidden = false;
+  mudou();
+}
+
 function irParaBusca(){
   if(edit || finalizado) return;
   rolarPara($("sBusca"), "start");
@@ -3540,9 +3563,20 @@ function iniciar(){
   carregarCidadesDoSite();
   carregarAtuacoesDoSite();
   if(location.hash === "#editar") irParaBusca();            // o link "Editar meu cadastro" da lista abre direto no cartão "Já tem cadastro?"
-  // ?buscar=35988089192 ou ?buscar=@usuario (o "Completar meu cadastro" do cadastro rápido): já busca esse cadastro
+  // vindo do cadastro rápido (o que vem depois do # não vai para o servidor):
+  //   #buscar=35988089192 (ou ?buscar=, ou @usuario): o "Completar meu cadastro agora" do pedido enviado; já busca esse cadastro
+  //   #completar?whats=...&insta=...&cidade=...: o "Fazer o cadastro completo" sem enviar o rápido; já preenche esses campos
   let buscar = "";
   try{ buscar = String(new URLSearchParams(location.search).get("buscar") || "").trim().slice(0, 60); }catch(e){ buscar = ""; }
+  if(location.hash.startsWith("#buscar=")){
+    try{ buscar = decodeURIComponent(location.hash.slice(8)).trim().slice(0, 60); }catch(e){ buscar = ""; }
+  }
+  if(location.hash.startsWith("#completar?")){
+    let q = null;
+    try{ q = new URLSearchParams(location.hash.slice(11)); }catch(e){ q = null; }
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    if(q && !edit) preencherDoRapido(q.get("whats"), q.get("insta"), q.get("cidade"));
+  }
   if(buscar && !edit){
     irParaBusca();
     $("fBusca").value = buscar;
@@ -3556,7 +3590,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v9.0.html
+ Arquivo: Cadastro_Musicos_v9.1.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3569,6 +3603,19 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v9.1 — 2026-11-24
+  - Vindo do cadastro rápido v1.2: "Fazer o cadastro completo" (sem
+    enviar o rápido) traz o WhatsApp, o Instagram e a cidade que a
+    pessoa já tinha preenchido (endereço com #completar?..., depois do #,
+    que não vai para o servidor) e mostra "Trouxemos o que você
+    preencheu no cadastro rápido". O "Completar meu cadastro agora" do
+    pedido enviado usa #buscar=... (além do ?buscar= de antes).
+  - Nome: a pré-formatação (Primeira Maiúscula, de/da/do minúsculas)
+    agora respeita siglas quando a pessoa não escreveu tudo em
+    maiúsculas: "Raphael WQ" continua "Raphael WQ". O nome que vem da
+    lista para editar fica como está lá.
+
+----------------------------------------------------------------
 v9.0 — 2026-11-24
   - Endereço com ?buscar=35988089192 (ou ?buscar=@usuario) já busca
     esse cadastro ao abrir. É o botão "Completar meu cadastro agora" da
