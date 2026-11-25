@@ -569,7 +569,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v17
+    Lista de Contatos de Músicos · v17.1
   </footer>
 </div>
 
@@ -1432,7 +1432,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v17";
+const VERSAO_LISTA = "v17.1";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -2173,12 +2173,35 @@ $("perto").addEventListener("click", () => {
   }
 });
 
+/* ---------- v17.1: o espaço do recado só em cartão curto ----------
+   Cartão sem recado ganha o espaço de 1 linha de recado, para ficar parecido com os outros. Mas quem já ocupa linhas a
+   mais (nome em 2 linhas ou mais, instrumentos em 2 fileiras ou mais, hashtags) já tem o tamanho de um cartão com recado:
+   aí o espaço não entra. LINHAS_A_MAIS_SEM_ESPACO: a partir de quantas linhas a mais o espaço sai. A conta é feita na
+   largura de verdade do cartão (celular, computador, colunas) e refeita quando ela muda. */
+const LINHAS_A_MAIS_SEM_ESPACO = 1;
+function contarLinhas(caixas){              // caixas na mesma altura (com folga de 10 px) = mesma linha
+  const meios = caixas.filter(x => x.width > 0 && x.height > 0).map(x => (x.top + x.bottom) / 2).sort((p, q) => p - q);
+  let n = 0, ultimo = -Infinity;
+  meios.forEach(m => { if(m > ultimo + 10){ n++; ultimo = m; } });
+  return Math.max(1, n);
+}
+function linhasDoTexto(el){ const r = document.createRange(); r.selectNodeContents(el); return contarLinhas([...r.getClientRects()]); }
+const fileirasDe = el => contarLinhas([...el.children].map(x => x.getBoundingClientRect()));
+function ajustarEspacoRecado(card){
+  const vazio = card.querySelector(".obs-vazio");
+  if(!vazio || !card.offsetParent) return;      // com recado, ou escondido pelo filtro (a conta fica para quando aparecer)
+  const nome = card.querySelector(".name"), tags = card.querySelector(".tags"), hashtags = card.querySelector(".hashtags");
+  const aMais = (nome ? linhasDoTexto(nome) - 1 : 0) + (tags && tags.children.length ? fileirasDe(tags) - 1 : 0) + (hashtags ? fileirasDe(hashtags) : 0);
+  vazio.hidden = aMais >= LINHAS_A_MAIS_SEM_ESPACO;
+}
+
 /* ---------- v13: no computador os cartões se encaixam em colunas, cada um com a sua altura ---------- */
 (function(){
   if(!("ResizeObserver" in window) || !("MutationObserver" in window)) return;   // sem isso fica a grade simples (a linha tem a altura do maior cartão)
   const GRADE = 4, VAO = 10;   // altura de cada linha da grade (a CSS usa os mesmos 4px) e espaço mínimo entre cartões, em px
   const lista = $("lista");
   const medidor = new ResizeObserver(es => es.forEach(e => {
+    ajustarEspacoRecado(e.target);           // v17.1: se o espaço do recado sair, o observador mede de novo em seguida
     const h = e.borderBoxSize && e.borderBoxSize[0] ? e.borderBoxSize[0].blockSize : e.target.getBoundingClientRect().height;
     e.target.style.setProperty("--linhas", String(Math.max(1, Math.ceil((h + VAO) / GRADE))));
   }));
@@ -2250,7 +2273,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v17.html
+ Arquivo: Lista_Contatos_Musicos_v17.1.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2789,6 +2812,15 @@ v17 — 2026-11-24
     ("+19545550123"). O cartão mostra "+1 954 555 0123", o WhatsApp
     abre wa.me/19545550123 e o Ligar liga para +19545550123. Os
     números do Brasil continuam como antes.
+----------------------------------------------------------------
+v17.1 — 2026-11-25
+  - O espaço vazio do recado (cartão sem recado) agora só entra em
+    cartão curto. Se o cartão já ocupa linhas a mais (nome com apelido
+    e referência em 2 linhas ou mais, instrumentos em 2 fileiras ou
+    mais, hashtags), ele já fica do tamanho de um cartão com recado, e
+    o espaço não entra. A conta usa a largura real do cartão (celular
+    ou computador) e é refeita quando ela muda. O limite fica em
+    LINHAS_A_MAIS_SEM_ESPACO (1 linha a mais).
 
 ================================================================
 -->
