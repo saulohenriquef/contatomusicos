@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ocultar ou excluir meu cadastro · Lista de Contatos de Músicos</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --text:#1d1b16; --muted:#6d685c;
+    --line:#e6e1d4; --accent:#b4531a; --accent-soft:#f6e6d9;
+    --botao:#13803d; --botao-ativo:#0e6a31; --erro:#c0392b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14120f; --card:#1e1b17; --text:#f1ece1; --muted:#a39d8f;
+      --line:#2e2a23; --accent:#e08a4f; --accent-soft:#33261b; --erro:#ff7b6b;
+    }
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--bg); color:var(--text); line-height:1.4; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:520px; margin:0 auto; padding:20px 16px 40px}
+  h1{margin:8px 0 4px; font-size:1.45rem; letter-spacing:-.01em}
+  h1 a{color:inherit; text-decoration:none}
+  h2{margin:0 0 4px; font-size:1.05rem}
+  .sub{margin:0; color:var(--muted); font-size:.95rem; line-height:1.45}
+  .passo{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:12px}
+  .dica{margin:6px 0 0; font-size:.86rem; color:var(--muted); line-height:1.45}
+  .dica.erro{color:var(--erro)}
+  .entrada{width:100%; font:inherit; font-size:1rem; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--text); min-height:46px}
+  .entrada:focus{outline:2px solid var(--accent); outline-offset:1px}
+  .linha{display:flex; gap:8px; margin-top:8px}
+  .linha .entrada{flex:1}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; text-decoration:none; font:inherit; font-size:.95rem;
+    font-weight:650; color:var(--text); background:transparent; border:1px solid var(--line); border-radius:10px; padding:10px 15px; min-height:44px}
+  .btn.principal{background:var(--botao); border-color:var(--botao); color:#fff}
+  .btn:disabled{opacity:.55; cursor:not-allowed}
+  .acoes{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
+  .achado{margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--bg); border:1px solid var(--line)}
+  .ver-lista{margin:8px 0 0; font-size:.9rem}
+  .ver-lista a, footer a{color:var(--accent); font-weight:650}
+  footer{margin-top:26px; text-align:center; font-size:.8rem; color:var(--muted)}
+  /* ---------- v12.0: ocultar, mostrar de novo ou excluir o cadastro ---------- */
+  .cards-pedido{display:grid; gap:10px; margin-top:10px}
+  .card-pedido{display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; text-align:left; cursor:pointer;
+    font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:14px;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation}
+  .card-pedido svg{flex:none; width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; color:var(--muted)}
+  .card-pedido strong{display:block; font-size:1rem}
+  .card-pedido small{display:block; margin-top:2px; font-size:.85rem; line-height:1.35; color:var(--muted)}
+  .card-pedido:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .card-pedido[aria-pressed="true"]{border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft)}
+  .card-pedido.perigo svg{color:var(--erro)}
+  .card-pedido.perigo[aria-pressed="true"]{border-color:var(--erro); box-shadow:0 0 0 2px rgba(192,57,43,.16)}
+  @media (hover:hover){ .card-pedido:hover{border-color:var(--accent)} .card-pedido.perigo:hover{border-color:var(--erro)} }
+  .caixa-pedido{margin-top:12px; padding:14px; border:1px solid var(--accent); border-radius:14px; background:var(--bg)}
+  .caixa-pedido.perigo{border-color:var(--erro)}
+  .caixa-pedido p{margin:0 0 8px}
+  .btn.perigo{background:var(--erro); border-color:var(--erro); color:#fff}
+  .codigo-pedido{display:inline-block; margin-left:6px; padding:4px 12px; border:1px dashed var(--accent); border-radius:10px; background:var(--card);
+    font:700 1.45rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing:.18em; user-select:all}
+  .dica.forte{color:var(--text); font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="index.html">Lista de Contatos de Músicos</a></h1>
+    <p class="sub">Não quer ter seu nome nesta lista? Aqui você pede para ocultar o seu cadastro (dá para voltar depois) ou excluir de vez.</p>
+    <p class="ver-lista"><a href="index.html">📋 Ver a lista de contatos</a></p>
+  </header>
+
+  <section class="passo" aria-labelledby="tBusca">
+    <h2 id="tBusca">Ache o seu cadastro</h2>
+    <p class="dica">Digite o WhatsApp do seu cadastro, com DDD (de outro país: + e o código do país), ou o seu Instagram com @.</p>
+    <div class="linha">
+      <input id="fBusca" class="entrada" type="text" inputmode="tel" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="(35) 98808-9192 ou @seuusuario">
+      <button id="buscar" class="btn principal" type="button">Buscar</button>
+    </div>
+    <p id="msgBusca" class="dica" aria-live="polite"></p>
+    <div id="achadoBox" class="achado" hidden><strong id="achadoNome"></strong><div id="achadoInfo" class="dica"></div></div>
+  </section>
+
+    <section id="secPedido" class="passo sem-numero" aria-labelledby="tPedido" hidden>
+      <h2 id="tPedido">O que você quer fazer?</h2>
+      <div class="cards-pedido">
+        <button id="cardOcultar" class="card-pedido" type="button" data-tipo="ocultar" aria-pressed="false" aria-controls="caixaPedido">
+          <svg id="iconeOcultar" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+          <svg id="iconeMostrar" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span><strong id="tituloCardOcultar">Ocultar meu cadastro</strong><small id="subCardOcultar">Você pode voltar atrás</small></span>
+        </button>
+        <button id="cardExcluir" class="card-pedido perigo" type="button" data-tipo="excluir" aria-pressed="false" aria-controls="caixaPedido">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+          <span><strong>Excluir meu cadastro</strong><small>O cadastro será excluído permanentemente da lista</small></span>
+        </button>
+      </div>
+      <div id="caixaPedido" class="caixa-pedido" hidden>
+        <p id="textoPedido"></p>
+        <div id="passoConfirmar">
+          <p id="dicaConfirmar" class="dica"></p>
+          <div class="acoes">
+            <button id="gerarPedido" class="btn principal" type="button">Gerar o código</button>
+            <button id="cancelarPedido" class="btn" type="button">Cancelar</button>
+          </div>
+          <p id="erroPedido" class="dica erro" role="alert" hidden></p>
+        </div>
+        <div id="passoCodigo" hidden>
+          <p>Seu código: <span id="codigoPedido" class="codigo-pedido"></span></p>
+          <p id="textoCodigo"></p>
+          <div class="acoes"><a id="whatsPedido" class="btn principal" href="#" target="_blank" rel="noopener">📲 Confirmar pelo WhatsApp</a></div>
+          <p id="dicaCodigo" class="dica forte" style="margin-top:10px"></p>
+        </div>
+      </div>
+    </section>
+
+  <footer>
+    <div>Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
+    Ocultar ou excluir cadastro · Lista de Contatos de Músicos · v1.0
+  </footer>
+</div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const VERSAO = "v1.0";
+const PAGINA = "Excluir_Cadastro_Musicos_" + VERSAO;
+const ORGANIZADOR_WHATSAPP = "35988089192";   // WhatsApp do organizador, só dígitos com DDD; vazio = sem o botão "Falar com o organizador" e sem os pedidos de ocultar/excluir (v12.0)
+const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
+let API_FIRESTORE = "https://firestore.googleapis.com";
+let TEMPO_ENVIO_MS = 25000;              // espera máxima por uma tentativa de envio (milissegundos)
+const COLECAO_PEDIDOS = "pedidos";      // v12.0: pedidos para ocultar, mostrar de novo ou excluir o cadastro
+const LETRAS_CODIGO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";   // v12.0: código do pedido sem 0/O e 1/I/L (fácil de ler e de digitar)
+const ARQ_CONTATOS = "Lista_Contatos_Musicos_contatos.json";   // a lista pública: de lá vem o cadastro já aprovado, para a pessoa editar
+const DEMO = /[?&]demo=1(&|#|$)/.test(location.search);   // ?demo=1: nada é registrado
+const DEMO_ESPERA_MS = 700, DEMO_SIMULAR_FALHA = false;
+const abriuEm = Date.now();
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+const limparNome = s => String(s == null ? "" : s).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+
+/* ---------- fora do Brasil: telefone ----------
+   Do Brasil: DDD + número, como sempre. De outro país: "+", o código do país e o número ("+19545550123"); quem digita
+   começa com + (ou 00). No banco, o nome do cadastro de um número de fora é "00" + os dígitos (o "+" não serve ali). */
+const doExterior = n => String(n == null ? "" : n).startsWith("+");
+const foneValido = n => doExterior(n) ? /^\+[1-9]\d{6,14}$/.test(n) : /^\d{10,11}$/.test(String(n == null ? "" : n));
+// quantos dígitos tem o código do país (1: +1, +7; 2: +33, +44, +54...; 3: +351, +595, +598...)
+const tamanhoDDI = d => /^[17]/.test(d) ? 1 : /^(2[07]|3[0-469]|4[013-9]|5[1-8]|6[0-6]|8[1246]|9[0-58])/.test(d) ? 2 : 3;
+function formatarExterior(n){                     // "+19545550123" -> "+1 954 555 0123"
+  const d = String(n == null ? "" : n).replace(/\D/g, ""), k = tamanhoDDI(d);
+  let resto = d.slice(k);
+  const g = [];
+  while(resto.length > 4){ const t = resto.length === 8 ? 4 : 3; g.push(resto.slice(0, t)); resto = resto.slice(t); }
+  if(resto) g.push(resto);
+  return "+" + d.slice(0, k) + (g.length ? " " + g.join(" ") : "");
+}
+const idDoNumero = n => doExterior(n) ? "00" + String(n).slice(1) : String(n == null ? "" : n);
+const numeroDoId = id => /^00[1-9]\d{6,14}$/.test(String(id)) ? "+" + String(id).slice(2) : String(id == null ? "" : id);
+
+function nacional(num){
+  const s = String(num == null ? "" : num).trim();
+  let d = s.replace(/\D/g, "");
+  const fora = s.startsWith("+") || /^00[1-9]/.test(d);
+  if(fora && !s.startsWith("+")) d = d.slice(2);
+  if(fora && d && !d.startsWith("55")) return "+" + d;
+  return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d;
+}
+function formatarTel(num){
+  const d = nacional(num);
+  if(doExterior(d)) return formatarExterior(d);
+  if(d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return d;
+}
+function instaDoCampo(v){
+  v = String(v == null ? "" : v).trim();
+  const m = v.match(/^(?:https?:\/\/)?(?:www\.|m\.)?instagram\.com\/([^\/?#\s]+)/i);
+  const h = (m ? m[1] : v).replace(/^@/, "");
+  return /^[A-Za-z0-9._]{1,30}$/.test(h) ? {valor: h} : {valor: ""};
+}
+// telefones do contato (WhatsApp e outros), só dígitos, sem o 55
+const digitos = n => { const d = String(n == null ? "" : n).replace(/\D/g, ""); return (d.startsWith("55") && d.length > 11) ? d.slice(2) : d; };
+const telefonesDe = c => [c.whatsapp, ...(Array.isArray(c.telefones) ? c.telefones : []).map(t => typeof t === "string" ? t : (t && t.numero))].map(digitos).filter(Boolean);
+const whatsDe = c => [c && c.whatsapp, ...(c && Array.isArray(c.telefones) ? c.telefones : []).map(t => typeof t === "string" ? t : (t && t.numero))]
+  .map(x => nacional(x)).find(foneValido) || null;
+const AJ = {acharPorTelefone(contatos, numero){
+  const d = digitos(numero);
+  const i = d ? contatos.findIndex(c => telefonesDe(c).includes(d)) : -1;
+  return i < 0 ? null : {indice: i, contato: contatos[i]};
+}};
+
+// valores do Firestore (como na página de cadastro)
+function paraValor(v){
+  if(typeof v === "number") return Number.isInteger(v) ? {integerValue: String(v)} : {doubleValue: v};
+  if(typeof v === "string") return {stringValue: typeof v.toWellFormed === "function" ? v.toWellFormed() : v};
+  if(typeof v === "object" && v) return {mapValue: {fields: paraCampos(v)}};
+  return {nullValue: null};
+}
+function paraCampos(o){ const f = {}; Object.keys(o).forEach(k => { if(o[k] !== undefined) f[k] = paraValor(o[k]); }); return f; }
+class ErroEnvio extends Error {
+  constructor(tipo, http){ super(tipo + (http ? " " + http : "")); this.tipo = tipo; this.http = http || 0; }
+}
+
+// a lista pública (lida uma vez)
+let listaPublica = null;
+function carregarLista(){
+  if(listaPublica) return listaPublica;
+  const p = (async () => {
+    try{
+      const r = await fetch(ARQ_CONTATOS, {cache: "no-store"});
+      if(!r.ok) return {estado: "erro"};
+      const j = await r.json();
+      return Array.isArray(j) ? {estado: "ok", contatos: j.filter(x => x && typeof x === "object")} : {estado: "erro"};
+    }catch(e){ return {estado: "erro"}; }
+  })();
+  listaPublica = p;
+  p.then(r => { if(r.estado === "erro" && listaPublica === p) listaPublica = null; });
+  return p;
+}
+
+let achadoBusca = null;      // {numero, contato} do cadastro achado na busca
+let pedidoAlvo = null, pedidoTipo = "", pedidoFeito = null, enviandoPedido = false, conferenciaPedido = 0, tentativasPedido = 0;
+const finalizado = false;
+
+const TEXTOS_PEDIDO = {
+  ocultar: {
+    explica: "Seu cadastro sai da lista, mas continua guardado. Quando quiser voltar, abra o seu cadastro aqui de novo e toque em “Mostrar meu cadastro de novo”.",
+    botao: "Gerar o código para ocultar",
+    zap: "Olá! Quero OCULTAR o meu cadastro da Lista de Contatos de Músicos (por enquanto; posso voltar depois)."
+  },
+  mostrar: {
+    explica: "Seu cadastro volta a aparecer na lista, do jeito que estava.",
+    botao: "Gerar o código para mostrar",
+    zap: "Olá! Quero MOSTRAR de novo o meu cadastro na Lista de Contatos de Músicos."
+  },
+  excluir: {
+    explica: "Seu cadastro (nome, telefones, foto e todo o resto) será excluído permanentemente da lista. Para voltar a aparecer, será preciso fazer um cadastro novo.",
+    botao: "Gerar o código para excluir",
+    zap: "Olá! Quero EXCLUIR o meu cadastro da Lista de Contatos de Músicos (para sempre)."
+  }
+};
+function novoCodigoPedido(){
+  const b = new Uint8Array(6);
+  crypto.getRandomValues(b);
+  return [...b].map(x => LETRAS_CODIGO[x % LETRAS_CODIGO.length]).join("");
+}
+// o contato da lista que a pessoa abriu (pelo número do cadastro): os cartões só aparecem para ele
+async function prepararPedidos(){
+  const n = ++conferenciaPedido;
+  const sec = $("secPedido");
+  if(!ORGANIZADOR_WHATSAPP || !achadoBusca){ sec.hidden = true; pedidoAlvo = null; fecharPedido(); return; }
+  if(n !== conferenciaPedido) return;
+  const achado = achadoBusca;
+  if(!achado){ sec.hidden = true; pedidoAlvo = null; fecharPedido(); return; }
+  const c = achado.contato;
+  const ig = typeof c.instagram === "string" ? (instaDoCampo(c.instagram).valor || "") : "";
+  const alvo = {numero: achadoBusca.numero, instagram: ig, oculto: c.oculto === true,
+    nome: limparNome(typeof c.nome === "string" ? c.nome : "") || (ig ? "@" + ig : formatarTel(achadoBusca.numero))};
+  if(!pedidoAlvo || pedidoAlvo.numero !== alvo.numero) fecharPedido();
+  pedidoAlvo = alvo;
+  $("iconeOcultar").hidden = alvo.oculto; $("iconeMostrar").hidden = !alvo.oculto;
+  $("tituloCardOcultar").textContent = alvo.oculto ? "Mostrar meu cadastro de novo" : "Ocultar meu cadastro";
+  $("subCardOcultar").textContent = alvo.oculto ? "Hoje ele está oculto: volta a aparecer na lista" : "Você pode voltar atrás";
+  $("cardOcultar").dataset.tipo = alvo.oculto ? "mostrar" : "ocultar";
+  sec.hidden = false;
+  if(pedidoTipo) desenharPedido();
+}
+function fecharPedido(){
+  pedidoTipo = ""; pedidoFeito = null; tentativasPedido = 0;
+  $("caixaPedido").hidden = true;
+  $("erroPedido").hidden = true;
+  ["cardOcultar", "cardExcluir"].forEach(id => $(id).setAttribute("aria-pressed", "false"));
+}
+function mensagemPedido(tipo, codigo, semRegistro){
+  return [TEXTOS_PEDIDO[tipo].zap, "Nome: " + pedidoAlvo.nome, "WhatsApp do cadastro: " + formatarTel(pedidoAlvo.numero), "Código: " + codigo]
+    .concat(semRegistro ? ["(A página não conseguiu registrar o pedido; mandei por aqui.)"] : []).join("\n");
+}
+// a caixa do pedido: a explicação e "Gerar o código"; depois de registrado, o código e o botão do WhatsApp
+function desenharPedido(){
+  const caixa = $("caixaPedido");
+  if(!pedidoTipo || !pedidoAlvo){ caixa.hidden = true; return; }
+  const t = TEXTOS_PEDIDO[pedidoTipo], numero = formatarTel(pedidoAlvo.numero);
+  ["cardOcultar", "cardExcluir"].forEach(id => $(id).setAttribute("aria-pressed", String($(id).dataset.tipo === pedidoTipo)));
+  caixa.classList.toggle("perigo", pedidoTipo === "excluir");
+  $("textoPedido").textContent = t.explica;
+  const feito = pedidoFeito && pedidoFeito.tipo === pedidoTipo ? pedidoFeito : null;
+  $("passoConfirmar").hidden = !!feito;
+  $("passoCodigo").hidden = !feito;
+  if(!feito){
+    $("dicaConfirmar").textContent = "Para ter certeza de que é você mesmo quem está pedindo, a página gera um código. Depois você manda esse código ao organizador pelo WhatsApp, do mesmo número do seu cadastro: " + numero + ".";
+    const b = $("gerarPedido");
+    b.textContent = enviandoPedido ? "Gerando o código…" : t.botao;
+    b.disabled = enviandoPedido;
+    b.classList.toggle("perigo", pedidoTipo === "excluir");
+  }else{
+    $("codigoPedido").textContent = feito.codigo;
+    $("textoCodigo").textContent = feito.semRegistro
+      ? "Não consegui registrar o pedido no sistema agora. Mande pelo WhatsApp mesmo: o organizador resolve por lá."
+      : (DEMO ? "Demonstração: nada foi registrado. " : "Pedido registrado ✓ ") + "Agora toque no botão abaixo: o WhatsApp abre com a mensagem pronta, com o código. É só enviar.";
+    $("whatsPedido").href = "https://wa.me/55" + ORGANIZADOR_WHATSAPP + "?text=" + encodeURIComponent(mensagemPedido(pedidoTipo, feito.codigo, feito.semRegistro));
+    $("dicaCodigo").textContent = "Envie do mesmo número do seu cadastro, " + numero + ". É assim que o organizador confere que é você: mensagem de outro número não vale. Até ele confirmar, o seu cadastro continua como está.";
+  }
+  caixa.hidden = false;
+}
+function escolherPedido(tipo){
+  if(enviandoPedido || !pedidoAlvo) return;
+  if(pedidoTipo === tipo && !(pedidoFeito && pedidoFeito.tipo === tipo)){ fecharPedido(); return; }   // tocar de novo no mesmo cartão fecha
+  if(pedidoTipo !== tipo) tentativasPedido = 0;
+  pedidoTipo = tipo;
+  if(pedidoFeito && pedidoFeito.tipo !== tipo) pedidoFeito = null;
+  $("erroPedido").hidden = true;
+  desenharPedido();
+  rolarPara($("caixaPedido"), "nearest");
+}
+// grava o pedido no banco (coleção "pedidos"), com a hora do servidor; lança ErroEnvio se não der
+async function registrarPedido(tipo, codigo){
+  if(DEMO){
+    await esperar(DEMO_ESPERA_MS);
+    if(DEMO_SIMULAR_FALHA) throw new ErroEnvio("rede");
+    return;
+  }
+  const base = "projects/" + FIREBASE.projectId + "/databases/(default)/documents";
+  const doc = {formato: "pedido-cadastro", versao: 1, tipo, codigo, whatsapp: pedidoAlvo.numero, nome: pedidoAlvo.nome.slice(0, 120),
+    meta: {pagina: PAGINA, segundos: Math.min(31536000, Math.max(0, Math.round((Date.now() - abriuEm) / 1000)))}};
+  if(pedidoAlvo.instagram) doc.instagram = pedidoAlvo.instagram;
+  const corpo = {writes: [{
+    update: {name: base + "/" + COLECAO_PEDIDOS + "/" + idDoNumero(pedidoAlvo.numero) + "_" + codigo, fields: paraCampos(doc)},
+    currentDocument: {exists: false},
+    updateTransforms: [{fieldPath: "enviadoEm", setToServerValue: "REQUEST_TIME"}]        // a hora é a do servidor
+  }]};
+  const controle = new AbortController();
+  let estourou = false;
+  const relogio = setTimeout(() => { estourou = true; controle.abort(); }, TEMPO_ENVIO_MS);
+  try{
+    const resp = await fetch(API_FIRESTORE + "/v1/" + base + ":commit?key=" + encodeURIComponent(FIREBASE.apiKey), {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(corpo),
+      signal: controle.signal, credentials: "omit", cache: "no-store"
+    });
+    const http = resp.status;
+    if(http === 200) return;
+    if(http === 429) throw new ErroEnvio("limite", http);
+    if(http >= 500 || http === 408) throw new ErroEnvio("servidor", http);
+    if(http === 401 || http === 403) throw new ErroEnvio("negado", http);
+    throw new ErroEnvio("config", http);
+  }catch(err){
+    if(err instanceof ErroEnvio) throw err;
+    throw new ErroEnvio(estourou ? "tempo" : "rede");
+  }finally{
+    clearTimeout(relogio);
+  }
+}
+async function gerarPedido(){
+  if(enviandoPedido || !pedidoTipo || !pedidoAlvo) return;
+  const tipo = pedidoTipo, codigo = novoCodigoPedido();
+  if(tipo === "excluir" && !confirm("Excluir o seu cadastro da lista para sempre?\n\nDepois que o organizador confirmar, não dá para desfazer: para voltar à lista, só fazendo um cadastro novo.")) return;
+  enviandoPedido = true;
+  $("erroPedido").hidden = true;
+  desenharPedido();
+  try{
+    await registrarPedido(tipo, codigo);
+    pedidoFeito = {tipo, codigo, semRegistro: false};
+  }catch(err){
+    const tipoErro = err instanceof ErroEnvio ? err.tipo : "rede";
+    tentativasPedido++;
+    if(tentativasPedido >= 2 || tipoErro === "negado" || tipoErro === "config"){
+      pedidoFeito = {tipo, codigo, semRegistro: true};      // o banco não aceitou: o pedido vai só pelo WhatsApp
+    }else{
+      const p = $("erroPedido");
+      p.textContent = "Não consegui registrar o pedido agora" + (err && err.http ? " (erro " + err.http + ")" : "") + ". Confira a internet e toque no botão de novo.";
+      p.hidden = false;
+    }
+  }finally{
+    enviandoPedido = false;
+    if(pedidoTipo === tipo) desenharPedido();
+  }
+}
+$("cardOcultar").addEventListener("click", () => escolherPedido($("cardOcultar").dataset.tipo || "ocultar"));
+$("cardExcluir").addEventListener("click", () => escolherPedido("excluir"));
+$("gerarPedido").addEventListener("click", gerarPedido);
+$("cancelarPedido").addEventListener("click", () => { fecharPedido(); $("cardOcultar").focus({preventScroll: true}); });
+
+
+function avisar(texto, erro){ const p = $("msgBusca"); p.className = "dica" + (erro ? " erro" : ""); p.textContent = texto || ""; }
+async function buscar(){
+  const v = $("fBusca").value.trim();
+  achadoBusca = null; $("achadoBox").hidden = true; prepararPedidos();
+  if(!v){ avisar("Digite o WhatsApp do cadastro ou o Instagram com @.", true); return; }
+  $("buscar").disabled = true; avisar("Buscando…");
+  const lista = await carregarLista();
+  $("buscar").disabled = false;
+  if(lista.estado !== "ok"){ avisar("Não consegui abrir a lista agora. Confira a internet e tente de novo.", true); return; }
+  let c = null;
+  if(v.startsWith("@") || /instagram\.com/i.test(v)){
+    const u = instaDoCampo(v).valor.toLowerCase();
+    c = u ? lista.contatos.find(x => typeof x.instagram === "string" && instaDoCampo(x.instagram).valor.toLowerCase() === u) || null : null;
+  }else{
+    const tel = nacional(v);
+    if(!foneValido(tel)){ avisar("Digite o WhatsApp com DDD (10 ou 11 números; de outro país, + e o código do país) ou o Instagram com @.", true); return; }
+    const r = AJ.acharPorTelefone(lista.contatos, tel);
+    c = r ? r.contato : null;
+  }
+  const numero = c ? whatsDe(c) : null;
+  if(!c){ avisar("Não achei nenhum cadastro na lista com isso. Confira se digitou certo."); return; }
+  if(!numero){ avisar("Achei o cadastro, mas ele não tem WhatsApp: fale com o organizador para resolver.", true); return; }
+  achadoBusca = {numero, contato: c};
+  avisar("");
+  $("achadoNome").textContent = limparNome(c.nome) || "@" + instaDoCampo(c.instagram).valor;
+  $("achadoInfo").textContent = [Array.isArray(c.cidades) && typeof c.cidades[0] === "string" ? c.cidades[0] : "", "WhatsApp do cadastro: " + formatarTel(numero),
+    c.oculto === true ? "hoje oculto da lista" : ""].filter(Boolean).join(" · ");
+  $("achadoBox").hidden = false;
+  await prepararPedidos();
+  rolarPara($("secPedido"), "start");
+}
+$("buscar").addEventListener("click", buscar);
+$("fBusca").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); buscar(); } });
+</script>
+</body>
+</html>
+<!--
+================================================================
+ Arquivo: Excluir_Cadastro_Musicos_v1.0.html
+ No GitHub: excluir-cadastro.html (ao lado do index.html e do cadastro.html)
+================================================================
+v1.0 — 2026-11-25
+  - Primeira versão. Página própria para quem não quer ter o nome na
+    lista: acha o cadastro pelo WhatsApp ou pelo Instagram (na lista
+    pública) e mostra os mesmos cartões da página de cadastro v12.0:
+    "Ocultar meu cadastro" (dá para voltar; com o cadastro oculto, vira
+    "Mostrar meu cadastro de novo") e "Excluir meu cadastro". O pedido
+    vai para o banco (coleção "pedidos", regras v10) com um código, e a
+    pessoa confirma pelo WhatsApp do mesmo número do cadastro; o
+    organizador confere no painel (v25). Se o banco não aceitar, vai só
+    pelo WhatsApp. ?demo=1 não registra nada.
+================================================================
+-->
