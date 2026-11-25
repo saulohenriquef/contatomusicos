@@ -398,7 +398,7 @@
   /* ---------- v11.0: a prévia desenhada pela própria lista ---------- */
   .previa-lista{display:block; width:100%; max-width:440px; height:200px; margin:0 auto; border:0; border-radius:10px; background:transparent}
   .previa-lista[hidden]{display:none}
-  /* ---------- v11.1: ocultar, mostrar de novo ou excluir o cadastro ---------- */
+  /* ---------- v12.0: ocultar, mostrar de novo ou excluir o cadastro ---------- */
   .cards-pedido{display:grid; gap:10px; margin-top:10px}
   .card-pedido{display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; text-align:left; cursor:pointer;
     font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:14px;
@@ -775,7 +775,7 @@
       <p class="dica centro">Seus dados são usados só para esta lista.</p>
     </section>
 
-    <!-- v11.1: só para quem abriu o próprio cadastro e já está na lista -->
+    <!-- v12.0: só para quem abriu o próprio cadastro e já está na lista -->
     <section id="secPedido" class="passo sem-numero" aria-labelledby="tPedido" hidden>
       <h2 id="tPedido">Ocultar ou excluir meu cadastro</h2>
       <div class="cards-pedido">
@@ -834,7 +834,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v11.1
+    Cadastro de Músicos · Lista de Contatos de Músicos · v12.0
   </footer>
 </div>
 
@@ -1194,15 +1194,15 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v11.1";
+const VERSAO = "v12.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
 // Onde achar: Firebase > engrenagem > Configurações do projeto > Seus aplicativos > firebaseConfig (projectId e apiKey).
 // Enquanto estiverem vazios — ou com ?demo=1 no endereço da página — ela fica em MODO DEMONSTRAÇÃO e não envia nada a lugar nenhum.
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};
-const COLECAO_PEDIDOS = "pedidos";      // v11.1: pedidos para ocultar, mostrar de novo ou excluir o cadastro
-const LETRAS_CODIGO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";   // v11.1: código do pedido sem 0/O e 1/I/L (fácil de ler e de digitar)
+const COLECAO_PEDIDOS = "pedidos";      // v12.0: pedidos para ocultar, mostrar de novo ou excluir o cadastro
+const LETRAS_CODIGO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";   // v12.0: código do pedido sem 0/O e 1/I/L (fácil de ler e de digitar)
 const COLECAO = "cadastros";             // pasta do banco onde cada cadastro vira um documento, com o WhatsApp (só dígitos) como nome
 let API_FIRESTORE = "https://firestore.googleapis.com";
 let TEMPO_ENVIO_MS = 25000;              // espera máxima por uma tentativa de envio (milissegundos)
@@ -1213,7 +1213,7 @@ let DEMO_ESPERA_MS = 700;                // na demonstração, quanto tempo o "E
 let DEMO_SIMULAR_FALHA = false;          // true = a demonstração falha ao enviar (para ver a mensagem de erro)
 let MIN_SEGUNDOS = 8;                    // proteção contra robôs: antes disso, desde que a página abriu, o envio é recusado
 const WHATSAPP_OBRIGATORIO = true;       // false = basta ter qualquer forma de contato
-const ORGANIZADOR_WHATSAPP = "35988089192";   // WhatsApp do organizador, só dígitos com DDD; vazio = sem o botão "Falar com o organizador" e sem os pedidos de ocultar/excluir (v11.1)
+const ORGANIZADOR_WHATSAPP = "35988089192";   // WhatsApp do organizador, só dígitos com DDD; vazio = sem o botão "Falar com o organizador" e sem os pedidos de ocultar/excluir (v12.0)
 const MENSAGEM_ORGANIZADOR = "Olá, fiz meu cadastro na lista de músicos e preciso de ajuda.";
 const SAIDA = 256;                       // lado da foto final, em pixels
 const QUALIDADE = 0.85;                  // qualidade do JPEG (0 a 1)
@@ -1259,7 +1259,7 @@ let cidades = [];                // ["Franca/SP"]
 let telefones = [];              // [{tipo, outro, numero, contato}]
 let links = [];                  // [{rotulo, url}]
 let videos = [];                 // [{url}] links de vídeo (YouTube ou Instagram)
-let pedidoAlvo = null, pedidoTipo = "", pedidoFeito = null, enviandoPedido = false, conferenciaPedido = 0, tentativasPedido = 0;   // v11.1
+let pedidoAlvo = null, pedidoTipo = "", pedidoFeito = null, enviandoPedido = false, conferenciaPedido = 0, tentativasPedido = 0;   // v12.0
 let conferenciaNome = 0, relogioNome = 0;   // v10.2: a conferência do nome igual ao de alguém da lista
 let edit = null;                 // null = cadastro novo; senão a edição em andamento: {fonte, nome, publicado, anterior, docId, instagram, instaOriginal}
                                  //   publicado = WhatsApp do contato que já está na lista; docId = nome do documento carregado do banco;
@@ -3206,7 +3206,7 @@ function mostrarEdicao(){
   $("avisoInsta").hidden = true;
   $("avisoNome").hidden = true;
   atualizarBotaoEnviar();
-  prepararPedidos();                                       // v11.1: os cartões "Ocultar" e "Excluir" (só para quem já está na lista)
+  prepararPedidos();                                       // v12.0: os cartões "Ocultar" e "Excluir" (só para quem já está na lista)
 }
 
 // entra no modo edição com o cadastro de "o" (veja escolherOrigem)
@@ -3252,7 +3252,7 @@ $("cancelarEdicao").addEventListener("click", () => {
   window.scrollTo({top: 0, behavior: reduzMovimento() ? "auto" : "smooth"});
 });
 
-/* ---------- v11.1: ocultar, mostrar de novo ou excluir o cadastro ----------
+/* ---------- v12.0: ocultar, mostrar de novo ou excluir o cadastro ----------
    Só para quem abriu o próprio cadastro e já está na lista. A página sorteia um código e grava o pedido no banco
    (coleção "pedidos"); a pessoa manda o mesmo código pelo WhatsApp, do número do cadastro, ao organizador. No painel,
    ele confere se a mensagem com o código veio desse número e só então oculta, mostra ou exclui. O pedido sozinho não
@@ -4262,7 +4262,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v11.1.html
+ Arquivo: Cadastro_Musicos_v12.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -4275,7 +4275,7 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
-v11.1 — 2026-11-25
+v12.0 — 2026-11-25
   - Ocultar ou excluir o cadastro: quem abre o próprio cadastro (e já
     está na lista) vê no fim da página os cartões "Ocultar meu
     cadastro" (você pode voltar atrás) e "Excluir meu cadastro" (sai da
@@ -4286,7 +4286,7 @@ v11.1 — 2026-11-25
     a própria pessoa, ela confirma pelo WhatsApp: "📲 Confirmar pelo
     WhatsApp" abre a conversa com o organizador com o pedido e o código
     já escritos, e a página reforça que tem de ser enviado do mesmo
-    número do cadastro. O organizador confere no painel (v24.2) e só
+    número do cadastro. O organizador confere no painel (v25) e só
     então oculta, mostra ou exclui. Se o banco não aceitar o pedido,
     ele vai só pelo WhatsApp.
   - WhatsApp do organizador preenchido (ORGANIZADOR_WHATSAPP): com ele
