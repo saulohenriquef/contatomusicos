@@ -630,5 +630,27 @@
     "hashtags": ["vaofalardemim", "tiobruno", "percuninho"],
     "bio": "Professor licenciado em música, proponente de vários projetos de aula de instrumento musical, e integrante dos projetos: Seven Samba, Bruninho e Diego, Bateria 7 Vidas e Bateria Feminina Batukaê. Além de reger fanfarras em Carmo do Rio Claro, Alpinópolis e São José da Barra.",
     "servicos": ["Free lance de percussão", "Regência de Fanfarra e Coral", "Mestre de bateria de escola de samba"]
+  },
+  {
+    "nome": "Weder & Felipe",
+    "categoria": "artista",
+    "foto": "weder-felipe.jpg",
+    "cidades": ["Alpinópolis/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "wederefelipe",
+    "whatsapp": ""
+  },
+  {
+    "nome": "Reginaldo Rodrigues",
+    "categoria": "artista",
+    "foto": "reginaldo-rodrigues.jpg",
+    "cidades": ["Carmo do Rio Claro/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "reginaldorodriguesmodao",
+    "whatsapp": ""
   }
 ]
