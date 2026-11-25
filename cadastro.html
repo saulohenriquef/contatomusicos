@@ -395,6 +395,9 @@
   .ver-lista{margin:6px 0 0; font-size:.92rem}
   .ver-lista a{color:var(--accent); font-weight:650; text-decoration:none}
   .ver-lista a:hover{text-decoration:underline}
+  /* ---------- v11.0: a prévia desenhada pela própria lista ---------- */
+  .previa-lista{display:block; width:100%; max-width:440px; height:200px; margin:0 auto; border:0; border-radius:10px; background:transparent}
+  .previa-lista[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -730,7 +733,10 @@
     <section class="passo" aria-labelledby="t5">
       <h2 id="t5">Conferir e enviar</h2>
       <p class="dica">Assim você vai aparecer na lista. Tudo muda aqui na hora; toque nos botões do cartão para ver o telefone e o perfil completo.</p>
-      <div class="previa-fundo"><ul id="previa" class="cartoes" aria-label="Prévia do seu cartão na lista"></ul></div>
+      <div class="previa-fundo">
+        <iframe id="previaLista" class="previa-lista" title="Prévia: o seu cartão como vai aparecer na lista" hidden></iframe>
+        <ul id="previa" class="cartoes" aria-label="Prévia do seu cartão na lista"></ul>
+      </div>
 
       <label class="marcar" id="rotAutoriza" for="fAutoriza">
         <input id="fAutoriza" type="checkbox">
@@ -775,13 +781,14 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v10.4
+    Cadastro de Músicos · Lista de Contatos de Músicos · v11.0
   </footer>
 </div>
 
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
+const previaLista = {pronta: false, suporta: false, ultimo: "", relogio: 0};   // v11.0: a prévia desenhada pela lista (veja "prévia" mais abaixo)
 const norm = s => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 /* ---------- AJUDANTES COMPARTILHADOS ----------
@@ -1134,7 +1141,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v10.4";
+const VERSAO = "v11.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -2149,6 +2156,7 @@ function previas(){
     c.drawImage(saida, 0, 0, lado, lado);
   });
   desenharAvatarPrevia();
+  agendarPreviaFoto();                                   // v11.0: a foto nova também na prévia da lista
 }
 function desenharAvatarPrevia(){
   if(!avatarPrevia || !avatarPrevia.isConnected) return;
@@ -2668,9 +2676,50 @@ function montarCartao(c, fotoModo){
 
 function atualizarPrevia(){
   const {c} = coletar();
+  if(previaLista.pronta){ enviarPreviaLista(c); return; }   // v11.0: a lista desenha a prévia
   const alvo = $("previa");
   alvo.textContent = "";
   alvo.appendChild(montarCartao(c, fonte ? "nova" : (fotoLista && !fotoRemovida ? "lista" : "")));
+}
+
+/* ---------- v11.0: a prévia é desenhada pela própria lista ----------
+   A lista do site (index.html?previa=1, num iframe) desenha o cartão com o mesmo código e o mesmo visual de lá: fica
+   exatamente como vai aparecer, com o "Perfil completo" e tudo. Se a lista publicada ainda não tiver a prévia (antes da
+   v18), fica a prévia desta página. */
+// (o estado previaLista fica no começo do script)
+function enviarPreviaLista(c){
+  if(!previaLista.pronta) return;
+  const contato = JSON.parse(JSON.stringify(c));
+  let foto = "";
+  if(fonte){ try{ foto = saida.toDataURL("image/jpeg", 0.85); }catch(e){ foto = ""; } }
+  else if(fotoLista && !fotoRemovida){ try{ contato.foto = new URL(fotoLista, location.href).href; }catch(e){ delete contato.foto; } }
+  else delete contato.foto;
+  const chave = JSON.stringify(contato) + "|" + foto.length + foto.slice(-48);
+  if(chave === previaLista.ultimo) return;
+  previaLista.ultimo = chave;
+  try{ $("previaLista").contentWindow.postMessage({tipo: "previa-contato", contato, foto}, location.origin); }catch(e){}
+}
+function agendarPreviaFoto(){                     // a foto mexe a cada arrasto: manda no máximo 4 vezes por segundo
+  if(!previaLista.pronta) return;
+  clearTimeout(previaLista.relogio);
+  previaLista.relogio = setTimeout(() => enviarPreviaLista(coletar().c), 250);
+}
+window.addEventListener("message", e => {
+  const f = $("previaLista");
+  if(e.source !== f.contentWindow || e.origin !== location.origin || !e.data || typeof e.data !== "object") return;
+  if(e.data.tipo === "previa-carregando") previaLista.suporta = true;
+  else if(e.data.tipo === "previa-pronta"){
+    previaLista.pronta = previaLista.suporta = true; previaLista.ultimo = "";
+    f.hidden = false; $("previa").hidden = true;
+    atualizarPrevia();
+  }else if(e.data.tipo === "previa-altura" && previaLista.pronta){
+    f.style.height = Math.max(60, Math.min(5000, Math.round(+e.data.altura || 0))) + "px";
+  }
+});
+if(/^https?:$/.test(location.protocol)){
+  $("previaLista").src = "index.html?previa=1";
+  // lista antiga (sem a prévia): o quadro escondido não fica rodando a lista inteira
+  setTimeout(() => { if(!previaLista.suporta) $("previaLista").src = "about:blank"; }, 15000);
 }
 
 let previaAgendada = false;
@@ -3993,7 +4042,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v10.4.html
+ Arquivo: Cadastro_Musicos_v11.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -4006,6 +4055,19 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v11.0 — 2026-11-25
+  - A prévia agora é desenhada pela própria lista do site (lista v18,
+    index.html?previa=1, num quadro dentro desta página): o cartão fica
+    exatamente como vai aparecer na lista, com o mesmo código e o mesmo
+    visual, incluindo o "Perfil completo" (bio, serviços, vídeos,
+    links), os telefones atrás do botão vermelho, os selos, a bandeira
+    e o espaço do recado. A foto nova aparece nela enquanto você
+    enquadra. O que você abrir na prévia continua aberto enquanto
+    preenche. A prévia não conta cliques na lista.
+  - Enquanto a lista publicada não for a v18, fica a prévia antiga
+    desta página.
+
+----------------------------------------------------------------
 v10.4 — 2026-11-24
   - O título leva para a lista (index.html, na mesma pasta do site) e,
     logo abaixo da apresentação, há o link "📋 Ver a lista de
