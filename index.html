@@ -283,6 +283,9 @@
   @media (prefers-reduced-motion: reduce){ .perfil-btn::after, .video-play{transition:none} }
   .cadastre .editar{margin-top:4px; font-size:.86rem}
   .cadastre .editar a{color:var(--accent); font-weight:650}
+  /* v19: cartão pequeno para quem não quer estar na lista */
+  .sair-lista{margin:-12px 0 22px; padding:9px 14px; border:1px dashed var(--line); border-radius:12px; text-align:center; font-size:.84rem; color:var(--muted)}
+  .sair-lista a{color:var(--accent); font-weight:650}
 
   /* selos (ex.: IFC) e balão explicativo */
   .selo{
@@ -573,9 +576,10 @@
       </div>
       <span class="editar">Já tem cadastro? <a id="linkEditar" href="https://saulohenriquef.github.io/contatomusicos/cadastro.html#editar" rel="noopener">Editar meu cadastro</a></span>
     </div>
+    <div class="sair-lista">Não quer ter seu nome nesta lista? <a id="linkSair" href="https://saulohenriquef.github.io/contatomusicos/excluir-cadastro.html" rel="noopener">Ocultar ou excluir meu cadastro</a></div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v18
+    Lista de Contatos de Músicos · v19
   </footer>
 </div>
 
@@ -1445,7 +1449,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v18";
+const VERSAO_LISTA = "v19";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -2333,7 +2337,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v18.html
+ Arquivo: Lista_Contatos_Musicos_v19.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2893,6 +2897,11 @@ v18 — 2026-11-25
     do cartão, para o iframe ficar do tamanho certo.
   - Por dentro: o preparo de cada contato do contatos.json virou a
     função prepararContato (a lista e a prévia usam a mesma).
+----------------------------------------------------------------
+v19 — 2026-11-25
+  - Logo abaixo do cartão de cadastro, um cartão pequeno: "Não quer ter
+    seu nome nesta lista? Ocultar ou excluir meu cadastro", que leva à
+    página própria (excluir-cadastro.html, v1.0).
 
 ================================================================
 -->
