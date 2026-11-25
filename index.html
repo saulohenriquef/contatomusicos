@@ -474,6 +474,12 @@
     animation:varreduraRadar 2.6s linear infinite}
   @keyframes varreduraRadar{to{transform:rotate(360deg)}}
   @media (prefers-reduced-motion: reduce){ .radar::after{animation:none} }
+  /* ---------- v18: prévia (dentro da página de cadastro e do painel): só o cartão ---------- */
+  html.modo-previa{scrollbar-gutter:auto}
+  html.modo-previa body{overflow:hidden}
+  html.modo-previa .lateral, html.modo-previa footer, html.modo-previa #tituloLista, html.modo-previa #vazio{display:none !important}
+  html.modo-previa .wrap{display:block; max-width:none; margin:0; padding:3px 3px 6px}
+  html.modo-previa #lista{display:block; margin:0}
 </style>
 </head>
 <body>
@@ -569,7 +575,7 @@
     </div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v17.1
+    Lista de Contatos de Músicos · v18
   </footer>
 </div>
 
@@ -598,6 +604,12 @@ let CONTATOS = [];   // carregado de Lista_Contatos_Musicos_contatos.json (cada 
 
 /* ---------- utilitários ---------- */
 const $ = id => document.getElementById(id);
+// v18: prévia: index.html?previa=1 dentro de um iframe (página de cadastro ou painel) mostra só o cartão que a página mandar
+const PREVIA = (() => { try{ return window.parent !== window && new URLSearchParams(location.search).has("previa"); }catch(e){ return false; } })();
+if(PREVIA){
+  document.documentElement.classList.add("modo-previa");
+  try{ window.parent.postMessage({tipo: "previa-carregando"}, "*"); }catch(e){}   // a página sabe que esta lista tem a prévia
+}
 const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 
 /* ---------- AJUDANTES COMPARTILHADOS ----------
@@ -1123,6 +1135,7 @@ function urlFoto(foto){
   if(!foto) return "";
   foto = String(foto).trim();
   if(!foto) return "";
+  if(PREVIA && /^data:image\/(jpeg|png|webp);base64,/i.test(foto)) return foto;   // v18: a foto nova que a página mandou para a prévia
   return /^https?:\/\//i.test(foto) ? foto : PASTA_FOTOS + encodeURI(foto);
 }
 
@@ -1432,7 +1445,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v17.1";
+const VERSAO_LISTA = "v18";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -1440,6 +1453,7 @@ try{
   if(q.has("contar")) localStorage.removeItem("naoContarCliques");
   naoContarCliques = localStorage.getItem("naoContarCliques") === "1";
 }catch(e){}
+if(PREVIA) naoContarCliques = true;            // v18: a prévia não conta cliques
 const cliquesRecentes = new Map();
 function idDoClique(){      // 20 letras e números, sorteados (é o nome do documento)
   const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", b = new Uint8Array(20);
@@ -2098,6 +2112,7 @@ window.addEventListener("resize", () => { if(window.innerWidth !== larguraBalaoC
 let ordem = [];
 
 function render(){
+  if(PREVIA){ if(contatoPrevia) desenharPrevia(contatoPrevia); return; }   // v18: na prévia, só o cartão
   const q = norm($("busca").value.trim());
   const lista = $("lista");
   fecharBalao();
@@ -2218,6 +2233,70 @@ async function carregarJSON(arquivo){
   return r.json();
 }
 
+let MAPA_CIDADES = new Map();       // nome da cidade -> [lat, lon] (v18: fora do iniciar, para a prévia usar também)
+const chaveCidade = n => norm(String(n||"").trim());
+// o contato do contatos.json do jeito que a lista usa (v18: a prévia passa pelo mesmo caminho)
+function prepararContato(c){
+  const bruto = String(c.nome || "");   // parênteses no nome = apelido (fica no nome)
+  const categoria = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
+  const selos = [...new Set([...(Array.isArray(c.selos) ? c.selos : []).filter(s => !["ABC","ENM"].includes(s) && (s !== "IFC" || categoria === "musico")),
+    ...(categoria === "artista" ? ["ABC"] : []), ...(categoria === "empresa" ? ["ENM"] : [])])];
+  return {
+    ...c,
+    nome: bruto.replace(/\s+/g, " ").trim(),       // como está no contatos.json (sem arrumar maiúsculas: Raphael WQ)
+    referencia: String(c.referencia || ""),
+    categoria, tipoArtista: String(c.tipoArtista || ""),
+    ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : (categoria === "musico" && selos.includes("IFC") ? "sim" : ""),
+    abcDisponibilidade: ["sim","raramente","nao"].includes(c.abcDisponibilidade) ? c.abcDisponibilidade : "nao",
+    selos,
+    cidades: Array.isArray(c.cidades) ? c.cidades : [],
+    instrumentos: AJ.instrumentos(c.instrumentos),
+    hashtags: AJ.hashtags(c.hashtags),
+    servicos: AJ.servicos(c.servicos),
+    bio: AJ.bio(c.bio),
+    videos: AJ.videos(c.videos),                       // só YouTube e Instagram; o resto é ignorado
+    coords: (Array.isArray(c.cidades) ? c.cidades : []).map(n => MAPA_CIDADES.get(chaveCidade(n))).filter(Boolean)
+  };
+}
+
+/* ---------- v18: prévia ----------
+   A página de cadastro e o painel abrem index.html?previa=1 num iframe e mandam o contato (postMessage). A lista desenha
+   o cartão com o mesmo código e o mesmo visual de sempre (perfil completo, telefones, selos, bandeira...) e avisa a
+   altura, para o iframe ficar do tamanho do cartão. Não conta cliques. A foto nova vem como imagem (data:). */
+let contatoPrevia = null;
+const estadoPrevia = {fone: new Set(), perfil: new Set()};       // o que a pessoa abriu na prévia continua aberto a cada mudança
+function desenharPrevia(novo){
+  const velho = contatoPrevia;
+  ["fone", "perfil"].forEach(k => { if(velho && velho !== novo && estadoPrevia[k].delete(velho)) estadoPrevia[k].add(novo); });
+  contatoPrevia = novo;
+  categoriaAtiva = novo.categoria;          // o tipo de artista aparece como na aba dele
+  fecharBalao(); fecharBalaoContato();
+  const lista = $("lista");
+  lista.textContent = "";
+  lista.appendChild(criarCartao(novo, estadoPrevia));
+  avisarAltura();
+}
+function avisarAltura(){
+  try{ window.parent.postMessage({tipo: "previa-altura", altura: Math.ceil(document.documentElement.scrollHeight)}, "*"); }catch(e){}
+}
+function iniciarPrevia(){
+  window.addEventListener("message", e => {
+    if(e.source !== window.parent) return;
+    const d = e.data;
+    if(!d || typeof d !== "object" || d.tipo !== "previa-contato" || !d.contato || typeof d.contato !== "object" || Array.isArray(d.contato)) return;
+    const bruto = {...d.contato};
+    delete bruto.oculto;
+    const f = typeof d.foto === "string" ? d.foto : "";
+    if(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(f) && f.length < 4000000) bruto.foto = f;
+    else if(typeof bruto.foto !== "string") delete bruto.foto;
+    try{ desenharPrevia(prepararContato(bruto)); }catch(erro){ console.warn("Prévia:", erro); }
+  });
+  if("ResizeObserver" in window) new ResizeObserver(avisarAltura).observe(document.body);
+  document.addEventListener("click", () => setTimeout(avisarAltura, 80));
+  window.addEventListener("load", avisarAltura);
+  try{ window.parent.postMessage({tipo: "previa-pronta", versao: VERSAO_LISTA}, "*"); }catch(e){}
+}
+
 async function iniciar(){
   try{
     const [contatos, cidades] = await Promise.all([
@@ -2226,38 +2305,19 @@ async function iniciar(){
       AJ.carregarCatalogo()   // instrumentos, funções e tipos de artista (se o arquivo não existir, ficam os da tabela de reserva)
     ]);
     // nome da cidade -> [lat, lon]; ignora maiúsculas, acentos e espaços nas pontas
-    const mapa = new Map(Object.entries(cidades).map(([n, v]) => [norm(n.trim()), [v.lat, v.lon]]));
-    const chave = n => norm(String(n||"").trim());
-    CONTATOS = contatos.filter(c => c && c.oculto !== true).map(c => {
-      const bruto = String(c.nome || "");   // parênteses no nome = apelido (fica no nome)
-      const categoria = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
-      const selos = [...new Set([...(Array.isArray(c.selos) ? c.selos : []).filter(s => !["ABC","ENM"].includes(s) && (s !== "IFC" || categoria === "musico")),
-        ...(categoria === "artista" ? ["ABC"] : []), ...(categoria === "empresa" ? ["ENM"] : [])])];
-      return {
-      ...c,
-      nome: bruto.replace(/\s+/g, " ").trim(),       // como está no contatos.json (sem arrumar maiúsculas: Raphael WQ)
-      referencia: String(c.referencia || ""),
-      categoria, tipoArtista: String(c.tipoArtista || ""),
-      ifcDisponibilidade: ["sim","raramente","nao"].includes(c.ifcDisponibilidade) ? c.ifcDisponibilidade : (categoria === "musico" && selos.includes("IFC") ? "sim" : ""),
-      abcDisponibilidade: ["sim","raramente","nao"].includes(c.abcDisponibilidade) ? c.abcDisponibilidade : "nao",
-      selos,
-      cidades: Array.isArray(c.cidades) ? c.cidades : [],
-      instrumentos: AJ.instrumentos(c.instrumentos),
-      hashtags: AJ.hashtags(c.hashtags),
-      servicos: AJ.servicos(c.servicos),
-      bio: AJ.bio(c.bio),
-      videos: AJ.videos(c.videos),                       // só YouTube e Instagram; o resto é ignorado
-      coords: (Array.isArray(c.cidades) ? c.cidades : []).map(n => mapa.get(chave(n))).filter(Boolean)
-    };
-    });
+    MAPA_CIDADES = new Map(Object.entries(cidades).map(([n, v]) => [norm(n.trim()), [v.lat, v.lon]]));
+    const mapa = MAPA_CIDADES, chave = chaveCidade;
+    CONTATOS = contatos.filter(c => c && c.oculto !== true).map(prepararContato);
     const faltam = [...new Set(contatos.flatMap(c => (c.cidades||[]).filter(n => !mapa.has(chave(n)))))];
     if(faltam.length) console.warn("Cidades sem coordenadas em Lista_Contatos_Musicos_cidades.json:", faltam);
     montarMapaInstagram();   // @menções: quem tem Instagram cadastrado
+    if(PREVIA){ iniciarPrevia(); return; }   // v18: a prévia não monta a lista; espera o contato da página
     montarFiltros();     // botões de instrumento, em ordem alfabética
     ordem = ordenar();   // sorteio a cada abertura da página
     render();
     pedirLocalizacao();  // se liberada, reordena por proximidade
   }catch(e){
+    if(PREVIA){ iniciarPrevia(); return; }
     $("contador").textContent = "";
     $("filtros").hidden = true;
     $("limpar").hidden = true;
@@ -2273,7 +2333,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v17.1.html
+ Arquivo: Lista_Contatos_Musicos_v18.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2821,6 +2881,18 @@ v17.1 — 2026-11-25
     o espaço não entra. A conta usa a largura real do cartão (celular
     ou computador) e é refeita quando ela muda. O limite fica em
     LINHAS_A_MAIS_SEM_ESPACO (1 linha a mais).
+----------------------------------------------------------------
+v18 — 2026-11-25
+  - Modo prévia: index.html?previa=1, aberto dentro de um iframe da
+    página de cadastro (v11.0) ou do painel (v24), não monta a lista:
+    espera o contato que a página manda e desenha só o cartão dele,
+    com o mesmo código e o mesmo visual da lista (perfil completo,
+    telefones atrás do botão vermelho, selos, bandeira, @menções,
+    espaço do recado...). Assim a prévia fica exatamente como o
+    contato vai aparecer. A prévia não conta cliques e avisa a altura
+    do cartão, para o iframe ficar do tamanho certo.
+  - Por dentro: o preparo de cada contato do contatos.json virou a
+    função prepararContato (a lista e a prévia usam a mesma).
 
 ================================================================
 -->
