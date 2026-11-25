@@ -612,5 +612,23 @@
     "email": "brunorsgra@hotmail.com",
     "whatsapp": "35984692225",
     "tipoWhatsapp": "Pessoal"
+  },
+  {
+    "nome": "Bruninho Valeriano (Tio Bruno)",
+    "referencia": "Seven Samba / Bruninho e Diego / Bateria 7 Vidas",
+    "categoria": "musico",
+    "foto": "bruninho-valeriano-tio-bruno.jpg",
+    "cidades": ["Carmo do Rio Claro/MG"],
+    "instrumentos": ["Percussão", "Cavaquinho", "Cajon", "Congas", "Pandeiro", "Repique", "Surdo", "Triângulo"],
+    "selos": ["IFC"],
+    "ifcDisponibilidade": "sim",
+    "instagram": "obruninhovaleriano",
+    "youtube": "https://youtube.com/@bruninhovaleriano?si=7O3laCQxrj1VD0Tv",
+    "email": "fanfarrabarra@gmail.com",
+    "whatsapp": "35998839117",
+    "tipoWhatsapp": "Pessoal",
+    "hashtags": ["vaofalardemim", "tiobruno", "percuninho"],
+    "bio": "Professor licenciado em música, proponente de vários projetos de aula de instrumento musical, e integrante dos projetos: Seven Samba, Bruninho e Diego, Bateria 7 Vidas e Bateria Feminina Batukaê. Além de reger fanfarras em Carmo do Rio Claro, Alpinópolis e São José da Barra.",
+    "servicos": ["Free lance de percussão", "Regência de Fanfarra e Coral", "Mestre de bateria de escola de samba"]
   }
 ]
