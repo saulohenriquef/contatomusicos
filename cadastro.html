@@ -388,6 +388,13 @@
   .membros[hidden]{display:none}
   .membros .rot-membros{font-size:.82rem; color:var(--muted)}
   .membros .chip{min-height:34px; padding:4px 12px; font-size:.86rem}
+  /* ---------- v10.4: o título leva para a lista ---------- */
+  h1 a.link-titulo{color:inherit; text-decoration:none}
+  h1 a.link-titulo:hover{text-decoration:underline; text-underline-offset:3px}
+  h1 a.link-titulo:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:6px}
+  .ver-lista{margin:6px 0 0; font-size:.92rem}
+  .ver-lista a{color:var(--accent); font-weight:650; text-decoration:none}
+  .ver-lista a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -429,8 +436,9 @@
 
 <div class="wrap">
   <header>
-    <h1>🪗 Cadastro para a lista de música</h1>
+    <h1><a class="link-titulo" href="index.html" title="Ver a lista de contatos">🪗 Cadastro para a lista de música</a></h1>
     <p class="sub">Cadastre músicos, artistas, bandas, cantores e empresas ligadas à música. O cadastro é conferido antes de aparecer na lista.</p>
+    <p class="ver-lista"><a href="index.html">📋 Ver a lista de contatos</a></p>
     <p id="avisoDemo" class="demo" hidden>🧪 <strong>Modo demonstração.</strong> Nada do que você preencher é enviado a lugar nenhum: pode testar à vontade.</p>
     <noscript><p class="demo">Para preencher o cadastro, ative o JavaScript do navegador.</p></noscript>
   </header>
@@ -767,7 +775,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v10.3
+    Cadastro de Músicos · Lista de Contatos de Músicos · v10.4
   </footer>
 </div>
 
@@ -1126,7 +1134,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v10.3";
+const VERSAO = "v10.4";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -3985,7 +3993,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v10.3.html
+ Arquivo: Cadastro_Musicos_v10.4.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -3998,6 +4006,12 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v10.4 — 2026-11-24
+  - O título leva para a lista (index.html, na mesma pasta do site) e,
+    logo abaixo da apresentação, há o link "📋 Ver a lista de
+    contatos": quem recebe só o link do cadastro também chega na lista.
+
+----------------------------------------------------------------
 v10.3 — 2026-11-24
   - Tipo de telefone "Membro", para todos, logo depois de "Pessoal" (o
     número de um integrante). Na lista aparece em cima do número, como
