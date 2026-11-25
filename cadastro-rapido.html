@@ -110,6 +110,13 @@
   .fora-box{margin-top:12px}
   .fora-box > summary{cursor:pointer; color:var(--muted); font-size:.88rem; padding:2px 0}
   .fora-box select.entrada{margin-top:6px}
+  /* ---------- v2.1: o título leva para a lista ---------- */
+  h1 a.link-titulo{color:inherit; text-decoration:none}
+  h1 a.link-titulo:hover{text-decoration:underline; text-underline-offset:3px}
+  h1 a.link-titulo:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:6px}
+  .ver-lista{margin:6px 0 0; font-size:.92rem}
+  .ver-lista a{color:var(--accent); font-weight:650; text-decoration:none}
+  .ver-lista a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -120,8 +127,9 @@
 
   <header class="topo">
     <span class="selo-rapido">⚡ Cadastro rápido · 1 minuto</span>
-    <h1>Entre na Lista de Contatos de Músicos</h1>
+    <h1><a class="link-titulo" href="index.html" title="Ver a lista de contatos">Entre na Lista de Contatos de Músicos</a></h1>
     <p class="sub">Só a sua cidade e o seu WhatsApp (e o Instagram, se tiver). O organizador completa o resto com você.</p>
+    <p class="ver-lista"><a href="index.html">📋 Ver a lista de contatos</a></p>
   </header>
 
   <a id="linkCompletoTopo" class="card-completo" href="cadastro.html">
@@ -175,8 +183,8 @@
     </section>
 
     <section class="cartao" aria-labelledby="t3">
-      <h2 id="t3"><span class="num">3</span> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="17.4" cy="6.6" r="1.3" fill="url(#gIg)"/></svg> Seu Instagram <span class="opcional">(opcional)</span></h2>
-      <label class="campo" for="fInsta">Instagram</label>
+      <h2 id="t3"><span class="num">3</span> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="17.4" cy="6.6" r="1.3" fill="url(#gIg)"/></svg> Seu Instagram</h2>
+      <label class="campo" for="fInsta">Instagram <b aria-hidden="true">*</b></label>
       <div class="com-icone"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.2" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#gIg)" stroke-width="2.1"/><circle cx="17.4" cy="6.6" r="1.3" fill="url(#gIg)"/></svg><input id="fInsta" class="entrada" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@seuusuario" aria-describedby="msgInsta"></div>
       <p id="msgInsta" class="dica" aria-live="polite"></p>
       <p class="nota-foto">📸 A foto do seu perfil vai para a lista, desde que tenha ar profissional.</p>
@@ -206,14 +214,14 @@
     <pre id="demoPayload" hidden></pre>
   </section>
 
-  <footer>Cadastro rápido · Lista de Contatos de Músicos · v2.0</footer>
+  <footer>Cadastro rápido · Lista de Contatos de Músicos · v2.2</footer>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v2.0";
+const VERSAO = "v2.2";
 const PAGINA = "Cadastro_Rapido_Musicos_" + VERSAO;
 // o mesmo Firebase da página de cadastro completo (estes dados não são segredo; quem protege o banco são as regras do Firestore,
 // arquivo Firestore_Regras_Cadastros_v8.rules: publique-as ANTES desta página). Vazio, ou ?demo=1 no endereço = modo demonstração.
@@ -686,7 +694,8 @@ $("form").addEventListener("submit", async e => {
     : "Cidade: use a localização ou escreva o nome da cidade (ex.: Pompano Beach/FL)."]);
   else if(cidadeDaLocal && !cidadeConfirmada) erros.push(["cidadeSim", "Cidade: confirme se " + textoCidade(cidade) + " é a sua cidade (Sim, é essa) ou troque (Não, é outra)."]);
   const ig = instaDoCampo($("fInsta").value);
-  if(ig.erro) erros.push(["fInsta", "Instagram: " + ig.erro + " (ou deixe em branco: é opcional)"]);   // opcional
+  if(!$("fInsta").value.trim()) erros.push(["fInsta", "Instagram: coloque o seu @ (é por ele que o organizador acha o seu nome e a sua foto)."]);   // v2.2: obrigatório
+  else if(ig.erro) erros.push(["fInsta", "Instagram: " + ig.erro]);
   const w = nacional($("fWhats").value);
   if(!foneValido(w)) erros.push(["fWhats", "WhatsApp: coloque o DDD e o número (10 ou 11 números); de outro país, + e o código do país."]);
   if(!$("fAutoriza").checked) erros.push(["fAutoriza", "Marque a autorização para aparecer na lista."]);
@@ -743,7 +752,7 @@ carregarCidades();
 <!--
 ================================================================
  Cadastro rápido · Lista de Contatos de Músicos
- Arquivo: Cadastro_Rapido_Musicos_v2.0.html
+ Arquivo: Cadastro_Rapido_Musicos_v2.2.html
  No site: publique como cadastro-rapido.html, na mesma pasta do
  index.html e do cadastro.html (ela lê o contatos.json e o
  cidades.json de lá e manda para o cadastro.html quem quiser
@@ -752,6 +761,16 @@ carregarCidades();
  (publique ANTES desta página).
 ================================================================
  HISTÓRICO DE VERSÕES (mais recente primeiro)
+----------------------------------------------------------------
+v2.2 — 2026-11-24
+  - O Instagram volta a ser obrigatório (o cadastro rápido não pede o
+    nome: o organizador acha o nome e a foto pelo @). Obrigatórios:
+    cidade, WhatsApp e Instagram. As regras do Firestore não mudam.
+----------------------------------------------------------------
+v2.1 — 2026-11-24
+  - O título leva para a lista (index.html, na mesma pasta do site) e,
+    logo abaixo da apresentação, há o link "📋 Ver a lista de
+    contatos": quem recebe só o link do cadastro também chega na lista.
 ----------------------------------------------------------------
 v2.0 — 2026-11-24
   - Fora do Brasil: "📍 Usar minha localização" acha a cidade também em
