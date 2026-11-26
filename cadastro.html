@@ -855,7 +855,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v13.0
+    Cadastro de Músicos · Lista de Contatos de Músicos · v13.1
   </footer>
 </div>
 
@@ -1215,7 +1215,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v13.0";
+const VERSAO = "v13.1";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -2798,7 +2798,7 @@ window.addEventListener("message", e => {
   }
 });
 if(/^https?:$/.test(location.protocol)){
-  $("previaLista").src = "index.html?previa=1";
+  $("previaLista").src = "index.html?previa=1&t=" + Date.now();   // v13.1: sempre a lista mais nova (não a guardada pelo navegador)
   // lista antiga (sem a prévia): o quadro escondido não fica rodando a lista inteira
   setTimeout(() => { if(!previaLista.suporta) $("previaLista").src = "about:blank"; }, 15000);
 }
@@ -4411,7 +4411,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v13.0.html
+ Arquivo: Cadastro_Musicos_v13.1.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -4424,6 +4424,12 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v13.1 — 2026-11-26
+  - A prévia abre sempre a lista mais nova do site: o navegador (e o
+    GitHub) guardavam por alguns minutos a lista antiga, e a prévia
+    podia sair sem as novidades (a logo) ou cair na prévia antiga.
+
+----------------------------------------------------------------
 v13.0 — 2026-11-26
   - Logo (opcional, para todos), no passo da foto: a pessoa escolhe um
     PNG (WebP ou GIF também servem) e a página confere se está
