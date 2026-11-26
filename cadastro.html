@@ -418,6 +418,14 @@
   .codigo-pedido{display:inline-block; margin-left:6px; padding:4px 12px; border:1px dashed var(--accent); border-radius:10px; background:var(--card);
     font:700 1.45rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing:.18em; user-select:all}
   .dica.forte{color:var(--text); font-weight:600}
+  /* ---------- v13.0: logo recortada ---------- */
+  .bloco-logo{margin:14px 0 16px; padding:12px; border:1px dashed var(--line); border-radius:12px}
+  .bloco-logo .campo{margin-top:0}
+  .logo-linha{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:8px}
+  .logo-previa{display:flex; align-items:center; justify-content:center; width:120px; height:72px; flex:none; border:1px solid var(--line); border-radius:10px; background:conic-gradient(#e7e4dc 25%, #fff 0 50%, #e7e4dc 0 75%, #fff 0) 0 0/14px 14px}
+  .logo-previa img{display:block; max-width:104px; max-height:56px; object-fit:contain}
+  .logo-previa span{font-size:.78rem; color:#8a8478}
+  #infoLogo.erro{color:var(--erro)}
 </style>
 </head>
 <body>
@@ -720,6 +728,19 @@
         </div>
       </div>
 
+      <div id="blocoLogo" class="bloco-logo">
+        <label class="campo" for="arquivoLogo">Logo <span>(opcional)</span></label>
+        <p class="dica" style="margin-top:2px">Se você (ou a sua banda, ou empresa) tem logo, ela aparece pequena no canto do seu cartão. Ela precisa estar <strong>recortada, sem fundo</strong> (PNG com fundo transparente). A página reduz o tamanho sozinha.</p>
+        <div class="logo-linha">
+          <div class="logo-previa" aria-hidden="true"><img id="logoImg" alt="" hidden><span id="logoVazia">sem logo</span></div>
+          <div class="acoes" style="margin:0">
+            <label class="btn pequeno" id="rotuloLogo"><input id="arquivoLogo" type="file" accept="image/png,image/webp,image/gif"><span id="textoLogo">Escolher logo</span></label>
+            <button id="removerLogo" class="btn pequeno" type="button" hidden>Remover logo</button>
+          </div>
+        </div>
+        <p id="infoLogo" class="dica" aria-live="polite"></p>
+      </div>
+
       <label class="campo" for="fObs">Recado para quem for te chamar <span>(opcional)</span></label>
       <textarea id="fObs" class="entrada" rows="3" maxlength="300" placeholder="Ex.: toco só aos finais de semana; levo meu equipamento" aria-describedby="dicaObs"></textarea>
       <p id="dicaObs" class="dica">0/300</p>
@@ -834,7 +855,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v12.0
+    Cadastro de Músicos · Lista de Contatos de Músicos · v13.0
   </footer>
 </div>
 
@@ -1194,7 +1215,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v12.0";
+const VERSAO = "v13.0";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -1265,6 +1286,7 @@ let edit = null;                 // null = cadastro novo; senão a edição em a
                                  //   publicado = WhatsApp do contato que já está na lista; docId = nome do documento carregado do banco;
                                  //   anterior = o "telefoneAnterior" que esse documento já tinha
 let fotoLista = "";              // endereço da foto que já está na lista (só em edição; vazio = não tem)
+let logoNova = "", logoLista = "", logoRemovida = false;   // v13.0: logo nova (data:), a da lista (endereço) e o pedido de tirar a da lista
 let fotoRemovida = false;        // true = a pessoa pediu para tirar a foto da lista
 const CIDADE_UF = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([A-Z]{2})$/u;   // "Cidade/UF" como a página guarda
 const CIDADE_EXT = /^([\p{L}][\p{L}\p{M}'’ .\-]{1,59})\/([^\/|]{0,40})\/([A-Z]{2})$/u;   // de outro país: "Cidade/Região/XX" (v10.0)
@@ -2750,10 +2772,13 @@ function enviarPreviaLista(c){
   if(fonte){ try{ foto = saida.toDataURL("image/jpeg", 0.85); }catch(e){ foto = ""; } }
   else if(fotoLista && !fotoRemovida){ try{ contato.foto = new URL(fotoLista, location.href).href; }catch(e){ delete contato.foto; } }
   else delete contato.foto;
-  const chave = JSON.stringify(contato) + "|" + foto.length + foto.slice(-48);
+  let logo = "";                                           // v13.0: a logo nova vai como imagem; a da lista, pelo endereço
+  if(logoNova) logo = logoNova;
+  else if(logoLista && !logoRemovida){ try{ contato.logo = new URL(logoLista, location.href).href; }catch(e){ /* sem logo */ } }
+  const chave = JSON.stringify(contato) + "|" + foto.length + foto.slice(-48) + "|" + logo.length + logo.slice(-48);
   if(chave === previaLista.ultimo) return;
   previaLista.ultimo = chave;
-  try{ $("previaLista").contentWindow.postMessage({tipo: "previa-contato", contato, foto}, location.origin); }catch(e){}
+  try{ $("previaLista").contentWindow.postMessage({tipo: "previa-contato", contato, foto, logo}, location.origin); }catch(e){}
 }
 function agendarPreviaFoto(){                     // a foto mexe a cada arrasto: manda no máximo 4 vezes por segundo
   if(!previaLista.pronta) return;
@@ -2801,7 +2826,7 @@ function estadoVazio(e){
   return !String(e.nome || "").trim() && !String(e.referencia || "").trim() && (e.categoria || "musico") === "musico" &&
     !(e.instr || []).length && !(e.cidades || []).length && !String(e.whats || "").trim() &&
     !String(e.insta || "").trim() && !String(e.email || "").trim() && !String(e.youtube || "").trim() && !(e.tels || []).length &&
-    !(e.links || []).length && !String(e.obs || "").trim() && !e.ifc && !e.foto &&
+    !(e.links || []).length && !String(e.obs || "").trim() && !e.ifc && !e.foto && !e.logo &&
     !String(e.hash || "").trim() && !String(e.bio || "").trim() && !String(e.servicos || "").trim() &&
     !(e.videos || []).some(u => String(u || "").trim()) && !e.edit;
 }
@@ -2817,6 +2842,7 @@ function estadoAtual(){
     hash: $("fHashtags").value, bio: $("fBio").value, servicos: $("fServicos").value, videos: videos.map(v => v.url),
     edit: edit ? {fonte: edit.fonte, nome: edit.nome, publicado: edit.publicado, anterior: edit.anterior, docId: edit.docId} : null,
     fotoLista, fotoRemovida,
+    logo: logoNova || null, logoLista, logoRemovida,
     foto: fonte ? fotoAtual() : null
   };
 }
@@ -2900,6 +2926,9 @@ function restaurarRascunho(){
       im.onload = () => { if(!finalizado) usarImagem(im, e.foto); };
       im.src = e.foto;
     }
+    logoNova = logoDataValida(e.logo);                     // v13.0: a logo também volta
+    logoLista = edit ? fotoListaValida(e.logoLista) : ""; logoRemovida = !!edit && e.logoRemovida === true;
+    atualizarLogoUI();
   }finally{
     restaurando = false;
   }
@@ -3067,17 +3096,20 @@ function escolherOrigem(res){
   const daLista = naLista || res.viaAnterior;                 // o contato da lista: o do número digitado, ou o do número de antes
   const publicado = daLista ? whatsDe(daLista.contato) : null;
   const fotoDaLista = daLista ? urlFoto(daLista.contato.foto) : "";
+  const logoDaLista = daLista ? urlFoto(daLista.contato.logo) : "";   // v13.0
   const doBanco = (d, pub, fotoL) => ({
     fonte: "cadastro", contato: d.dados.contato, docId: d.id, anterior: dig(d.dados.telefoneAnterior),
     publicado: pub || dig(d.dados.telefoneAnterior), fotoLista: fotoL,
     foto: typeof d.dados.fotoJpegBase64 === "string" ? d.dados.fotoJpegBase64 : "", removerFoto: d.dados.removerFoto === true,
+    logoLista: pub ? logoDaLista : "", logo: typeof d.dados.logoBase64 === "string" ? d.dados.logoBase64 : "", logoFormato: d.dados.logoFormato,
+    removerLogo: d.dados.removerLogo === true,
     novas: d.dados.novasAtuacoes,
     rapido: d.dados.formato === "cadastro-rapido"          // o pedido da página de cadastro rápido (sem nome e sem instrumentos)
   });
   if(pendente) return doBanco(pendente, publicado, fotoDaLista);
   // o banco não respondeu (ou recusou): vale o da lista, mas a pessoa é avisada de que pode haver mudanças dela que não deu para ver
   const incompleto = res.docs.some(d => d.estado === "erro" || d.estado === "negado");
-  if(naLista) return {fonte: "lista", contato: naLista.contato, docId: null, anterior: null, publicado, fotoLista: fotoDaLista, foto: "", removerFoto: false, incompleto};
+  if(naLista) return {fonte: "lista", contato: naLista.contato, docId: null, anterior: null, publicado, fotoLista: fotoDaLista, logoLista: logoDaLista, foto: "", removerFoto: false, incompleto};
   if(achados.length) return doBanco(achados[0], null, "");
   return null;
 }
@@ -3226,6 +3258,9 @@ function entrarEdicao(o){
       instaOriginal: instaDoCampo(c.instagram || "").valor || null, rapido: o.rapido === true};
     fotoLista = fotoListaValida(o.fotoLista);
     fotoRemovida = o.removerFoto === true;
+    logoLista = fotoListaValida(o.logoLista);              // v13.0: a logo da lista, a do cadastro que espera conferência e o pedido de tirar
+    logoRemovida = o.removerLogo === true;
+    logoNova = typeof o.logo === "string" && o.logo && (o.logoFormato === "webp" || o.logoFormato === "png") ? logoDataValida("data:image/" + o.logoFormato + ";base64," + o.logo) : "";
   }finally{
     restaurando = false;
   }
@@ -3239,6 +3274,7 @@ function entrarEdicao(o){
   }
   mostrarEdicao();
   atualizarFotoUI();
+  atualizarLogoUI();
   ajustarCanvas();
   mudou();
   rolarPara($("avisoEdicao"), "start");
@@ -3415,6 +3451,113 @@ $("cardExcluir").addEventListener("click", () => escolherPedido("excluir"));
 $("gerarPedido").addEventListener("click", gerarPedido);
 $("cancelarPedido").addEventListener("click", () => { fecharPedido(); $("cardOcultar").focus({preventScroll: true}); });
 
+/* ---------- logo recortada: PNG, WebP ou GIF com fundo transparente ----------
+   Confere se a imagem tem fundo transparente (recortada), corta as sobras transparentes e reduz até LOGO_LADO_MAX;
+   grava em WebP (com transparência) ou, se o navegador não souber, em PNG. Fica pequena: até LOGO_MAX_BYTES. */
+const LOGO_LADO_MAX = 320, LOGO_MAX_BYTES = 48 * 1024, LOGO_MIN_TRANSPARENTE = 0.05;
+function abrirImagemLogo(arquivo){
+  return new Promise((ok, falha) => {
+    const url = URL.createObjectURL(arquivo), im = new Image();
+    im.onload = () => { URL.revokeObjectURL(url); ok(im); };
+    im.onerror = () => { URL.revokeObjectURL(url); falha(new Error("Não consegui abrir esta imagem. Envie a logo em PNG (recortada, com fundo transparente).")); };
+    im.src = url;
+  });
+}
+const canvasParaBlob = (cv, tipo, q) => new Promise(ok => { try{ cv.toBlob(b => ok(b), tipo, q); }catch(e){ ok(null); } });
+const blobParaDataUrl = b => new Promise((ok, falha) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => falha(r.error); r.readAsDataURL(b); });
+// devolve {blob, formato: "webp" | "png", largura, altura, dataUrl, clara}; se não servir, lança um Error com a explicação
+async function prepararLogo(arquivo){
+  if(!arquivo) throw new Error("Escolha a imagem da logo.");
+  const tipo = String(arquivo.type || "").toLowerCase(), nome = String(arquivo.name || "").toLowerCase();
+  if(/jpe?g/.test(tipo) || /\.jpe?g$/.test(nome)) throw new Error("Imagem em JPG não tem fundo transparente: envie a logo recortada em PNG.");
+  if(tipo && !/^image\/(png|webp|gif)$/.test(tipo)) throw new Error("Envie a logo em PNG (recortada, com fundo transparente). WebP e GIF também servem.");
+  if(arquivo.size > 10 * 1024 * 1024) throw new Error("Imagem grande demais (mais de 10 MB).");
+  const im = await abrirImagemLogo(arquivo);
+  const w0 = im.naturalWidth, h0 = im.naturalHeight;
+  if(!w0 || !h0) throw new Error("Não consegui abrir esta imagem.");
+  if(Math.max(w0, h0) < 48) throw new Error("Logo pequena demais: envie uma imagem maior (pelo menos 100 px).");
+  // confere numa cópia de até 600 px: quanto é transparente e onde fica a logo de verdade
+  const k0 = Math.min(1, 600 / Math.max(w0, h0)), cw = Math.max(1, Math.round(w0 * k0)), ch = Math.max(1, Math.round(h0 * k0));
+  const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+  const g = cv.getContext("2d", {willReadFrequently: true});
+  g.drawImage(im, 0, 0, cw, ch);
+  const px = g.getImageData(0, 0, cw, ch).data;
+  let transp = 0, opacos = 0, luz = 0, x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+  for(let y = 0, i = 3; y < ch; y++){
+    for(let x = 0; x < cw; x++, i += 4){
+      const a = px[i];
+      if(a < 16){ transp++; continue; }
+      if(a > 40){
+        opacos++; luz += (0.2126 * px[i - 3] + 0.7152 * px[i - 2] + 0.0722 * px[i - 1]) / 255;
+        if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+      }
+    }
+  }
+  if(!opacos) throw new Error("A imagem está toda transparente.");
+  if(transp / (cw * ch) < LOGO_MIN_TRANSPARENTE) throw new Error("A logo precisa estar recortada, sem fundo (PNG com fundo transparente). Esta imagem tem fundo: recorte e envie de novo.");
+  // corta as sobras transparentes (com 1 px de folga) e reduz até caber em LOGO_MAX_BYTES
+  const sx = Math.max(0, (x0 - 1) / k0), sy = Math.max(0, (y0 - 1) / k0);
+  const sw = Math.min(w0 - sx, (x1 - x0 + 3) / k0), sh = Math.min(h0 - sy, (y1 - y0 + 3) / k0);
+  let lado = LOGO_LADO_MAX;
+  for(let t = 0; t < 8; t++){
+    const k = Math.min(1, lado / Math.max(sw, sh));
+    const w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
+    const out = document.createElement("canvas"); out.width = w; out.height = h;
+    const go = out.getContext("2d");
+    go.imageSmoothingQuality = "high";
+    go.drawImage(im, sx, sy, sw, sh, 0, 0, w, h);
+    let blob = await canvasParaBlob(out, "image/webp", 0.9), formato = "webp";
+    if(!blob || blob.type !== "image/webp"){ blob = await canvasParaBlob(out, "image/png"); formato = "png"; }
+    if(!blob) throw new Error("Não consegui preparar a logo neste navegador.");
+    if(blob.size <= LOGO_MAX_BYTES) return {blob, formato, largura: w, altura: h, dataUrl: await blobParaDataUrl(blob), clara: luz / opacos > 0.82};
+    lado = Math.round(lado * 0.8);
+  }
+  throw new Error("A logo ficou pesada demais mesmo pequena. Tente uma versão mais simples.");
+}
+const logoDataValida = s => (typeof s === "string" && /^data:image\/(webp|png);base64,[A-Za-z0-9+\/=]+$/.test(s) && s.length < 100000) ? s : "";
+// v13.0: o quadrinho da logo (com fundo xadrez, para ver o recorte), os botões e o aviso
+function atualizarLogoUI(){
+  const src = logoNova || (logoLista && !logoRemovida ? logoLista : "");
+  const img = $("logoImg");
+  if(src){ if(img.getAttribute("src") !== src) img.src = src; img.hidden = false; } else { img.hidden = true; img.removeAttribute("src"); }
+  $("logoVazia").hidden = !!src;
+  $("logoVazia").textContent = logoRemovida && logoLista ? "vai sair" : "sem logo";
+  $("textoLogo").textContent = src ? "Trocar logo" : "Escolher logo";
+  const b = $("removerLogo");
+  b.hidden = !src && !(logoRemovida && logoLista);
+  b.textContent = !src && logoRemovida ? "Manter a logo atual" : "Remover logo";
+  const info = $("infoLogo");
+  if(info.classList.contains("erro")) return;              // o erro fica até a pessoa mexer de novo
+  info.textContent = logoNova ? "Logo pronta ✓ " + (logoLista && !logoRemovida ? "Ela substitui a que está na lista." : "")
+    : logoRemovida && logoLista ? "A logo vai sair da lista quando o organizador atualizar o seu cadastro."
+    : logoLista ? "Esta é a logo que está na lista agora. Para trocar, escolha outra." : "";
+}
+$("arquivoLogo").addEventListener("change", async () => {
+  const f = $("arquivoLogo").files && $("arquivoLogo").files[0];
+  $("arquivoLogo").value = "";
+  if(!f) return;
+  const info = $("infoLogo");
+  info.classList.remove("erro"); info.textContent = "Preparando a logo…";
+  try{
+    const r = await prepararLogo(f);
+    logoNova = r.dataUrl; logoRemovida = false;
+    atualizarLogoUI();
+    if(r.clara) info.textContent += " Atenção: ela é bem clara e pode ficar apagada no fundo claro da lista; se tiver uma versão escura, prefira.";
+    mudou();
+  }catch(e){
+    info.classList.add("erro");
+    info.textContent = e && e.message ? e.message : "Não consegui usar esta imagem.";
+    atualizarLogoUI();
+  }
+});
+$("removerLogo").addEventListener("click", () => {
+  $("infoLogo").classList.remove("erro");
+  if(logoNova) logoNova = "";                              // tira a nova (volta a da lista, se tiver)
+  else if(logoLista) logoRemovida = !logoRemovida;          // a da lista: sai (ou fica, se já tinha marcado)
+  atualizarLogoUI();
+  mudou();
+});
+
 // ---- cartão "Já tem cadastro?"
 let buscando = false;
 async function buscarEEditar(){
@@ -3492,7 +3635,7 @@ async function origemPeloContato(achado){
     const o = res ? escolherOrigem(res) : null;
     if(o) return {estado: "achou", o};
   }
-  return {estado: "achou", o: {fonte: "lista", contato: achado, docId: null, anterior: null, publicado: w, fotoLista: urlFoto(achado.foto),
+  return {estado: "achou", o: {fonte: "lista", contato: achado, docId: null, anterior: null, publicado: w, fotoLista: urlFoto(achado.foto), logoLista: urlFoto(achado.logo),
     foto: "", removerFoto: false, instagram: w ? null : String(instaDoCampo(achado.instagram).valor || "")}};
 }
 async function buscarEEditarInstagram(){
@@ -3759,6 +3902,10 @@ function montarPayload(c, fotoUrl, segundos){
   if(novas) p.novasAtuacoes = novas;
   if(fotoUrl) p.fotoJpegBase64 = fotoUrl.slice(fotoUrl.indexOf(",") + 1);
   else if(edit && fotoRemovida) p.removerFoto = true;
+  if(logoNova){                                            // v13.0: a logo recortada (webp ou png), à parte, em base64
+    p.logoBase64 = logoNova.slice(logoNova.indexOf(",") + 1);
+    p.logoFormato = /^data:image\/webp/.test(logoNova) ? "webp" : "png";
+  }else if(edit && logoRemovida && logoLista) p.removerLogo = true;
   return p;
 }
 
@@ -3944,6 +4091,7 @@ function concluir(payload){
     const copia = JSON.parse(JSON.stringify(payload));
     const b64 = copia.fotoJpegBase64;
     if(b64) copia.fotoJpegBase64 = b64.slice(0, 40) + "… (" + b64.length + " caracteres no total)";
+    if(copia.logoBase64) copia.logoBase64 = copia.logoBase64.slice(0, 40) + "… (" + copia.logoBase64.length + " caracteres no total)";
     textoCompletoDemo = JSON.stringify(payload, null, 2);
     nomeArquivoDemo = "cadastro-" + (slug(payload.contato.nome) || "musico") + ".json";
     $("jsonDemo").textContent = JSON.stringify(copia, null, 2);
@@ -3966,6 +4114,7 @@ function zerarTudo(){
   clearTimeout(temporizadorRascunho);
   instr = []; cidades = []; telefones = []; links = []; videos = [];
   edit = null; fotoLista = ""; fotoRemovida = false;
+  logoNova = ""; logoLista = ""; logoRemovida = false; atualizarLogoUI();
   previaFoneAberto = false; previaPerfilAberto = false;
   funcoesDigitadas = new Set(); tipoOutroAberto = false;
   ["fNome", "fCidade", "fOutroInstr", "fOutraFuncao", "fTipoOutro", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
@@ -4262,7 +4411,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v12.0.html
+ Arquivo: Cadastro_Musicos_v13.0.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -4275,6 +4424,21 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v13.0 — 2026-11-26
+  - Logo (opcional, para todos), no passo da foto: a pessoa escolhe um
+    PNG (WebP ou GIF também servem) e a página confere se está
+    recortada, com fundo transparente; imagem com fundo (ou JPG) é
+    recusada com a explicação. A página corta as sobras transparentes,
+    reduz (até 320 px) e grava em WebP com transparência (ou PNG, se o
+    navegador não souber), com até 48 KB. Logo muito clara ganha um
+    aviso (pode sumir no fundo claro da lista).
+  - Em edição, aparece a logo que está na lista, com "Trocar logo" e
+    "Remover logo" ("Manter a logo atual" desfaz).
+  - Vai ao banco à parte, como a foto: "logoBase64" + "logoFormato"
+    (ou "removerLogo"), regras v11. Volta no rascunho e na prévia da
+    lista (canto de cima, à direita do cartão).
+
+----------------------------------------------------------------
 v12.0 — 2026-11-25
   - Ocultar ou excluir o cadastro: quem abre o próprio cadastro (e já
     está na lista) vê no fim da página os cartões "Ocultar meu
