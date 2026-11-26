@@ -483,6 +483,15 @@
   html.modo-previa .lateral, html.modo-previa footer, html.modo-previa #tituloLista, html.modo-previa #vazio{display:none !important}
   html.modo-previa .wrap{display:block; max-width:none; margin:0; padding:3px 3px 6px}
   html.modo-previa #lista{display:block; margin:0}
+  /* ---------- v20: a logo recortada, pequena no canto de cima à direita do cartão ---------- */
+  li.card.tem-logo{position:relative}
+  li.card.tem-logo .name, li.card.tem-logo .name + .line{padding-right:62px}
+  .logo-contato{position:absolute; top:10px; right:10px; display:flex; align-items:center; justify-content:flex-end;
+    width:56px; height:36px; padding:0; border:0; background:none; cursor:zoom-in; -webkit-tap-highlight-color:transparent}
+  .logo-contato img{display:block; max-width:56px; max-height:36px; object-fit:contain; filter:drop-shadow(0 0 .6px rgba(0,0,0,.45))}
+  .logo-contato:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+  @media (prefers-color-scheme: dark){ .logo-contato img{filter:drop-shadow(0 0 .8px rgba(255,255,255,.6))} }
+  .foto-zoom.e-logo img{background:#e9e7e2; padding:18px; box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -579,7 +588,7 @@
     <div class="sair-lista">Não quer ter seu nome nesta lista? <a id="linkSair" href="https://saulohenriquef.github.io/contatomusicos/excluir-cadastro.html" rel="noopener">Ocultar ou excluir meu cadastro</a></div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v19
+    Lista de Contatos de Músicos · v20
   </footer>
 </div>
 
@@ -1177,9 +1186,15 @@ function abrirFoto(av, c, src){
   $("foto-fechar").focus({preventScroll:true});
 }
 
+function abrirLogo(botao, c, src){               // v20: a logo ampliada, num fundo claro
+  abrirFoto(botao, c, src);
+  $("foto-img").alt = "Logo de " + c.nome;
+  $("foto-zoom").classList.add("e-logo");
+}
 function fecharFoto(){
   if($("foto-zoom").hidden) return;
   $("foto-zoom").hidden = true;
+  $("foto-zoom").classList.remove("e-logo");
   $("foto-img").removeAttribute("src");
   document.body.style.overflow = "";
   if(avatarAberto){ avatarAberto.focus({preventScroll:true}); avatarAberto = null; }
@@ -1449,7 +1464,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v19";
+const VERSAO_LISTA = "v20";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -1919,6 +1934,21 @@ function criarCartao(c, estado = abertos, noBalao = false){
   });
 
   corpo.append(nome, local, tags);
+  if(c.logo){                                     // v20: a logo recortada, pequena no canto de cima à direita
+    const src = urlFoto(c.logo);
+    if(src){
+      const lg = document.createElement("button");
+      lg.type = "button"; lg.className = "logo-contato";
+      lg.setAttribute("aria-label", "Logo de " + c.nome + ". Toque para ampliar.");
+      const im = document.createElement("img");
+      im.alt = ""; im.decoding = "async"; im.src = src;
+      im.addEventListener("error", () => { lg.remove(); li.classList.remove("tem-logo"); }, {once: true});
+      lg.appendChild(im);
+      lg.addEventListener("click", () => abrirLogo(lg, c, src));
+      li.classList.add("tem-logo");
+      corpo.appendChild(lg);
+    }
+  }
 
   if(c.hashtags.length){
     const h = document.createElement("div");
@@ -2293,6 +2323,9 @@ function iniciarPrevia(){
     const f = typeof d.foto === "string" ? d.foto : "";
     if(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(f) && f.length < 4000000) bruto.foto = f;
     else if(typeof bruto.foto !== "string") delete bruto.foto;
+    const lg = typeof d.logo === "string" ? d.logo : "";   // v20: a logo nova que a página mandou
+    if(/^data:image\/(webp|png);base64,[A-Za-z0-9+\/=]+$/.test(lg) && lg.length < 200000) bruto.logo = lg;
+    else if(typeof bruto.logo !== "string") delete bruto.logo;
     try{ desenharPrevia(prepararContato(bruto)); }catch(erro){ console.warn("Prévia:", erro); }
   });
   if("ResizeObserver" in window) new ResizeObserver(avisarAltura).observe(document.body);
@@ -2337,7 +2370,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v19.html
+ Arquivo: Lista_Contatos_Musicos_v20.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2902,6 +2935,15 @@ v19 — 2026-11-25
   - Logo abaixo do cartão de cadastro, um cartão pequeno: "Não quer ter
     seu nome nesta lista? Ocultar ou excluir meu cadastro", que leva à
     página própria (excluir-cadastro.html, v1.0).
+----------------------------------------------------------------
+v20 — 2026-11-26
+  - Logo recortada do contato (campo "logo" do contatos.json, arquivo
+    na pasta fotos): pequena (até 56 × 36) no canto de cima à direita
+    do cartão, do lado oposto da foto; o nome e a cidade abrem espaço
+    para ela. Um contorno bem leve mantém visível logo da mesma cor do
+    fundo (escura no modo noturno, clara no claro). Tocar amplia, num
+    fundo claro. Se o arquivo não abrir, o cartão fica sem ela.
+  - A prévia (página de cadastro v13.0 e painel v26) recebe a logo nova.
 
 ================================================================
 -->
