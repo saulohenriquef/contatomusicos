@@ -483,12 +483,10 @@
   html.modo-previa .lateral, html.modo-previa footer, html.modo-previa #tituloLista, html.modo-previa #vazio{display:none !important}
   html.modo-previa .wrap{display:block; max-width:none; margin:0; padding:3px 3px 6px}
   html.modo-previa #lista{display:block; margin:0}
-  /* ---------- v20: a logo recortada, pequena no canto de cima à direita do cartão ---------- */
-  li.card.tem-logo{position:relative}
-  li.card.tem-logo .name, li.card.tem-logo .name + .line{padding-right:62px}
-  .logo-contato{position:absolute; top:10px; right:10px; display:flex; align-items:center; justify-content:flex-end;
-    width:56px; height:36px; padding:0; border:0; background:none; cursor:zoom-in; -webkit-tap-highlight-color:transparent}
-  .logo-contato img{display:block; max-width:56px; max-height:36px; object-fit:contain; filter:drop-shadow(0 0 .6px rgba(0,0,0,.45))}
+  /* ---------- v21: a logo recortada, embaixo da foto (o "Perfil completo" desce) ---------- */
+  .logo-contato{display:flex; flex:none; align-items:center; justify-content:center; width:60px; height:40px; margin:8px -6px 0; padding:0;
+    border:0; background:none; cursor:zoom-in; -webkit-tap-highlight-color:transparent}
+  .logo-contato img{display:block; max-width:60px; max-height:40px; object-fit:contain; filter:drop-shadow(0 0 .6px rgba(0,0,0,.45))}
   .logo-contato:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
   @media (prefers-color-scheme: dark){ .logo-contato img{filter:drop-shadow(0 0 .8px rgba(255,255,255,.6))} }
   .foto-zoom.e-logo img{background:#e9e7e2; padding:18px; box-sizing:border-box}
@@ -588,7 +586,7 @@
     <div class="sair-lista">Não quer ter seu nome nesta lista? <a id="linkSair" href="https://saulohenriquef.github.io/contatomusicos/excluir-cadastro.html" rel="noopener">Ocultar ou excluir meu cadastro</a></div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v20
+    Lista de Contatos de Músicos · v21
   </footer>
 </div>
 
@@ -1464,7 +1462,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v20";
+const VERSAO_LISTA = "v21";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -1934,7 +1932,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
   });
 
   corpo.append(nome, local, tags);
-  if(c.logo){                                     // v20: a logo recortada, pequena no canto de cima à direita
+  if(c.logo){                                     // v21: a logo recortada, embaixo da foto (o "Perfil completo" vem depois dela)
     const src = urlFoto(c.logo);
     if(src){
       const lg = document.createElement("button");
@@ -1946,7 +1944,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
       lg.appendChild(im);
       lg.addEventListener("click", () => abrirLogo(lg, c, src));
       li.classList.add("tem-logo");
-      corpo.appendChild(lg);
+      colunaFoto.appendChild(lg);
     }
   }
 
@@ -2310,8 +2308,17 @@ function desenharPrevia(novo){
   lista.appendChild(criarCartao(novo, estadoPrevia));
   avisarAltura();
 }
+// v21: a altura do conteúdo (o scrollHeight nunca fica menor que o próprio quadro: o cartão pequeno ficava com sobra embaixo)
+function alturaPrevia(){
+  let h = document.documentElement.getBoundingClientRect().height;
+  ["balao", "balaoContato"].forEach(id => {                 // um balão aberto pode passar do cartão
+    const b = $(id);
+    if(b && !b.hidden){ const r = b.getBoundingClientRect(); if(r.height) h = Math.max(h, r.bottom + window.scrollY + 8); }
+  });
+  return Math.ceil(h);
+}
 function avisarAltura(){
-  try{ window.parent.postMessage({tipo: "previa-altura", altura: Math.ceil(document.documentElement.scrollHeight)}, "*"); }catch(e){}
+  try{ window.parent.postMessage({tipo: "previa-altura", altura: alturaPrevia()}, "*"); }catch(e){}
 }
 function iniciarPrevia(){
   window.addEventListener("message", e => {
@@ -2370,7 +2377,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v20.html
+ Arquivo: Lista_Contatos_Musicos_v21.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2944,6 +2951,14 @@ v20 — 2026-11-26
     fundo (escura no modo noturno, clara no claro). Tocar amplia, num
     fundo claro. Se o arquivo não abrir, o cartão fica sem ela.
   - A prévia (página de cadastro v13.0 e painel v26) recebe a logo nova.
+----------------------------------------------------------------
+v21 — 2026-11-26
+  - A logo saiu do canto de cima à direita e foi para embaixo da foto
+    (até 60 × 40); o "Perfil completo" desce e fica embaixo dela. O
+    nome e a cidade voltam a usar a largura toda.
+  - Prévia (página de cadastro e painel): a altura agora é a do
+    cartão. Antes o quadro nunca diminuía (cartão pequeno ficava com
+    sobra embaixo, e fechar o perfil completo não encolhia).
 
 ================================================================
 -->
