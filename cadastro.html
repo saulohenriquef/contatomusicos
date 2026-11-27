@@ -426,6 +426,9 @@
   .logo-previa img{display:block; max-width:104px; max-height:56px; object-fit:contain}
   .logo-previa span{font-size:.78rem; color:#8a8478}
   #infoLogo.erro{color:var(--erro)}
+  /* ---------- apelido ao lado do nome ---------- */
+  .nome-apelido{display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(0, 1fr); column-gap:8px; align-items:end}
+  .nome-apelido > div{min-width:0}
 </style>
 </head>
 <body>
@@ -510,8 +513,16 @@
     <section class="passo" aria-labelledby="t1">
       <h2 id="t1">Seus dados</h2>
 
-      <label class="campo" for="fNome">Seu nome, nome artístico ou nome da empresa <b aria-hidden="true">*</b></label>
-      <input id="fNome" class="entrada" type="text" maxlength="80" autocomplete="name" placeholder="Ex.: Fulano de Tal" aria-describedby="dicaNome">
+      <div class="nome-apelido">
+        <div>
+          <label class="campo" for="fNome">Seu nome, nome artístico ou nome da empresa <b aria-hidden="true">*</b></label>
+          <input id="fNome" class="entrada" type="text" maxlength="80" autocomplete="name" placeholder="Ex.: Fulano de Tal" aria-describedby="dicaNome">
+        </div>
+        <div>
+          <label class="campo" for="fApelido">Apelido <span>(opcional)</span></label>
+          <input id="fApelido" class="entrada" type="text" maxlength="30" autocomplete="nickname" placeholder="Ex.: China" aria-describedby="dicaNome">
+        </div>
+      </div>
       <p id="dicaNome" class="dica" aria-live="polite"></p>
       <div id="avisoNome" class="caixa-aviso" role="status" hidden>
         <p id="textoAvisoNome"></p>
@@ -855,7 +866,7 @@
 
   <footer>
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Cadastro de Músicos · Lista de Contatos de Músicos · v13.1
+    Cadastro de Músicos · Lista de Contatos de Músicos · v14.1
   </footer>
 </div>
 
@@ -1215,7 +1226,7 @@ const reduzMovimento = () => !!(window.matchMedia && matchMedia("(prefers-reduce
 const rolarPara = (el, bloco) => el.scrollIntoView({block: bloco || "center", behavior: reduzMovimento() ? "auto" : "smooth"});
 
 /* ---------- ajustes ---------- */
-const VERSAO = "v13.1";
+const VERSAO = "v14.1";
 const PAGINA = "Cadastro_Musicos_" + VERSAO;
 // Firebase = o banco onde os cadastros chegam (Firestore). Estes dois dados NÃO são segredos: qualquer página que usa o Firebase os mostra.
 // Quem protege o banco são as regras do Firestore (arquivo Firestore_Regras_Cadastros_v7.rules: publique-as ANTES desta página).
@@ -1687,7 +1698,7 @@ function chipTipoArtista(valor, emoji, matiz){
 }
 
 const tipoDoCatalogo = v => TIPOS_PROJETO_ARTISTA.some(([n]) => n === v);
-const limparTipo = s => { const t = semControle(String(s || "")).replace(/\s+/g, " ").trim().slice(0, 40); return t ? t.charAt(0).toLocaleUpperCase("pt-BR") + t.slice(1) : ""; };
+const limparTipo = s => { const t = semControle(String(s || "")).replace(/\|/g, "/").replace(/\s+/g, " ").trim().slice(0, 40); return t ? t.charAt(0).toLocaleUpperCase("pt-BR") + t.slice(1) : ""; };
 function desenharTiposArtista(foco){
   const box = $("chipsTiposArtista");
   if(!box) return;
@@ -2452,7 +2463,7 @@ function coletar(){
   const falha = (campo, texto) => erros.push({campo, texto});
 
   // o nome sempre sai arrumado: Primeira Letra Maiúscula e "de/da/do/das/dos/e" em minúscula (Saulo Henrique de Tarso)
-  const nome = AJ.formatarNome(limparNome($("fNome").value));
+  const nome = AJ.formatarNome(nomeDoFormulario());        // v14.0: o nome e o apelido (entre parênteses)
   if(!nome) falha("fNome", "Escreva o seu nome (ou nome artístico).");
   else if(nome.length < 2) falha("fNome", "O nome está curto demais.");
 
@@ -2833,7 +2844,7 @@ function estadoVazio(e){
 function estadoAtual(){
   return {
     v: 2, salvoEm: Date.now(),
-    nome: $("fNome").value, referencia: $("fReferencia").value, categoria: $("fCategoria").value,
+    nome: $("fNome").value, apelido: $("fApelido").value, referencia: $("fReferencia").value, categoria: $("fCategoria").value,
     tipoArtista: $("fTipoArtista").value, instr, cidades, ifc: $("fIfc").checked,
     ifcDisponibilidade, abcDisponibilidade, freelanceABC, funcoes: [...funcoesDigitadas],
     whats: $("fWhats").value, tipoWhats: $("fTipoWhats").value, tipoWhatsOutro: $("fTipoWhatsOutro").value,
@@ -2871,6 +2882,7 @@ function restaurarRascunho(){
   restaurando = true;
   try{
     $("fNome").value = cortar(e.nome, MAX_NOME);
+    $("fApelido").value = cortar(e.apelido, MAX_APELIDO);
     // instrumentos e cidades não são conferidos de novo ao enviar; por isso passam pela mesma conferência de quando são digitados
     instr = [];
     (Array.isArray(e.instr) ? e.instr : []).forEach(x => {
@@ -2909,7 +2921,6 @@ function restaurarRascunho(){
     $("fBio").value = cortar(e.bio, MAX_BIO);
     $("fServicos").value = cortar(e.servicos, MAX_TEXTO_SERVICOS);
     videos = (Array.isArray(e.videos) ? e.videos : []).slice(0, MAX_VIDEOS).map(u => ({url: cortar(u, MAX_URL_VIDEO)}));
-    if(e.youtube || e.email || telefones.length || links.length) $("maisContatos").open = true;
     if(String(e.hash || "").trim() || String(e.bio || "").trim() || String(e.servicos || "").trim() || videos.length) $("maisPerfil").open = true;
     // edição em andamento: volta para a mesma edição (o mesmo cadastro, os mesmos números de origem)
     edit = null; fotoLista = ""; fotoRemovida = false;
@@ -2940,10 +2951,41 @@ function dicaObs(){ $("dicaObs").textContent = $("fObs").value.length + "/" + MA
 function dicaBio(){ $("dicaBio").textContent = $("fBio").value.length + "/" + MAX_BIO; }
 
 // o nome é arrumado ao sair do campo; enquanto a pessoa digita, a dica mostra como vai ficar
+/* ---------- apelido: campo próprio, ao lado do nome ----------
+   Na lista, no painel e no banco o apelido continua no nome, entre parênteses: Moacyr (China). Só o formulário separa.
+   Quem escreve "(China)" no próprio nome também vale: ao sair do campo, o apelido vai sozinho para o campo dele. */
+const MAX_APELIDO = 30;
+// "Moacyr (China)" -> ["Moacyr", "China"]; sem parênteses no fim -> [nome, ""]
+function separarApelido(n){
+  const m = String(n || "").match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  return m && m[1].trim() ? [m[1].trim(), m[2].trim()] : [String(n || "").trim(), ""];
+}
+const limparApelido = s => limparNome(String(s || "").replace(/[()\[\]|]/g, " ")).slice(0, MAX_APELIDO);
+function nomeComApelido(nome, apelido){
+  const n = limparNome(nome), a = limparApelido(apelido);
+  return n && a ? n + " (" + a + ")" : n;
+}
+// o nome como vai para a lista: o nome e, se tiver, o apelido entre parênteses
+function nomeDoFormulario(){ return nomeComApelido($("fNome").value, $("fApelido").value); }
+// um nome da lista nos dois campos: "Moacyr (China)" -> "Moacyr" e "China"
+function porNomeNosCampos(nome){
+  const [base, ap] = separarApelido(limparNome(nome));
+  $("fNome").value = base;
+  $("fApelido").value = limparApelido(ap);
+}
+// "(China)" escrito no nome vai para o campo do apelido (só se ele estiver vazio)
+function separarApelidoDigitado(){
+  const [base, ap] = separarApelido(limparNome($("fNome").value));
+  if(!ap || limparApelido($("fApelido").value)) return false;
+  $("fNome").value = base;
+  $("fApelido").value = limparApelido(ap);
+  return true;
+}
+
 function dicaNome(){
-  const bruto = limparNome($("fNome").value);
+  const bruto = nomeDoFormulario();                        // v14.0: com o apelido (entre parênteses, como na lista)
   const bonito = AJ.formatarNome(bruto);
-  avisar("dicaNome", bonito && bonito !== bruto ? "Vai aparecer assim na lista: " + bonito : "");
+  avisar("dicaNome", bonito && (bonito !== bruto || limparApelido($("fApelido").value)) ? "Vai aparecer assim na lista: " + bonito : "");
   atualizarMembros();                                     // v10.3: nome de dupla: os nomes no "Falar com"
   clearTimeout(relogioNome);
   relogioNome = setTimeout(conferirNome, 500);           // v10.2: tem alguém na lista com esse nome?
@@ -3182,11 +3224,9 @@ function contatoDeFora(b){
 
 // põe um contato (já conferido) nos campos do formulário
 function preencherContato(c){
-  $("fNome").value = c.nome || "";
+  porNomeNosCampos(c.nome || "");                          // v14.0: "Moacyr (China)" -> o nome e o apelido, cada um no seu campo
   instr = [...(c.instrumentos || [])];
   cidades = [...(c.cidades || [])];
-  const nomeBruto = String(c.nome || "");
-  const separado = nomeBruto.match(/^(.*?)\s+\(([^()]*)\)$/);
   $("fReferencia").value = c.referencia || "";
   $("fCategoria").value = ["musico","artista","empresa"].includes(c.categoria) ? c.categoria : ((c.selos || []).includes("ABC") ? "artista" : (c.selos || []).includes("ENM") ? "empresa" : "musico");
   $("fTipoArtista").value = c.tipoArtista || "";
@@ -3212,14 +3252,13 @@ function preencherContato(c){
   $("fBio").value = c.bio || "";
   $("fServicos").value = (c.servicos || []).join("\n");
   videos = (c.videos || []).map(u => ({url: u}));
-  if(c.youtube || c.email || telefones.length || links.length) $("maisContatos").open = true;
   if(c.hashtags || c.bio || c.servicos || c.videos) $("maisPerfil").open = true;
   desenharInstrumentos(); desenharCidades(); desenharTelefones(); desenharLinks(); desenharVideos();
   dicaNome(); dicaWhats(false); dicaInsta(false); dicaObs(); dicaHashtags(); dicaBio(); dicaServicos();
 }
 
 function formularioVazio(){
-  return !String($("fNome").value).trim() && !String($("fReferencia").value).trim() && $("fCategoria").value === "musico" &&
+  return !String($("fNome").value).trim() && !String($("fApelido").value).trim() && !String($("fReferencia").value).trim() && $("fCategoria").value === "musico" &&
     !instr.length && !cidades.length && !String($("fWhats").value).trim() && !String($("fInsta").value).trim() && !String($("fEmail").value).trim() && !String($("fYoutube").value).trim() &&
     !telefones.some(t => String(t.numero || "").trim() || String(t.contato || "").trim()) && !String($("fContatoWhats").value).trim() &&
     !links.some(l => String(l.url || "").trim() || String(l.rotulo || "").trim()) && !String($("fObs").value).trim() &&
@@ -3482,13 +3521,14 @@ async function prepararLogo(arquivo){
   const g = cv.getContext("2d", {willReadFrequently: true});
   g.drawImage(im, 0, 0, cw, ch);
   const px = g.getImageData(0, 0, cw, ch).data;
-  let transp = 0, opacos = 0, luz = 0, x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+  let transp = 0, opacos = 0, luz = 0, neutros = 0, x0 = cw, y0 = ch, x1 = -1, y1 = -1;
   for(let y = 0, i = 3; y < ch; y++){
     for(let x = 0; x < cw; x++, i += 4){
       const a = px[i];
       if(a < 16){ transp++; continue; }
       if(a > 40){
         opacos++; luz += (0.2126 * px[i - 3] + 0.7152 * px[i - 2] + 0.0722 * px[i - 1]) / 255;
+        if(Math.max(px[i - 3], px[i - 2], px[i - 1]) - Math.min(px[i - 3], px[i - 2], px[i - 1]) <= 48) neutros++;   // preto/branco/cinza
         if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
       }
     }
@@ -3509,7 +3549,7 @@ async function prepararLogo(arquivo){
     let blob = await canvasParaBlob(out, "image/webp", 0.9), formato = "webp";
     if(!blob || blob.type !== "image/webp"){ blob = await canvasParaBlob(out, "image/png"); formato = "png"; }
     if(!blob) throw new Error("Não consegui preparar a logo neste navegador.");
-    if(blob.size <= LOGO_MAX_BYTES) return {blob, formato, largura: w, altura: h, dataUrl: await blobParaDataUrl(blob), clara: luz / opacos > 0.82};
+    if(blob.size <= LOGO_MAX_BYTES) return {blob, formato, largura: w, altura: h, dataUrl: await blobParaDataUrl(blob), clara: luz / opacos > 0.82 && neutros / opacos < 0.5};   // a branca a lista inverte no tema claro (v22): só a clara colorida ganha o aviso
     lado = Math.round(lado * 0.8);
   }
   throw new Error("A logo ficou pesada demais mesmo pequena. Tente uma versão mais simples.");
@@ -3706,16 +3746,22 @@ function quemEhNaLista(c){
   if(ig) partes.push("@" + ig);
   return partes.join(" · ");
 }
+// v14.0: o nome igual ao da lista; sem apelido, "Moacyr" também confere com o "Moacyr (China)" da lista
+function mesmoNomeDaLista(daLista, digitado){
+  if(norm(daLista) === norm(digitado)) return true;
+  const [baseL] = separarApelido(daLista), [baseD, apD] = separarApelido(digitado);
+  return !apD && !!baseD && norm(baseL) === norm(baseD);
+}
 async function conferirNome(){
   const n = ++conferenciaNome;
   const caixa = $("avisoNome");
-  const nome = limparNome($("fNome").value);
+  const nome = nomeDoFormulario();
   if(norm(nome).length < 3 || finalizado){ caixa.hidden = true; return; }
   const lista = await carregarLista();
   if(n !== conferenciaNome) return;                // a pessoa continuou digitando
   if(lista.estado !== "ok"){ caixa.hidden = true; return; }
   const proprio = proprioNaLista(lista.contatos);
-  const iguais = lista.contatos.filter(c => c !== proprio && typeof c.nome === "string" && norm(c.nome) === norm(nome)).slice(0, MAX_IGUAIS_NOME);
+  const iguais = lista.contatos.filter(c => c !== proprio && typeof c.nome === "string" && mesmoNomeDaLista(c.nome, nome)).slice(0, MAX_IGUAIS_NOME);
   if(!iguais.length){ caixa.hidden = true; return; }
   const nomeLista = iguais[0].nome, botoes = $("botoesNome");
   botoes.textContent = "";
@@ -3735,7 +3781,7 @@ async function conferirNome(){
   }
   botoes.hidden = !botoes.childNodes.length;
   $("difAvisoNome").textContent = (edit ? "" : "Se não for você, pode continuar normalmente. ") +
-    "Para quem contrata não confundir vocês, use o seu nome artístico, um apelido entre parênteses (ex.: João Silva (Joãozinho do Sax)) " +
+    "Para quem contrata não confundir vocês, use o seu nome artístico, preencha o Apelido, ao lado do nome (ex.: Joãozinho do Sax), " +
     "ou preencha a “Referência ao lado do nome”, logo abaixo.";
   caixa.hidden = false;
 }
@@ -4082,7 +4128,7 @@ function concluir(payload){
     (foiEdicao ? "As suas mudanças foram recebidas. Depois de conferidas, a lista é atualizada; você não precisa fazer mais nada."
                : "Seu cadastro foi recebido. Depois de conferido, ele entra na lista; você não precisa fazer mais nada.");
   // guarda o que foi enviado (e de onde veio) antes de limpar o formulário
-  ultimoEnviado = payload ? {payload, publicado: edit ? edit.publicado : null, fotoLista} : null;
+  ultimoEnviado = payload ? {payload, publicado: edit ? edit.publicado : null, fotoLista, logoLista, rapido: !!(edit && edit.rapido)} : null;   // v13.2: e a logo
   $("corrigirCadastro").hidden = !payload;
   $("dicaCorrigir").hidden = !payload;
   const mostrarDemo = DEMO && !!payload;
@@ -4117,7 +4163,7 @@ function zerarTudo(){
   logoNova = ""; logoLista = ""; logoRemovida = false; atualizarLogoUI();
   previaFoneAberto = false; previaPerfilAberto = false;
   funcoesDigitadas = new Set(); tipoOutroAberto = false;
-  ["fNome", "fCidade", "fOutroInstr", "fOutraFuncao", "fTipoOutro", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
+  ["fNome", "fApelido", "fCidade", "fOutroInstr", "fOutraFuncao", "fTipoOutro", "fWhats", "fInsta", "fEmail", "fYoutube", "fObs", "fHashtags", "fBio", "fServicos", "campoIsca"].forEach(id => { $(id).value = ""; });
   $("fUf").value = ""; $("fRegiao").value = ""; $("fFora").checked = false; $("boxPais").hidden = true; $("fPais").value = "BR"; aoTrocarPais();
   $("confirmaLocal").hidden = true; cidadeDaLocal = "";
   $("fIfc").checked = false;
@@ -4127,7 +4173,6 @@ function zerarTudo(){
   document.querySelectorAll('input[name="ifcDisponibilidade"]').forEach(x => x.checked = false);
   atualizarCamposCategoria();
   $("fAutoriza").checked = false;
-  $("maisContatos").open = false;
   $("maisPerfil").open = false;
   ["msgInstr", "msgCidade", "dicaWhats", "dicaInsta", "dicaNome", "dicaHashtags"].forEach(id => avisar(id, ""));
   esconderAvisoNumero();
@@ -4181,6 +4226,12 @@ $("formulario").addEventListener("input", e => limparErro(e.target.id));
 $("formulario").addEventListener("change", e => limparErro(e.target.id));
 
 $("fNome").addEventListener("input", () => { dicaNome(); mudou(); });
+$("fApelido").addEventListener("input", () => { dicaNome(); mudou(); });
+$("fApelido").addEventListener("blur", () => {               // v14.0: sem parênteses, primeira letra maiúscula
+  const a = limparApelido($("fApelido").value);
+  $("fApelido").value = a ? AJ.formatarNome(a) : "";
+  dicaNome(); mudou();
+});
 $("fReferencia").addEventListener("input", mudou);
 function atualizarCamposCategoria(){
   const categoria = $("fCategoria").value || "musico";
@@ -4253,6 +4304,7 @@ document.querySelectorAll('input[name="abcDisponibilidade"]').forEach(x => x.add
   abcDisponibilidade = x.value; atualizarCamposCategoria(); mudou();
 }));
 $("fNome").addEventListener("blur", () => {                  // ao sair do campo, o nome fica arrumado: Saulo Henrique de Tarso
+  if(separarApelidoDigitado()){ const a = $("fApelido").value; $("fApelido").value = a ? AJ.formatarNome(a) : ""; dicaNome(); mudou(); }   // v14.0: "(China)" vai para o Apelido
   const bonito = AJ.formatarNome(limparNome($("fNome").value));
   if(bonito) $("fNome").value = bonito;
   atualizarMembros();
@@ -4338,7 +4390,10 @@ $("corrigirCadastro").addEventListener("click", () => {      // volta para o cad
   if(!u) return;
   const p = u.payload;
   entrarEdicao({fonte: "cadastro", contato: p.contato, docId: p.id, anterior: p.telefoneAnterior || null, publicado: u.publicado,
-    fotoLista: u.fotoLista, foto: p.fotoJpegBase64 || "", removerFoto: p.removerFoto === true});
+    fotoLista: u.fotoLista, foto: p.fotoJpegBase64 || "", removerFoto: p.removerFoto === true,
+    // v13.2: a logo, o @ do contato feito só com o Instagram e as funções novas também voltam para corrigir
+    logoLista: u.logoLista, logo: p.logoBase64 || "", logoFormato: p.logoFormato, removerLogo: p.removerLogo === true,
+    instagram: p.instagramAnterior || null, novas: p.novasAtuacoes || null, rapido: u.rapido === true});
   window.scrollTo({top: 0, behavior: "auto"});
   $("tituloEdicao").focus({preventScroll: true});
 });
@@ -4411,7 +4466,7 @@ iniciar();
 <!--
 ================================================================
  CADASTRO DE MÚSICOS — LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Cadastro_Musicos_v13.1.html
+ Arquivo: Cadastro_Musicos_v14.1.html
  Dados:   cada cadastro vira um documento na pasta "cadastros" do
           Firestore (Firebase) do projeto, com o WhatsApp (só dígitos)
           como nome e status "pendente",
@@ -4424,6 +4479,39 @@ iniciar();
           nada: fica em modo demonstração, como na v1.
 ================================================================
 
+v14.1 — 2026-11-27
+  - Logo branca não ganha mais o aviso "é bem clara e pode ficar
+    apagada": a lista (v22) inverte sozinha a logo branca no tema claro
+    (e a preta no escuro). O aviso fica só para logo clara colorida.
+
+----------------------------------------------------------------
+v14.0 — 2026-11-27
+  - Apelido com campo próprio, na mesma linha do nome, menor (apelido
+    costuma ser curto). Na lista continua como sempre: o nome e o
+    apelido entre parênteses, Moacyr (China); a dica "Vai aparecer
+    assim na lista" mostra o resultado.
+  - Quem escreve o apelido entre parênteses no próprio nome também
+    vale: ao sair do campo, "(China)" vai sozinho para o Apelido (se ele
+    estiver vazio). Parênteses digitados no Apelido são tirados.
+  - Ao abrir um cadastro, o nome da lista é separado nos dois campos.
+    Volta no rascunho.
+  - Nome igual ao de alguém da lista: sem apelido, "Moacyr" também
+    confere com o "Moacyr (China)" da lista ("É você?"); a dica para
+    diferenciar fala do campo Apelido.
+
+----------------------------------------------------------------
+v13.2 — 2026-11-27
+  - "Corrigir meu cadastro" (depois de enviar) agora volta com a logo
+    (a nova, a da lista ou o pedido de remover), com o @ do contato
+    feito só com o Instagram e com as funções novas digitadas. Antes a
+    logo sumia do formulário e ficava fora do reenvio, e uma função
+    nova voltava como instrumento.
+  - Tipo de artista em "Outros": o caractere | vira /, como nos
+    serviços (com |, as regras do banco recusavam o cadastro inteiro).
+  - Limpeza: tirado o código que não fazia nada (#maisContatos.open e
+    uma conta do nome que não era usada).
+
+----------------------------------------------------------------
 v13.1 — 2026-11-26
   - A prévia abre sempre a lista mais nova do site: o navegador (e o
     GitHub) guardavam por alguns minutos a lista antiga, e a prévia
