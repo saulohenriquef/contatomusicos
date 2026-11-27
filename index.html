@@ -592,7 +592,7 @@
     <div class="sair-lista">Não quer ter seu nome nesta lista? <a id="linkSair" href="https://saulohenriquef.github.io/contatomusicos/excluir-cadastro.html" rel="noopener">Ocultar ou excluir meu cadastro</a></div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v23
+    Lista de Contatos de Músicos · v23.1
   </footer>
 </div>
 
@@ -1164,6 +1164,7 @@ function iniciais(nome){
    Para pôr foto, coloque no contato "foto": "nome-do-arquivo.jpg" (o arquivo fica na pasta PASTA_FOTOS
    do repositório). Sem foto, ou se o arquivo não for encontrado, aparece o círculo com as iniciais. */
 const PASTA_FOTOS = "fotos/";   // pasta das fotos no repositório, com a barra no fim
+const PASTA_LOGOS = "logos/";   // v23.1: pasta das logos ("logo": "nome-do-arquivo.webp"), com a barra no fim; as de antes podem estar ainda em PASTA_FOTOS
 const COR_POR_NOME = true;      // true = cada pessoa tem uma cor própria nas iniciais; false = todas laranja
 
 function matiz(nome){           // o mesmo nome sempre dá a mesma cor
@@ -1178,6 +1179,18 @@ function urlFoto(foto){
   if(!foto) return "";
   if(PREVIA && /^data:image\/(jpeg|png|webp);base64,/i.test(foto)) return foto;   // v18: a foto nova que a página mandou para a prévia
   return /^https?:\/\//i.test(foto) ? foto : PASTA_FOTOS + encodeURI(foto);
+}
+function urlLogo(logo){                           // v23.1: a logo vem da pasta logos
+  if(!logo) return "";
+  logo = String(logo).trim();
+  if(!logo) return "";
+  if(PREVIA && /^data:image\/(png|webp);base64,/i.test(logo)) return logo;   // a logo nova que a página mandou para a prévia
+  return /^https?:\/\//i.test(logo) ? logo : PASTA_LOGOS + encodeURI(logo);
+}
+// v23.1: a logo de antes da pasta logos pode estar ainda na pasta das fotos: o mesmo arquivo lá ("" se não veio da pasta logos)
+function reservaLogo(src){
+  const k = src.lastIndexOf(PASTA_LOGOS);
+  return k >= 0 && (k === 0 || src[k - 1] === "/") && !/^data:/i.test(src) ? src.slice(0, k) + PASTA_FOTOS + src.slice(k + PASTA_LOGOS.length) : "";
 }
 
 function criarAvatar(c){
@@ -1554,7 +1567,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v23";
+const VERSAO_LISTA = "v23.1";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -2031,7 +2044,7 @@ function criarCartao(c, estado = abertos, noBalao = false){
 
   corpo.append(nome, local, tags);
   if(c.logo){                                     // v21: a logo recortada, embaixo da foto (o "Perfil completo" vem depois dela)
-    const src = urlFoto(c.logo);
+    const src = urlLogo(c.logo);                  // v23.1: da pasta logos
     if(src){
       const lg = document.createElement("button");
       lg.type = "button"; lg.className = "logo-contato";
@@ -2039,10 +2052,14 @@ function criarCartao(c, estado = abertos, noBalao = false){
       const im = document.createElement("img");
       im.alt = ""; im.decoding = "async";
       im.addEventListener("load", () => prepararLogoTema(im));   // v22: a preta no tema escuro vira branca (e a branca no claro, preta)
-      im.addEventListener("error", () => { lg.remove(); li.classList.remove("tem-logo"); }, {once: true});
+      im.addEventListener("error", () => {
+        const r = reservaLogo(im.getAttribute("src") || "");   // v23.1: a logo de antes, ainda na pasta das fotos
+        if(r){ im.src = r; return; }
+        lg.remove(); li.classList.remove("tem-logo");
+      });
       im.src = src;
       lg.appendChild(im);
-      lg.addEventListener("click", () => abrirLogo(lg, c, src));
+      lg.addEventListener("click", () => abrirLogo(lg, c, im.dataset.original || src));   // v23.1: o endereço que carregou
       li.classList.add("tem-logo");
       colunaFoto.appendChild(lg);
     }
@@ -2477,7 +2494,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v23.html
+ Arquivo: Lista_Contatos_Musicos_v23.1.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -3083,6 +3100,12 @@ v23 — 2026-11-27
     "Ver todos os músicos" abre a lista inteira.
   - No analytics, o clique feito nela vem marcado: "v23 acordeonistas".
   - Para travar em outro instrumento, é só acrescentar em VISTAS.
+----------------------------------------------------------------
+v23.1 — 2026-11-27
+  - A logo vem da pasta logos do repositório (o painel v28 guarda as
+    logos lá). A logo de antes, que ainda esteja na pasta fotos,
+    continua aparecendo: não achando em logos, a lista tenta em fotos.
+    Publique esta lista antes de publicar pelo painel v28.
 
 ================================================================
 -->
