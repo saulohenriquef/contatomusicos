@@ -490,6 +490,11 @@
   .logo-contato:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
   @media (prefers-color-scheme: dark){ .logo-contato img{filter:drop-shadow(0 0 .8px rgba(255,255,255,.6))} }
   .foto-zoom.e-logo img{background:#e9e7e2; padding:18px; box-sizing:border-box}
+  /* ---------- v23: a lista travada num instrumento (?so=acordeonistas): sem abas nem filtros ---------- */
+  html.vista-travada .abas, html.vista-travada #atuacoes, html.vista-travada #abrirFiltros,
+  html.vista-travada #filtros, html.vista-travada #sugestoes{display:none !important}
+  .aviso-vista{margin:8px 0 0; font-size:.92rem; color:var(--muted)}
+  .aviso-vista a{color:var(--accent); font-weight:650}
 </style>
 </head>
 <body>
@@ -533,6 +538,7 @@
   <header>
     <h1>🪗 Contatos dos Músicos</h1>
     <p class="sub">Chame pelo WhatsApp ou toque no botão vermelho para ver o telefone.</p>
+    <p id="avisoVista" class="aviso-vista" hidden></p>
   </header>
 
   <div class="tools">
@@ -586,7 +592,7 @@
     <div class="sair-lista">Não quer ter seu nome nesta lista? <a id="linkSair" href="https://saulohenriquef.github.io/contatomusicos/excluir-cadastro.html" rel="noopener">Ocultar ou excluir meu cadastro</a></div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v22
+    Lista de Contatos de Músicos · v23
   </footer>
 </div>
 
@@ -622,6 +628,30 @@ if(PREVIA){
   try{ window.parent.postMessage({tipo: "previa-carregando"}, "*"); }catch(e){}   // a página sabe que esta lista tem a prévia
 }
 const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+/* ---------- v23: a lista travada num instrumento, pelo endereço ----------
+   ?so=acordeonistas mostra só quem toca acordeon (a página /contatomusicos/acordeonistas/ manda para cá, e o site
+   antigo contatoacordeonistas também). Sem abas nem filtros; a busca, o "Perto de mim" e o resto ficam. Para criar
+   outra, é só pôr aqui: a chave (como vai no endereço), o título e os instrumentos (como estão no catálogo). */
+const VISTAS = {
+  acordeonistas: {titulo: "Contatos dos Acordeonistas", emoji: "🪗", rotulo: "Acordeonistas", plural: "acordeonistas", instrumentos: ["Acordeon", "Sanfona"]}
+};
+const VISTA = (() => {
+  if(PREVIA) return null;
+  try{
+    const v = norm(new URLSearchParams(location.search).get("so") || "").trim();
+    return Object.prototype.hasOwnProperty.call(VISTAS, v) ? {...VISTAS[v], chave: v} : null;
+  }catch(e){ return null; }
+})();
+if(VISTA){
+  document.documentElement.classList.add("vista-travada");
+  document.title = VISTA.titulo;
+  const h1 = document.querySelector("header h1");
+  if(h1) h1.textContent = VISTA.emoji + " " + VISTA.titulo;
+  const av = $("avisoVista"), todos = document.createElement("a");
+  todos.href = "./"; todos.textContent = "Ver todos os músicos";
+  av.append("Só " + VISTA.plural + " · ", todos);
+  av.hidden = false;
+}
 
 /* ---------- AJUDANTES COMPARTILHADOS ----------
    O mesmo bloco vai na lista, no cadastro e no painel: nome automático, instrumentos parecidos que se juntam,
@@ -1524,7 +1554,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v22";
+const VERSAO_LISTA = "v23";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -1547,7 +1577,7 @@ function registrarClique(c, acao, alvo){
     const chave = nome + "|" + acao + "|" + (alvo || ""), agora = Date.now();
     if(agora - (cliquesRecentes.get(chave) || 0) < 4000) return;      // toque duplo conta uma vez só
     cliquesRecentes.set(chave, agora);
-    const campos = {acao: {stringValue: acao}, nome: {stringValue: nome}, pagina: {stringValue: VERSAO_LISTA}};
+    const campos = {acao: {stringValue: acao}, nome: {stringValue: nome}, pagina: {stringValue: VERSAO_LISTA + (VISTA ? " " + VISTA.chave : "")}};
     const w = nacional(c.whatsapp);
     if(foneValido(w)) campos.whatsapp = {stringValue: w};      // v21.1: de outro país também (precisa das regras v12)
     const ig = usuarioInstagram(c.instagram);
@@ -1650,6 +1680,12 @@ const ofereceFreelance = c => c.categoria === "artista" && (c.instrumentos || []
 const naAba = (c, categoria) => c.categoria === categoria || (categoria === "musico" && ofereceFreelance(c));
 const contatosDaArea = () => CONTATOS.filter(c => naAba(c, categoriaAtiva));
 const passaInstr = c => !filtroInstr.size || (c.instrumentos || []).some(i => filtroInstr.has(chaveInstr(i)));
+let chavesVista = null;                          // v23: os instrumentos da lista travada (?so=...)
+const passaVista = c => {
+  if(!VISTA) return true;
+  if(!chavesVista) chavesVista = new Set(VISTA.instrumentos.map(chaveInstr));
+  return (c.instrumentos || []).some(i => chavesVista.has(chaveInstr(i)));
+};
 const rotuloArea = area => area === "instrumentos" ? "Instrumentos" : "Apenas funções";
 
 function criarChip(rotulo, qtd, matizCor, emoji, tom){
@@ -2221,7 +2257,7 @@ function render(){
   const nomeLista = categoriaAtiva === "musico"
     ? "Instrumentos e Funções · " + tituloAreas
     : categoriaAtiva === "artista" ? "Artistas / Bandas / Cantores" : "Empresas";
-  $("tituloLista").textContent = nomeLista;
+  $("tituloLista").textContent = VISTA ? VISTA.rotulo : nomeLista;
   $("filtrosTitulo").textContent = areasSelecionadas.length === 1 ? rotuloArea(areasSelecionadas[0]) : "Atuações";
   $("filtros-rail").setAttribute("aria-label", "Filtrar por instrumento ou função profissional");
   $("atuacoes").hidden = categoriaAtiva !== "musico";
@@ -2230,7 +2266,7 @@ function render(){
   $("abaEmpresas").setAttribute("aria-pressed", String(categoriaAtiva === "empresa"));
   $("busca").placeholder = categoriaAtiva === "empresa" ? "Buscar por empresa, cidade ou o que oferece…" : "Buscar por nome, referência, cidade ou função…";
   const contatosVisiveis = ordem.filter(c => {
-    if(!naAba(c, categoriaAtiva)) return false;
+    if(!passaVista(c) || !naAba(c, categoriaAtiva)) return false;   // v23: travada (?so=acordeonistas): só eles
     if(categoriaAtiva === "musico" && !areasSelecionadas.some(area => tagsDaArea(c, area).length)) return false;
     if(categoriaAtiva === "musico" && !passaInstr(c)) return false;
     const termos = [c.nome,c.referencia,c.tipoArtista,(c.cidades||[]).map(k => { const p = partesCidade(k); return cidadeSemPais(k) + (p.pais ? " " + nomePais(p.pais) + " " + siglaPais(p.pais) : ""); }).join(" "),(c.instrumentos||[]).join(" "),
@@ -2441,7 +2477,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v22.html
+ Arquivo: Lista_Contatos_Musicos_v23.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -3037,6 +3073,16 @@ v22 — 2026-11-27
     branco juntos (contraste próprio), não muda. Trocar o tema do
     aparelho troca na hora. Ampliada (fundo claro), a logo branca
     aparece preta.
+----------------------------------------------------------------
+v23 — 2026-11-27
+  - Lista travada nos acordeonistas: com ?so=acordeonistas no endereço
+    (a página contatomusicos/acordeonistas/ e o site antigo
+    contatoacordeonistas mandam para cá), mostra só quem toca acordeon
+    (ou sanfona), com o título "Contatos dos Acordeonistas", sem as abas
+    e os filtros. A busca, o "Perto de mim" e o resto funcionam;
+    "Ver todos os músicos" abre a lista inteira.
+  - No analytics, o clique feito nela vem marcado: "v23 acordeonistas".
+  - Para travar em outro instrumento, é só acrescentar em VISTAS.
 
 ================================================================
 -->
