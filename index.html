@@ -586,7 +586,7 @@
     <div class="sair-lista">Não quer ter seu nome nesta lista? <a id="linkSair" href="https://saulohenriquef.github.io/contatomusicos/excluir-cadastro.html" rel="noopener">Ocultar ou excluir meu cadastro</a></div>
     A ordem muda toda vez que a página é aberta. Se você liberar a localização, os mais próximos aparecem primeiro; ela fica só no seu aparelho.
     <div class="creditos">Criado por <strong>Saulo Henrique Fernandes</strong> · <a href="https://www.instagram.com/saulohenriquef" target="_blank" rel="noopener">@saulohenriquef</a></div>
-    Lista de Contatos de Músicos · v21
+    Lista de Contatos de Músicos · v22
   </footer>
 </div>
 
@@ -1184,8 +1184,70 @@ function abrirFoto(av, c, src){
   $("foto-fechar").focus({preventScroll:true});
 }
 
-function abrirLogo(botao, c, src){               // v20: a logo ampliada, num fundo claro
-  abrirFoto(botao, c, src);
+/* ---------- v22: logo preta no tema escuro (e branca no claro) ----------
+   A maioria das logos é preta ou branca, e some no fundo da mesma cor. A logo "de uma cor só" é reconhecida pelos pixels:
+   preta (ou cinza-escura) no tema escuro, ou branca no tema claro, tem a parte preta/branca/cinza invertida (preto vira
+   branco e branco vira preto); as partes coloridas ficam como estão. Logo que já tem preto e branco juntos (contraste
+   próprio) ou que é colorida não muda. A conta é feita uma vez por logo; trocar o tema do aparelho troca na hora. */
+const TEMA_ESCURO = window.matchMedia("(prefers-color-scheme: dark)");
+const LOGOS_ADAPTADAS = new Map();        // endereço da logo -> {tom: "escura" | "clara" | "", adaptada: data: da versão invertida}
+const NEUTRO_MAX = 48;                    // diferença máxima entre R, G e B para contar como preto/branco/cinza
+function analisarLogo(im){
+  const w = im.naturalWidth, h = im.naturalHeight;
+  if(!w || !h) return {tom: ""};
+  const k = Math.min(1, 400 / Math.max(w, h));
+  const cv = document.createElement("canvas");
+  cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+  const g = cv.getContext("2d", {willReadFrequently: true});
+  g.drawImage(im, 0, 0, cv.width, cv.height);
+  let px;
+  try{ px = g.getImageData(0, 0, cv.width, cv.height); }catch(e){ return {tom: ""}; }   // imagem de outro site: fica como está
+  const d = px.data;
+  let opacos = 0, escuros = 0, claros = 0;
+  for(let i = 0; i < d.length; i += 4){
+    if(d[i + 3] < 48) continue;
+    opacos++;
+    const r = d[i], gr = d[i + 1], b = d[i + 2];
+    if(Math.max(r, gr, b) - Math.min(r, gr, b) > NEUTRO_MAX) continue;              // colorido
+    const l = (0.2126 * r + 0.7152 * gr + 0.0722 * b) / 255;
+    if(l < 0.35) escuros++; else if(l > 0.75) claros++;
+  }
+  if(!opacos) return {tom: ""};
+  const tom = escuros / opacos >= 0.4 && claros / opacos < 0.08 ? "escura"
+    : claros / opacos >= 0.4 && escuros / opacos < 0.08 ? "clara" : "";
+  if(!tom) return {tom};
+  for(let i = 0; i < d.length; i += 4){                  // inverte só o preto/branco/cinza; o colorido fica
+    if(!d[i + 3]) continue;
+    const r = d[i], gr = d[i + 1], b = d[i + 2];
+    if(Math.max(r, gr, b) - Math.min(r, gr, b) > NEUTRO_MAX) continue;
+    d[i] = 255 - r; d[i + 1] = 255 - gr; d[i + 2] = 255 - b;
+  }
+  g.putImageData(px, 0, 0);
+  let adaptada = "";
+  try{ adaptada = cv.toDataURL("image/png"); }catch(e){ return {tom: ""}; }
+  return {tom, adaptada};
+}
+// a versão certa para o tema de agora: a preta no escuro e a branca no claro usam a invertida
+function aplicarTomLogo(img){
+  const info = LOGOS_ADAPTADAS.get(img.dataset.original);
+  if(!info || !info.tom) return;
+  const inverter = (info.tom === "escura") === TEMA_ESCURO.matches;
+  const src = inverter ? info.adaptada : img.dataset.original;
+  if(img.getAttribute("src") !== src) img.src = src;
+}
+function prepararLogoTema(img){                            // no "load" da logo (a troca de src dispara outro load: ignorado)
+  if(img.dataset.original) return;
+  img.dataset.original = img.getAttribute("src");
+  let info = LOGOS_ADAPTADAS.get(img.dataset.original);
+  if(!info){ info = analisarLogo(img); LOGOS_ADAPTADAS.set(img.dataset.original, info); }
+  aplicarTomLogo(img);
+}
+const trocouTema = () => document.querySelectorAll(".logo-contato img[data-original]").forEach(aplicarTomLogo);
+if(TEMA_ESCURO.addEventListener) TEMA_ESCURO.addEventListener("change", trocouTema); else if(TEMA_ESCURO.addListener) TEMA_ESCURO.addListener(trocouTema);
+
+function abrirLogo(botao, c, src){               // v20: a logo ampliada, num fundo claro (v22: a branca aparece preta)
+  const info = LOGOS_ADAPTADAS.get(src);
+  abrirFoto(botao, c, info && info.tom === "clara" ? info.adaptada : src);
   $("foto-img").alt = "Logo de " + c.nome;
   $("foto-zoom").classList.add("e-logo");
 }
@@ -1462,7 +1524,7 @@ function criarIcone(id){
    Para não contar os próprios toques (o dono, testando): abra a lista uma vez com ?naoContar=1 no fim do endereço,
    em cada aparelho (?contar=1 volta a contar). */
 const FIREBASE = {projectId: "contatomusicos", apiKey: "AIzaSyCTDRjRPv_yIgXg2-yLyYnv31U3njzOPac"};   // vazio = não registra nada
-const VERSAO_LISTA = "v21";
+const VERSAO_LISTA = "v22";
 let naoContarCliques = false;
 try{
   const q = new URLSearchParams(location.search);
@@ -1487,7 +1549,7 @@ function registrarClique(c, acao, alvo){
     cliquesRecentes.set(chave, agora);
     const campos = {acao: {stringValue: acao}, nome: {stringValue: nome}, pagina: {stringValue: VERSAO_LISTA}};
     const w = nacional(c.whatsapp);
-    if(/^\d{10,11}$/.test(w)) campos.whatsapp = {stringValue: w};
+    if(foneValido(w)) campos.whatsapp = {stringValue: w};      // v21.1: de outro país também (precisa das regras v12)
     const ig = usuarioInstagram(c.instagram);
     if(ig) campos.instagram = {stringValue: ig};
     const a = String(alvo || "").trim().slice(0, 120);
@@ -1939,8 +2001,10 @@ function criarCartao(c, estado = abertos, noBalao = false){
       lg.type = "button"; lg.className = "logo-contato";
       lg.setAttribute("aria-label", "Logo de " + c.nome + ". Toque para ampliar.");
       const im = document.createElement("img");
-      im.alt = ""; im.decoding = "async"; im.src = src;
+      im.alt = ""; im.decoding = "async";
+      im.addEventListener("load", () => prepararLogoTema(im));   // v22: a preta no tema escuro vira branca (e a branca no claro, preta)
       im.addEventListener("error", () => { lg.remove(); li.classList.remove("tem-logo"); }, {once: true});
+      im.src = src;
       lg.appendChild(im);
       lg.addEventListener("click", () => abrirLogo(lg, c, src));
       li.classList.add("tem-logo");
@@ -2377,7 +2441,7 @@ iniciar();
 <!--
 ================================================================
  LISTA DE CONTATOS DE MÚSICOS — CHANGELOG
- Arquivo: Lista_Contatos_Musicos_v21.html
+ Arquivo: Lista_Contatos_Musicos_v22.html
  Dados:   o HTML lê os mesmos arquivos do GitHub,
           Lista_Contatos_Musicos_contatos.json (com campos opcionais de referência,
           categoria, selos, disponibilidade, oculto, perfil e contatos) e
@@ -2959,6 +3023,20 @@ v21 — 2026-11-26
   - Prévia (página de cadastro e painel): a altura agora é a do
     cartão. Antes o quadro nunca diminuía (cartão pequeno ficava com
     sobra embaixo, e fechar o perfil completo não encolhia).
+----------------------------------------------------------------
+v21.1 — 2026-11-27
+  - Analytics: o clique num contato de outro país também leva o
+    WhatsApp dele (+...), para o painel juntar os cliques certo. Precisa
+    das regras v12 (publique as regras antes desta lista).
+----------------------------------------------------------------
+v22 — 2026-11-27
+  - Logo preta no tema escuro e logo branca no tema claro: a lista
+    reconhece a logo "de uma cor só" pelos pixels e inverte só a parte
+    preta/branca/cinza (preto vira branco, branco vira preto); as partes
+    coloridas ficam como estão. Logo colorida, ou que já tem preto e
+    branco juntos (contraste próprio), não muda. Trocar o tema do
+    aparelho troca na hora. Ampliada (fundo claro), a logo branca
+    aparece preta.
 
 ================================================================
 -->
