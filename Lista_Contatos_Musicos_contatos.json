@@ -654,5 +654,16 @@
     "abcDisponibilidade": "nao",
     "instagram": "reginaldorodriguesmodao",
     "whatsapp": ""
+  },
+  {
+    "nome": "Banda Tequila",
+    "categoria": "artista",
+    "foto": "banda-tequila.jpg",
+    "cidades": ["Passos/MG"],
+    "instrumentos": [],
+    "selos": ["ABC"],
+    "abcDisponibilidade": "nao",
+    "instagram": "bandatequila",
+    "whatsapp": "35997729080"
   }
 ]
